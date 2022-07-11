@@ -106,16 +106,16 @@ function init_app() {
                     }
                 } else if (TF.keyboardShortcuts === true && document.getElementById("option1").disabled === false) {
                     if (event.keyCode == 49) {
-                        $("#option1").click()
+                        $("#not_sure").click()
                     }
                     else if (event.keyCode == 50) {
-                        $("#option2").click()
+                        $("#normal").click()
                     }
                     else if (event.keyCode == 51) {
-                        $("#option3").click()
+                        $("#gray_zone").click()
                     }
                     else if (event.keyCode == 52) {
-                        $("#option4").click()
+                        $("#precancer_cancer").click()
                     }
                 }
             }
@@ -159,18 +159,18 @@ function init_app() {
     };
 
     ClassifyTaskFeeder.enableButtons = function () {
-        document.getElementById("option1").disabled = false;
-        document.getElementById("option2").disabled = false;
-        document.getElementById("option3").disabled = false;
-        document.getElementById("option4").disabled = false;
+        document.getElementById("normal").disabled = false;
+        document.getElementById("gray_zone").disabled = false;
+        document.getElementById("precancer_cancer").disabled = false;
+        document.getElementById("not_sure").disabled = false;
         document.getElementById("previousClassification").disabled = false;
     };
 
     ClassifyTaskFeeder.disableButtons = function () {
-        document.getElementById("option1").disabled = true;
-        document.getElementById("option2").disabled = true;
-        document.getElementById("option3").disabled = true;
-        document.getElementById("option4").disabled = true;
+        document.getElementById("normal").disabled = true;
+        document.getElementById("gray_zone").disabled = true;
+        document.getElementById("precancer_cancer").disabled = true;
+        document.getElementById("not_sure").disabled = true;
         document.getElementById("previousClassification").disabled = true;
     };
 

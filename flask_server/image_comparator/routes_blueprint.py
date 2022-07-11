@@ -159,7 +159,6 @@ def get_tasks(app):
     view = f"_design/basic_views/_view/incomplete_{app}_tasks?key=\"{username}\""
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
-
     return json.loads(response.content.decode('utf-8'))
 
 
@@ -188,7 +187,6 @@ def get_image_compare_lists():
 def get_image_classify_lists():
     base = "http://{}:{}/{}".format(
         current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
-    # pdb.set_trace()
     try:
         key = request.args['key']
     except:
@@ -202,6 +200,7 @@ def get_image_classify_lists():
     view = f"_design/basic_views/_view/image_classify_lists?key=\"{key}\""
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
+    # pdb.set_trace()
     return json.loads(response.content.decode('utf-8'))
 
 
@@ -465,9 +464,12 @@ def reset_to_previous_result(app):
     currentTask = json.loads(request.data)
     base = "http://{}:{}/{}".format(
         current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
-
+    # pdb.set_trace()
     # get old result
-    view = f"_design/basic_views/_view/{app}Results?key=\"{currentTask['user']}\""
+    if app.capitalize() == "Compare":
+        view = f"_design/basic_views/_view/results{app.capitalize()}?key=[\"{currentTask['user']}\",\"{currentTask['list_name']}\"]"
+    else:
+        view = f"_design/basic_views/_view/results{app.capitalize()}_userList?key=[\"{currentTask['user']}\",\"{currentTask['list_name']}\"]"
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
     all_results = json.loads(response.content.decode('utf-8'))
@@ -477,6 +479,8 @@ def reset_to_previous_result(app):
         if row['value']['task_idx'] + 1 == currentTask['current_idx']:
             # pdb.set_trace()
             old_result_id, old_result_rev = row['value']['_id'], row['value']['_rev']
+    # pdb.set_trace()
+
     if len(old_result_id) == 0 or len(old_result_rev) == 0:
         pdb.set_trace()  # quick error handling till I properly implement
 
@@ -503,6 +507,7 @@ def reset_to_previous_result(app):
 @bp.route('/get_classification_results/', methods=['GET'])
 def get_classification_results():
     username = request.args['username']
+    # list_name = request.args['list_name']
     base = "http://{}:{}/{}".format(
         current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
     view = f"_design/basic_views/_view/resultsClassify?key=\"{username}\""

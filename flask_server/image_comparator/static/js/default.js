@@ -36,10 +36,12 @@ function TaskFeeder(config_obj) {
   // Meant to be updated and represent app state
   this.app = config_obj['app'];
   this.user = "default";
+  // debugger
   this.message = config_obj['message'];
   this.incompleteTasks = [];
   this.currentTask = {};
   this.imageList = [];
+  this.cachedClassifyResults = {};
   // Experimental option
   this.gridAppRedirect = false;
   this.fromApp = null; // Don't touch, this is set in this.handleUrlFilter()
@@ -227,6 +229,7 @@ function TaskFeeder(config_obj) {
       return "no tasks left"
     } else {
       return new Promise((resolve, reject) => {
+        // debugger;
         $.ajax({
           url: this.url_image_list_base + `?key=${task.list_name}`,
           type: 'GET',
@@ -269,6 +272,27 @@ function TaskFeeder(config_obj) {
           resolve(data)
         })
     })
+  };
+
+  this.resetToPreviousTaskId = function () {
+    TF = this;
+    if (TF.currentTask.current_idx === 0) {
+        alert('You are on the first task, cannot go back.')
+    } else {
+        TF.disableButtons();
+        $.ajax({
+            url: this.url_reset_to_previous_result,
+            type: 'POST',
+            data: JSON.stringify(this.currentTask),
+            headers: { 'Content-Type': 'application/json' },
+            success: (response) => {
+                TF.OnSetUser(TF.user)
+            },
+            error: (response) => {
+                console.log('resetToPreviousClassification error!')
+            },
+        });
+    }
   };
 
 }

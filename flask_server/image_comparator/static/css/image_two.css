@@ -25,6 +25,12 @@ input::-webkit-slider-thumb {
 .portfolio-item {
   margin-bottom: 25px;
 }
+.col-lg-6 {
+  display: block;
+}
+.shortcuts-and-instructions {
+  display: block;
+}
 .col-lg-12 {
   #background-color: silver;
   margin: 10px;

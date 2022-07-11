@@ -15,11 +15,14 @@ function init_app() {
   // - Methods
   GridTaskFeeder.getClassificationResults = function (imageList) {
     if (imageList === "no tasks left") {
-      return "no tasks left"
+      this.imageList = [];
+      this.cachedClassifyResults = [];
+      return "no tasks means no UI to build";
     }
 
     GTF = this; // otherwise "this" becomes the $.ajax object
     return new Promise((resolve, reject) => {
+      // debugger;
       $.ajax({
         url: GTF.url_get_classification_results + `?username=${GTF.user}`,
         type: 'GET',
@@ -32,7 +35,8 @@ function init_app() {
             image_id = parseInt(image_url.substring(image_id_index, image_url.length))
             results[image_id] = v.value.diagnosis
           })
-          // GTF.results = results // No longer needed.
+          GTF.cachedClassifyResults = results
+          // debugger;
           resolve(results);
         },
         error: function (response) {
@@ -90,28 +94,25 @@ function init_app() {
       this.imageList = [];
       return "no tasks means no UI to build";
     }
-
+    debugger
     if (this.gridAppRedirect === true) {
       // If we have results from the classify or pair app use those
-      // Reorder by frontal\lateral\reject
-      results = imageList
-      frontal = [];
-      lateral = [];
+      results = this.cachedClassifyResults
+      debugger
+      not_sure = [];
+      
       Object.values(results).forEach((v, i, a) => {
         var keys = Object.keys(results)
         // image_id = i + 1;
         image_id = keys[i];
-        if (v === "frontal") {
-          frontal.push(image_id)
-        } else {
-          lateral.push(image_id)
+        if (v === "not_sure") {
+          not_sure.push(image_id)
         }
-
       })
-      imageList = frontal.concat(lateral)
+      imageList = not_sure
     }
 
-
+    debugger;
     grid_of_images = $('#grid_of_images');
     grid_of_images.empty()
     let n_count = imageList.length;
@@ -135,13 +136,17 @@ function init_app() {
         // debugger
         if (this.gridAppRedirect === true) {
           var select = $(`<select name="class" id="image_${v}">
-                            <option value="frontal" ${results[v] === 'frontal' ? ' selected' : ''}>frontal</option>
-                            <option value="lateral" ${results[v] === 'lateral' ? ' selected' : ''}>lateral</option>
+                            <option value="not_sure" ${results[v] === 'not_sure' ? ' selected' : ''}>not_sure</option>
+                            <option value="normal" ${results[v] === 'normal' ? ' selected' : ''}>normal</option>
+                            <option value="gray_zone" ${results[v] === 'gray_zone' ? ' selected' : ''}>gray_zone</option>
+                            <option value="precancer/cancer" ${results[v] === 'precancer/cancer' ? ' selected' : ''}>precancer/cancer</option>
                           </select>`)
         } else {
           var select = $(`<select name="class" id="image_${v}">
-                            <option value="frontal" "selected">frontal</option>
-                            <option value="lateral">lateral</option>
+                            <option value="not_sure" selected}>not_sure</option>
+                            <option value="normal">normal</option>
+                            <option value="gray_zone">gray_zone</option>
+                            <option value="precancer/cancer">precancer/cancer</option>
                           </select>`)
         }
         row.append(col)
