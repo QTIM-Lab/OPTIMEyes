@@ -125,26 +125,20 @@
                         <p>App Instructions:</p>
                         <ol>
                             <li>Select your user from the drop down at the top.</li>
-                            <li>You will be redirected to the same page with survey questions for you to fill
-                                out.
-                                <ul>
-                                    <li>
-                                        <p style="color:red;">If placeholders come up instead of images after
-                                            creating a user, hit refresh.</p>
-                                    </li>
-                                </ul>
-                            </li>
-
                         </ol>
                         <p>Optional: Click button "Keyboard Shortcuts:" to allow for arrow keys to choose
                             images. Otherwise you can click with your mouse. Controls are below.</p>
                         <p>***************</p>
                         <p>Number keys enabled (practice mode "Off"):</p>
-                        <p>* Number 1: option1</p>
-                        <p>* Number 2: option2</p>
-                        <p>* Number 3: option3</p>
-                        <p>* Number 4: option4</p>
+                        <p>* Number 1: normal</p>
+                        <p>* Number 2: ABV</p>
+                        <p>* Number 3: GSP</p>
+                        <p>* Number 4: HSP</p>
+                        <p>* Number 5: RP</p>
                         <p>***************</p>
+
+                        <p style="color: red;">NOTE: If you choose "normal" nothing else is allowed. If you choose other
+                            categories (single\multiple) then you can't submit as normal.</p>
 
                         <hr>
 
@@ -187,25 +181,54 @@
     <div class="col-md-7">
         <img id="image0" class="img-responsive" src="https://via.placeholder.com/700x400">
     </div>
-    <div id="class_buttons" class="col-md-5">
+
+    <!-- buttons -->
+    <!-- <div id="class_buttons" class="col-md-2">
         <h2 id="to-do-message" class="page-header">Class Choices:</h2>
-        <button type="button" class="btn btn-warning" id="not_sure" style="display:block;"
-        onclick="ClassifyTaskFeeder.classifySubmit(this)">not sure</button>
-        <br>
-        <button type="button" class="btn btn-primary" id="normal"
+        <button type="button" class="btn btn-warning" id="normal" style="display:block;"
             onclick="ClassifyTaskFeeder.classifySubmit(this)">normal</button>
         <br>
-        <button type="button" class="btn btn-primary" id="gray_zone"
-            onclick="ClassifyTaskFeeder.classifySubmit(this)">gray zone</button>
+        <button type="button" class="btn btn-primary" id="ABV"
+            onclick="ClassifyTaskFeeder.classifySubmit(this)">ABV</button>
         <br>
-        <button type="button" class="btn btn-primary" id="precancer_cancer"
-            onclick="ClassifyTaskFeeder.classifySubmit(this)">precancer/cancer</button>
+        <button type="button" class="btn btn-primary" id="GSP"
+            onclick="ClassifyTaskFeeder.classifySubmit(this)">GSP</button>
+        <br>
+        <button type="button" class="btn btn-primary" id="HSP"
+            onclick="ClassifyTaskFeeder.classifySubmit(this)">HSP</button>
+        <br>
+        <button type="button" class="btn btn-primary" id="RP"
+            onclick="ClassifyTaskFeeder.classifySubmit(this)">RP</button>
         <hr>
+
+        <button type="button" class="btn btn-danger" id="previousClassification"
+            onclick="ClassifyTaskFeeder.resetToPreviousClassification(this)">Go
+            Back One</button>
+    </div> -->
+    <!-- checkboxes  -->
+    <div id="class_checkboxes" class="col-md-2">
+        <h2 class="page-header">Additional Choices:</h2>
+        <!-- <form onSubmit="ClassifyTaskFeeder.classifySubmit()"> -->
+        <input type="checkbox" id="normal" name="normal" value="normal">
+        <label for="normal"> normal</label><br><br>
+        <input type="checkbox" id="ABV" name="ABV" value="ABV">
+        <label for="ABV"> ABV</label><br><br>
+        <input type="checkbox" id="GSP" name="GSP" value="GSP">
+        <label for="GSP"> GSP</label><br><br>
+        <input type="checkbox" id="HSP" name="HSP" value="HSP">
+        <label for="HSP"> HSP</label><br><br>
+        <input type="checkbox" id="RP" name="RP" value="RP">
+        <label for="RP"> RP</label><br><br>
+        <input type="submit" value="Submit" onclick="ClassifyTaskFeeder.classifySubmit()">
+        <!-- </form> -->
+        <hr>
+
         <!-- Back Button -->
         <button type="button" class="btn btn-danger" id="previousClassification"
             onclick="ClassifyTaskFeeder.resetToPreviousClassification(this)">Go
             Back One</button>
     </div>
+
 </div>
 {% endblock %}
 

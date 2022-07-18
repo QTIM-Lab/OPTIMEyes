@@ -236,7 +236,7 @@ function TaskFeeder(config_obj) {
           success: function (response) {
             if (TF.app === 'compare' | TF.app === 'classify' | TF.app === 'pair') {
               var curTaskElem = document.getElementById("si_curtask");
-              curTaskElem.textContent = "You are on comparison " + (task.current_idx + 1) + " of " + response.rows[0].value.count;
+              curTaskElem.textContent = `You are on ${TF.app} task ` + (task.current_idx + 1) + " of " + response.rows[0].value.count;
             }
             TF.imageList = response.rows[0].value.list;
             resolve(TF.imageList);

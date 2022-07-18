@@ -16,6 +16,7 @@ function init_app() {
     // - Attributes
     ClassifyTaskFeeder.currentImg = null;
     ClassifyTaskFeeder.nextImg = null;
+    ClassifyTaskFeeder.usingCheckbox = true;
     ClassifyTaskFeeder.keyboardShortcuts = false; // turn keyboard listener on\off
 
     // - Methods
@@ -40,7 +41,6 @@ function init_app() {
         console.log("classifySubmit");
         this.disableButtons();
         // Gather all imageIDs
-        // debugger
         TF = this;
         const user = this.user;
 
@@ -52,17 +52,25 @@ function init_app() {
         const task_idx = this.currentTask.current_idx;
         // debugger
 
-        const save_results = {
+        save_results = {
             user: user,
             type: "classifyResult",
             date: timeStr,
             image: img0,
-            diagnosis: selection.id,
+            // diagnosis: selection.id, // button id
             task: task,
             task_list_name: this.currentTask.list_name,
             task_idx: task_idx,
         }
 
+        // Check if this is a button or checkbox classification
+        if (ClassifyTaskFeeder.usingCheckbox && document.getElementById('class_checkboxes') != null){
+            let checkboxes = ['normal','ABV','GSP','HSP','RP']
+            checkboxes.forEach((v,i,a) =>{
+                save_results[`diagnoisis_${v}`] = document.getElementById(v).checked
+            })
+        }
+        debugger
         $.ajax({
             url: `http://${DNS}:${HTTP_PORT}/task_results`,
             data: JSON.stringify(save_results),
@@ -71,9 +79,11 @@ function init_app() {
             contentType: 'application/json',
             success: function (response) {
                 // debugger
-                console.log('success')
+                // Uncheck checkbox
+                TF.clearSelection()
                 // Reset incomplete tasks list
                 TF.OnSetUser(TF.user)
+                
             },
             error: function (response) {
                 console.log("get of tasks failed : " + JSON.stringify(response));
@@ -87,6 +97,36 @@ function init_app() {
         alert('If you want to provide an optional justification for your decision (left/right/tie), please enter it before you click left/right/tie. The text box will refresh after a decision is made.')
     };
 
+    ClassifyTaskFeeder.initCheckboxListener = function (number_keys) {
+        normal_checkbox = document.getElementById('normal');
+        ABV_checkbox = document.getElementById('ABV');
+        GSP_checkbox = document.getElementById('GSP');
+        HSP_checkbox = document.getElementById('HSP');
+        RP_checkbox = document.getElementById('RP');
+        // If anything but normal is checked, unselect normal
+        ABV_checkbox.addEventListener('change', function() {
+            normal_checkbox.checked = false
+        });
+        GSP_checkbox.addEventListener('change', function() {
+            normal_checkbox.checked = false
+        });
+        HSP_checkbox.addEventListener('change', function() {
+            normal_checkbox.checked = false
+        });
+        RP_checkbox.addEventListener('change', function() {
+            normal_checkbox.checked = false
+        });
+        // If normal is checked unselect everything else
+        normal_checkbox.addEventListener('change', function() {
+            if(normal_checkbox.checked === true){
+                ABV_checkbox.checked = false
+                GSP_checkbox.checked = false
+                HSP_checkbox.checked = false
+                RP_checkbox.checked = false
+            }          
+        });
+
+    };
     ClassifyTaskFeeder.initKeyboardListener = function () {
         TF = this;
         document.addEventListener('keydown', function (event) {
@@ -104,18 +144,24 @@ function init_app() {
                     else if (event.keyCode == 52) {
                         alert('4 was pressed');
                     }
-                } else if (TF.keyboardShortcuts === true && document.getElementById("option1").disabled === false) {
+                    else if (event.keyCode == 53) {
+                        alert('5 was pressed');
+                    }
+                } else if (TF.keyboardShortcuts === true && document.getElementById("normal").disabled === false) {
                     if (event.keyCode == 49) {
-                        $("#not_sure").click()
+                        $("#normal")[0].click()
                     }
                     else if (event.keyCode == 50) {
-                        $("#normal").click()
+                        $("#ABV")[0].click()
                     }
                     else if (event.keyCode == 51) {
-                        $("#gray_zone").click()
+                        $("#GSP")[0].click()
                     }
                     else if (event.keyCode == 52) {
-                        $("#precancer_cancer").click()
+                        $("#HSP")[0].click()
+                    }
+                    else if (event.keyCode == 53) {
+                        $("#RP")[0].click()
                     }
                 }
             }
@@ -158,19 +204,29 @@ function init_app() {
         }
     };
 
+    ClassifyTaskFeeder.clearSelection = function () {
+        document.getElementById("normal").checked = false;
+        document.getElementById("ABV").checked = false;
+        document.getElementById("GSP").checked = false;
+        document.getElementById("HSP").checked = false;
+        document.getElementById("RP").checked = false;
+    };
+
     ClassifyTaskFeeder.enableButtons = function () {
         document.getElementById("normal").disabled = false;
-        document.getElementById("gray_zone").disabled = false;
-        document.getElementById("precancer_cancer").disabled = false;
-        document.getElementById("not_sure").disabled = false;
+        document.getElementById("ABV").disabled = false;
+        document.getElementById("GSP").disabled = false;
+        document.getElementById("HSP").disabled = false;
+        document.getElementById("RP").disabled = false;
         document.getElementById("previousClassification").disabled = false;
     };
 
     ClassifyTaskFeeder.disableButtons = function () {
         document.getElementById("normal").disabled = true;
-        document.getElementById("gray_zone").disabled = true;
-        document.getElementById("precancer_cancer").disabled = true;
-        document.getElementById("not_sure").disabled = true;
+        document.getElementById("ABV").disabled = true;
+        document.getElementById("GSP").disabled = true;
+        document.getElementById("HSP").disabled = true;
+        document.getElementById("RP").disabled = true;
         document.getElementById("previousClassification").disabled = true;
     };
 
@@ -178,6 +234,7 @@ function init_app() {
     // debugger
     ClassifyTaskFeeder.setPrompt();
     ClassifyTaskFeeder.handleUrlFilter(document.location.search);
+    ClassifyTaskFeeder.initCheckboxListener();
     ClassifyTaskFeeder.initKeyboardListener();
 
 }
