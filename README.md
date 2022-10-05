@@ -76,22 +76,8 @@ MR.4.dcm,class_a
 
 Run addImages.py to add images:
 ```bash
-python3 image_comparator/utils/addImages.py <path to Image-Comparator-Data> <imageSetName> [<fromCSV>]
+python3 flask_server/image_comparator/utils/addImages.py <path to Image-Comparator-Data> <imageSetName> [<fromCSV>]
 ```
-
-Ex:
-```bash
-python3 flask_server/image_comparator/utils/addImages.py Image-Comparator-Data TEST
-python3 flask_server/image_comparator/utils/addImages.py Image-Comparator-Data TEST test_classification.csv
-
-python3 flask_server/image_comparator/utils/addImages.py Image-Comparator-Data mimicMIDRCtrain training_classification.csv
-python3 flask_server/image_comparator/utils/addImages.py Image-Comparator-Data mimicMIDRCvalidation validation_classification.csv
-python3 flask_server/image_comparator/utils/addImages.py Image-Comparator-Data mimicMIDRCtest test_classification.csv
-```
-
-* \<imageFolder> Image-Comparator-Data, but could be user specified.  
-* \<imageSetName> is the name for the image set.  
-* \<fromCSV> ```name of optional csv file in imageFolder```
 
 ### Change flask_server/app/templates/app_template.html to have your users in this section:
 
@@ -117,22 +103,12 @@ python3 flask_server/image_comparator/utils/addImages.py Image-Comparator-Data m
 python3 flask_server/image_comparator/utils/makeCompareList.py <imageSetName> <list name> <pct repeat>
 ```
 
-```bash
-python3 flask_server/image_comparator/utils/makeCompareList.py TEST TESTCompareList
-python3 flask_server/image_comparator/utils/makeCompareList.py TEST TESTCompareList 10
-```
 
 ### Image-Classifier
 
 #### Make Image Classify List
 ```bash
-ruby makeImageClassifyList.rb <imageSet> <listName> <pctRepeat>
-```
-
-Ex:
-```bash
-python3 flask_server/image_comparator/utils/makeClassifyList.py TEST TESTClassifyList
-python3 flask_server/image_comparator/utils/makeClassifyList.py TEST TESTClassifyList 10
+python3 flask_server/image_comparator/utils/makeClassifyList.py <imageSet> <listName> <pctRepeat>
 ```
 
 ### Grid-Classifier
@@ -147,9 +123,6 @@ It has the secondary option of being linked to the classify results themselves. 
 python3 flask_server/image_comparator/utils/makeGridList.py <imageSet> <listName> [<linkedToList>]
 ```
 
-```bash
-python3 flask_server/image_comparator/utils/makeGridList.py TEST TESTGridList
-```
 
 Using linked results we link to a previous classify list and associated task:
 ```bash
@@ -161,10 +134,6 @@ python3 flask_server/image_comparator/utils/makeGridList.py TEST TESTGridList TE
 #### Make Pair Classifier List
 ```bash
 python3 flask_server/image_comparator/utils/makePairList.py <imageSet> <listName>
-```
-
-```bash
-python3 flask_server/image_comparator/utils/makePairList.py TEST TESTPairList
 ```
 
 ### Add a task to a user for one of the Apps:
