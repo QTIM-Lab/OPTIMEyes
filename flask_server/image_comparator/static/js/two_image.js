@@ -7,7 +7,7 @@ function init_app() {
     // Update global app feeder variable
     const config_obj = {
         endpoint_image_list: "image_compare_lists",
-        message: "Default Compare Message",
+        message: "Based upon what you observe in these images and considering the criteria for ablation (i.e., area requiring treatment should be completely visible and accessible), which of the two cervices is more suitable for ablation?",
         app: "compare"
     }
     CompareTaskFeeder = new TaskFeeder(config_obj);
@@ -113,23 +113,33 @@ function init_app() {
                     else if(event.keyCode == 39) {
                         alert('Right was pressed');
                     }
+                    else if(event.keyCode == 40) {
+                        alert('Down was pressed');
+                    }
                     else if(event.keyCode == 38) {
                         alert('Up was pressed');
                     }
                     
                 } else if (TF.keyboardShortcuts === true && document.getElementById('image0').style.pointerEvents === 'auto') {
                     if(event.keyCode == 37) {
+                        debugger
                         // CompareTaskFeeder.compareSubmit(1)
                         $("#image0").click()
                     }
                     else if(event.keyCode == 39) {
-                        $("#tie-button").click()
-                        // CompareTaskFeeder.compareSubmit(-1)
-                    }
-                    else if(event.keyCode == 38) {
-                        // $('*[data-target="#tieModal"]')[0].click() // for forced tie justification
+                        debugger
                         $("#image1").click()
                         // CompareTaskFeeder.compareSubmit(0)
+                    }
+                    else if(event.keyCode == 40) {
+                        debugger
+                        $("#tie-button2").click()
+                        // CompareTaskFeeder.compareSubmit(-2)
+                    }
+                    else if(event.keyCode == 38) {
+                        debugger
+                        $("#tie-button1").click()
+                        // CompareTaskFeeder.compareSubmit(-1)
                     }
                 }
             }
@@ -153,14 +163,16 @@ function init_app() {
 
     CompareTaskFeeder.enableButtons = function () {
         document.getElementById('image0').style.pointerEvents = 'auto';
-        document.getElementById('tie-button').style.pointerEvents = 'auto';
+        document.getElementById('tie-button1').style.pointerEvents = 'auto';
+        document.getElementById('tie-button2').style.pointerEvents = 'auto';
         document.getElementById('image1').style.pointerEvents = 'auto';
 
     };
 
     CompareTaskFeeder.disableButtons = function () {
         document.getElementById('image0').style.pointerEvents = 'none';
-        document.getElementById('tie-button').style.pointerEvents = 'none';
+        document.getElementById('tie-button1').style.pointerEvents = 'none';
+        document.getElementById('tie-button2').style.pointerEvents = 'none';
         document.getElementById('image1').style.pointerEvents = 'none';
     };
 

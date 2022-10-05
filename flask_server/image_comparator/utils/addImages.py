@@ -20,7 +20,7 @@ DNS = os.getenv("DNS")
 IMAGES_DB = os.getenv("IMAGES_DB")
 DB_PORT = os.getenv("DB_PORT")
 ADMIN_PARTY = True if os.getenv("ADMIN_PARTY") == 'True' else False
-
+# pdb.set_trace()
 # https://couchdb-python.readthedocs.io/en/latest/getting-started.html
 if ADMIN_PARTY:
     couch = couchdb.Server(f'http://{DNS}:{DB_PORT}')
@@ -78,6 +78,7 @@ def main(path_to_images: str, imageSetName: str, fromCSV: str = None):
                    "timeAdded": t.strftime('%Y-%m-%d %H:%M:%S')}
 
             db.save(obj)
+            print(f"Saved record: {obj}")
             # image_content = Image.open(os.path.join(path_to_images,image))
             image_content = open(os.path.join(path_to_images, image), "rb")
             image_extension = image.split(".")[-1]
@@ -88,6 +89,7 @@ def main(path_to_images: str, imageSetName: str, fromCSV: str = None):
 if __name__ == "__main__":
     try:
         try:
+            # pdb.set_trace()
             main(sys.argv[1], sys.argv[2], sys.argv[3])
             print("* csv used to help guide import *")
         except IndexError as err:

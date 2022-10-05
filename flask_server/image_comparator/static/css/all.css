@@ -1,3 +1,21 @@
 body {
   margin-top: 50px; /* 50px is the height of the navbar - change this if the navbarn height changes */
+  background-color: black;
+}
+
+select {
+  color: black; /* user dropdown */
+}
+
+h1, h2, label, span {
+  color: white;
+}
+
+#load_messaging {
+  color: white;
+}
+
+.modal-body, button
+ {
+  color: black;
 }

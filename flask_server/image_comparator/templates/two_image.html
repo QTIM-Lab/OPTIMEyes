@@ -72,8 +72,6 @@
               <label for="other">other</label><br>
 
               <button class="btn btn-primary">Submit</button>
-              <p style="color:red;">If placeholders come up instead of images after creating a user, hit refresh.
-              </p>
             </form>
 
 
@@ -108,12 +106,10 @@
 <!-- Page Header -->
 <div class="row">
   <!-- <div class="col-lg-12"> -->
-  <h1 id="to-do-message" class="page-header"></h1>
-  <button onclick="CompareTaskFeeder.toggleKeyboardShortcuts()">Keyboard Shortcuts:</button><span
-    id=keyboardShortcuts>Off</span>
+  <div class="col-lg-12">
+    <h2 id="to-do-message" class="page-header"></h1>
+  </div>
 
-  <!-- Button trigger modal -->
-  <button type="button" data-toggle="modal" data-target="#Instructions">Instructions</button>
   <!-- Modal -->
   <div class="modal fade" id="Instructions" tabindex="-1" role="dialog" aria-labelledby="InstructionsLabel"
     aria-hidden="true">
@@ -129,14 +125,7 @@
         <div class="modal-body">
           <p>App Instructions:</p>
           <ol>
-            <li>You will be redirected to the same page with survey questions for you to fill out.
-              <ul>
-                <li>
-                  <p style="color:red;">If placeholders come up instead of images after creating a user, hit
-                    refresh.</p>
-                </li>
-              </ul>
-            </li>
+            <li>You will be redirected to the same page with survey questions for you to fill out.</li>
             <!-- <li>Select yourself (the username you made) from the dropdown at the top of page.</li> -->
           </ol>
           <p>Optional: Click button "Keyboard Shortcuts:" to allow for arrow keys to choose images. Otherwise
@@ -180,25 +169,59 @@
   <!-- </div> -->
   <!-- col-lg-12 -->
 </div>
+
+<div class="row">
+  <div class="col-lg-12">
+    <button onclick="CompareTaskFeeder.toggleKeyboardShortcuts()">Keyboard Shortcuts:</button><span
+      id=keyboardShortcuts>Off</span>
+
+    <!-- Button trigger modal -->
+    <button type="button" data-toggle="modal" data-target="#Instructions">Instructions</button>
+    
+    <div style="border-left:1px solid #000;height:12px; display: inline-block;"></div>
+    
+    <!-- Back Button -->
+    <button id="previousCompare" type="button" class="btn btn-danger" onclick="CompareTaskFeeder.resetToPreviousTaskId()" style="color: black">
+      <strong>Go Back One</strong>
+    </button>
+
+  </div>
+</div>
+<div class="row">
+  <p style="color: red">Right click (computer)\ click and hold(mobile) to see option for opening image in new tab for larger viewing.</p>
+</div>
+
 <!-- /.row -->
 
 <!-- Projects Row -->
-<div id="image-row" class="row">
+<div id="image-row" class="row" style="position: relative;">
 
-  <div class="col-md-5 portfolio-item" style="display:inline-block;">
-    <img id="image0" onclick="CompareTaskFeeder.compareSubmit(1)" class="img-responsive portfolio-item"
-      src="https://via.placeholder.com/1250x500" alt="" style="width:85%;">
+  <div class="col-md-5" style="display:inline-block;">
+    <img id="image0" onclick="CompareTaskFeeder.compareSubmit(1)" class="img-responsive"
+      src="https://via.placeholder.com/500x500" alt="" style="max-height: 800px; margin: auto;">
   </div>
 
-  <div class="col-md-1 portfolio-item">
+  <div class="col-sm-2" style="height: 400px">
     <!-- [*] Use if Tie comment not forced -->
-    <button id=tie-button type="button" class="btn btn-warning" onclick="CompareTaskFeeder.compareSubmit(-1)"
-      style="display:block; margin:auto;">Tie</button>
-
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <button id=tie-button1 type="button" class="btn btn-success" onclick="CompareTaskFeeder.compareSubmit(-1)" style="display: block; margin: auto; color: black">
+      <strong><p>Equally</p><p>Treatable</p></strong>
+    </button>
+    <br>
+    <br>
+    <button id=tie-button2 type="button" class="btn btn-warning" onclick="CompareTaskFeeder.compareSubmit(-2)"
+      style="display: block; margin: auto; color: black"><strong><p>Equally</p><p>Not Treatable</p></strong></button>
     <!-- [-*-] Use if Tie comment forced -->
     <!-- Button trigger modal -->
     <!-- <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#tieModal">Tie</button> -->
   </div>
+
 
 
   <!-- [-*-] Modal if Tie comment forced -->
@@ -226,9 +249,9 @@
 
 
 
-  <div class="col-md-5 portfolio-item" style="display:inline-block;">
-    <img id="image1" onclick="CompareTaskFeeder.compareSubmit(0)" class="img-responsive portfolio-item"
-      src="https://via.placeholder.com/1250x500" alt="" style="width:85%;">
+  <div class="col-md-5" style="display:inline-block;">
+    <img id="image1" onclick="CompareTaskFeeder.compareSubmit(0)" class="img-responsive"
+      src="https://via.placeholder.com/500x500" alt="" style="max-height: 800px; margin: auto;">
   </div>
 
 

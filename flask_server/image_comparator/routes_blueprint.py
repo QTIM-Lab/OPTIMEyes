@@ -115,6 +115,12 @@ def grid_class():
     con['app'] = 'Grid'
     return render_template('grid_class.html', app_config=con)
 
+@bp.route('/grid_class_dev', methods=['GET'])
+def grid_class_dev():
+    con = json.loads(config().data)
+    con['app'] = 'Grid'
+    return render_template('grid_class_dev.html', app_config=con)
+
 
 @bp.route('/pair_image', methods=['GET'])
 def pair_image():
@@ -159,7 +165,6 @@ def get_tasks(app):
     view = f"_design/basic_views/_view/incomplete_{app}_tasks?key=\"{username}\""
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
-
     return json.loads(response.content.decode('utf-8'))
 
 
@@ -188,7 +193,6 @@ def get_image_compare_lists():
 def get_image_classify_lists():
     base = "http://{}:{}/{}".format(
         current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
-    # pdb.set_trace()
     try:
         key = request.args['key']
     except:
@@ -202,6 +206,7 @@ def get_image_classify_lists():
     view = f"_design/basic_views/_view/image_classify_lists?key=\"{key}\""
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
+    # pdb.set_trace()
     return json.loads(response.content.decode('utf-8'))
 
 
@@ -272,21 +277,25 @@ def update_tasks(task_id):
 
 @bp.route('/get_image/<image_id>', methods=['GET'])
 def get_image(image_id):
-    # pdb.set_trace()
-    # Get Image ID
+    # Get Image ID to fetch image data
     IMAGE_ID = image_id
     url_for_couchdb_image_fetch = f'http://{current_app.config["DNS"]}:{current_app.config["DB_PORT"]}/{current_app.config["IMAGES_DB"]}/{IMAGE_ID}/image'
-    response = check_if_admin_party_then_make_request(
-        url_for_couchdb_image_fetch)
-    response.raw.decode_content = True
-    # type(response.content) # bytes
+    response = check_if_admin_party_then_make_request(url_for_couchdb_image_fetch)
+    response.raw.decode_content = True # You can inspect with: type(response.content) # bytes
     image_response = base64.b64encode(response.content)
-    return send_file(
+    # Fetch image name
+    url_for_couchdb_image_name_fetch = f'http://{current_app.config["DNS"]}:{current_app.config["DB_PORT"]}/{current_app.config["IMAGES_DB"]}/{IMAGE_ID}/'
+    response = check_if_admin_party_then_make_request(url_for_couchdb_image_name_fetch)
+    image_meta_data = json.loads(response.content)
+    attachment_filename = image_meta_data['origin']
+    # pdb.set_trace()
+    response = send_file(
         # io.BytesIO(response.content),
         io.BytesIO(image_response),
         mimetype='image/png',
         as_attachment=True,
-        attachment_filename='test.png')
+        attachment_filename=attachment_filename)
+    return response
 
 
 @bp.route('/task_results', methods=['POST'])
@@ -465,9 +474,12 @@ def reset_to_previous_result(app):
     currentTask = json.loads(request.data)
     base = "http://{}:{}/{}".format(
         current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
-
+    # pdb.set_trace()
     # get old result
-    view = f"_design/basic_views/_view/{app}Results?key=\"{currentTask['user']}\""
+    if app.capitalize() == "Compare":
+        view = f"_design/basic_views/_view/results{app.capitalize()}?key=[\"{currentTask['user']}\",\"{currentTask['list_name']}\"]"
+    else:
+        view = f"_design/basic_views/_view/results{app.capitalize()}_userList?key=[\"{currentTask['user']}\",\"{currentTask['list_name']}\"]"
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
     all_results = json.loads(response.content.decode('utf-8'))
@@ -477,6 +489,8 @@ def reset_to_previous_result(app):
         if row['value']['task_idx'] + 1 == currentTask['current_idx']:
             # pdb.set_trace()
             old_result_id, old_result_rev = row['value']['_id'], row['value']['_rev']
+    # pdb.set_trace()
+
     if len(old_result_id) == 0 or len(old_result_rev) == 0:
         pdb.set_trace()  # quick error handling till I properly implement
 
@@ -503,12 +517,13 @@ def reset_to_previous_result(app):
 @bp.route('/get_classification_results/', methods=['GET'])
 def get_classification_results():
     username = request.args['username']
+    list_name = request.args['list_name']
     base = "http://{}:{}/{}".format(
         current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
-    view = f"_design/basic_views/_view/resultsClassify?key=\"{username}\""
+    view = f"_design/basic_views/_view/resultsClassify?key=[\"{username}\",\"{list_name}\"]"
     url = f"{base}/{view}"
-    # pdb.set_trace()
     response = check_if_admin_party_then_make_request(url)
+    # pdb.set_trace()
 
     return json.loads(response.content.decode('utf-8'))
 
