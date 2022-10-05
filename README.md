@@ -136,14 +136,24 @@ python3 flask_server/image_comparator/utils/makeClassifyList.py TEST TESTClassif
 ```
 
 ### Grid-Classifier
+The grid app will make a grid of images with drop downs associated with each image. It is essentially a classify app in bulk in that you see all images at once and classify. 
+
+It has the secondary option of being linked to the classify results themselves. In this version the grid is pre-poulated with the results from the classfiy phase. 
+
+> Note: If using the linked version, be sure to change ```this.gridAppRedirect = true;``` in "flask_server/image_comparator/static/js/default.js"
 
 #### Make Image Grid List
 ```bash
-python3 flask_server/image_comparator/utils/makeGridList.py <imageSet> <listName>
+python3 flask_server/image_comparator/utils/makeGridList.py <imageSet> <listName> [<linkedToList>]
 ```
 
 ```bash
 python3 flask_server/image_comparator/utils/makeGridList.py TEST TESTGridList
+```
+
+Using linked results we link to a previous classify list and associated task:
+```bash
+python3 flask_server/image_comparator/utils/makeGridList.py TEST TESTGridList TESTClassifyList
 ```
 
 ### Pair-Classifier
@@ -159,27 +169,23 @@ python3 flask_server/image_comparator/utils/makePairList.py TEST TESTPairList
 
 ### Add a task to a user for one of the Apps:
 ```bash
-python3 flask_server/image_comparator/utils/makeTask.py <user> <image-list-name> <image-list-type> <task-order> [<description>]
+python3 flask_server/image_comparator/utils/makeTask.py <user> <image-list-name> <image-list-type> <task-order>
 ```
 
 ```bash
 python3 flask_server/image_comparator/utils/makeTask.py Benjamin TESTCompareList compare 1
-python3 flask_server/image_comparator/utils/makeTask.py Benjamin TESTCompareList compare 1 test_description
 ```
 
 ```bash
 python3 flask_server/image_comparator/utils/makeTask.py Benjamin TESTClassifyList classify 1
-python3 flask_server/image_comparator/utils/makeTask.py Benjamin TESTClassifyList classify 1 test_description
 ```
 
 ```bash
 python3 flask_server/image_comparator/utils/makeTask.py Benjamin TESTGridList grid 1
-python3 flask_server/image_comparator/utils/makeTask.py Benjamin TESTGridList grid 1 test_description
 ```
 
 ```bash
 python3 flask_server/image_comparator/utils/makeTask.py Benjamin TESTPairList pair 1
-python3 flask_server/image_comparator/utils/makeTask.py Benjamin TESTPairList pair 1 test_description
 ```
 
 ## Acknowledgements

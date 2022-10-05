@@ -7,6 +7,27 @@
   }
 }
 
+#full_screen_note, #image_name {
+  color: white;
+}
+
 .btn.btn-primary {
   display: block;
+}
+
+/* Magnifying Glass */
+* {box-sizing: border-box;}
+
+.img-magnifier-container {
+  position: relative;
+}
+
+.img-magnifier-glass {
+  position: absolute;
+  border: 3px solid #000;
+  border-radius: 50%;
+  cursor: none;
+  /*Set the size of the magnifier glass:*/
+  width: 200px;
+  height: 200px;
 }

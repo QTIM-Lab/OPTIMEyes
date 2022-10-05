@@ -18,6 +18,7 @@
             User</button>
         <p>Current User: <span id="current_user" style="color: red">User Not Created</span></p>
 
+
         <!-- Modal -->
         <div class="modal fade" id="createUserModal" tabindex="-1" role="dialog" aria-labelledby="createUserModalLabel"
             aria-hidden="true">
@@ -30,6 +31,7 @@
                         </button>
                     </div>
                     <div class="modal-body">
+
                         <!-- Form for User input -->
                         <!-- request.form['username'] -->
                         <!-- request.form.get('username') -->
@@ -121,73 +123,6 @@
 
 
 <div id="grid_of_images" class="container">
-    <!-- Tab Link -->
-    <!-- https://www.w3schools.com/howto/howto_js_tabs.asp -->
-    <div class="tab">
-        <button id="first_tab" class="tablinks" onclick="GridTaskFeeder.openDiagnosisTab(event, 'Normal_tab')">Normal</button>
-        <button class="tablinks" onclick="GridTaskFeeder.openDiagnosisTab(event, 'ABV_tab')">ABV</button>
-        <button class="tablinks" onclick="GridTaskFeeder.openDiagnosisTab(event, 'GSP_tab')">GSP</button>
-        <button class="tablinks" onclick="GridTaskFeeder.openDiagnosisTab(event, 'HSP_tab')">HSP</button>
-        <button class="tablinks" onclick="GridTaskFeeder.openDiagnosisTab(event, 'RP_tab')">RP</button>
-        <button class="tablinks" onclick="GridTaskFeeder.openDiagnosisTab(event, 'Other_tab')">Other</button>
-        <button class="tablinks" onclick="GridTaskFeeder.openDiagnosisTab(event, 'Nabothian_Cyst_tab')">Nab. Cyst</button>
-        <button class="tablinks" onclick="GridTaskFeeder.openDiagnosisTab(event, 'Excessive_Reflections_tab')">Exc. Ref.</button>
-        <button class="tablinks" onclick="GridTaskFeeder.openDiagnosisTab(event, 'Inadequate_tab')">Inadequate</button>
-        <button class="tablinks" onclick="GridTaskFeeder.openDiagnosisTab(event, 'Uncategorized_tab')">Uncategorized</button>
-      </div>
-      
-      <!-- Tab content -->
-      <div id="Normal_tab" class="tabcontent">
-        <h3>Normal</h3>
-        <p>Normal images.</p>
-      </div>
-      
-      <div id="ABV_tab" class="tabcontent">
-        <h3>ABV</h3>
-        <p>ABV images.</p>
-      </div>
-      
-      <div id="GSP_tab" class="tabcontent">
-        <h3>GSP</h3>
-        <p>GSP images.</p>
-      </div>
-
-      <div id="HSP_tab" class="tabcontent">
-        <h3>HSP</h3>
-        <p>HSP images.</p>
-      </div>
-
-      <div id="RP_tab" class="tabcontent">
-        <h3>RP</h3>
-        <p>RP images.</p>
-      </div>
-
-      <div id="Other_tab" class="tabcontent">
-        <h3>Other</h3>
-        <p>Other images.</p>
-      </div>
-
-      <div id="Nabothian_Cyst_tab" class="tabcontent">
-        <h3>Nab. Cyst</h3>
-        <p>Nabothian cyst images.</p>
-      </div>
-
-      <div id="Excessive_Reflections_tab" class="tabcontent">
-        <h3>Exc. Ref.</h3>
-        <p>Excessive Reflections images.</p>
-      </div>
-
-      <div id="Inadequate_tab" class="tabcontent">
-        <h3>Inadequate</h3>
-        <p>Inadequate images.</p>
-      </div>
-
-      <div id="Uncategorized_tab" class="tabcontent">
-        <h3>Uncategorized</h3>
-        <p>Uncategorized images.</p>
-      </div>
-      
-    <!-- Below is more of a template for one image so that js can automate creating this in bulk with a for loop. -->
     <!-- <div class="row">
               <div class="col-xs-2">
                 <img src="{{ url_for('static', filename='img/TCGA_CS_4944.png') }}" alt=""> 

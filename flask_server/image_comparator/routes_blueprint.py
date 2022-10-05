@@ -115,6 +115,12 @@ def grid_class():
     con['app'] = 'Grid'
     return render_template('grid_class.html', app_config=con)
 
+@bp.route('/grid_class_dev', methods=['GET'])
+def grid_class_dev():
+    con = json.loads(config().data)
+    con['app'] = 'Grid'
+    return render_template('grid_class_dev.html', app_config=con)
+
 
 @bp.route('/pair_image', methods=['GET'])
 def pair_image():
@@ -271,21 +277,25 @@ def update_tasks(task_id):
 
 @bp.route('/get_image/<image_id>', methods=['GET'])
 def get_image(image_id):
-    # pdb.set_trace()
-    # Get Image ID
+    # Get Image ID to fetch image data
     IMAGE_ID = image_id
     url_for_couchdb_image_fetch = f'http://{current_app.config["DNS"]}:{current_app.config["DB_PORT"]}/{current_app.config["IMAGES_DB"]}/{IMAGE_ID}/image'
-    response = check_if_admin_party_then_make_request(
-        url_for_couchdb_image_fetch)
-    response.raw.decode_content = True
-    # type(response.content) # bytes
+    response = check_if_admin_party_then_make_request(url_for_couchdb_image_fetch)
+    response.raw.decode_content = True # You can inspect with: type(response.content) # bytes
     image_response = base64.b64encode(response.content)
-    return send_file(
+    # Fetch image name
+    url_for_couchdb_image_name_fetch = f'http://{current_app.config["DNS"]}:{current_app.config["DB_PORT"]}/{current_app.config["IMAGES_DB"]}/{IMAGE_ID}/'
+    response = check_if_admin_party_then_make_request(url_for_couchdb_image_name_fetch)
+    image_meta_data = json.loads(response.content)
+    attachment_filename = image_meta_data['origin']
+    # pdb.set_trace()
+    response = send_file(
         # io.BytesIO(response.content),
         io.BytesIO(image_response),
         mimetype='image/png',
         as_attachment=True,
-        attachment_filename='test.png')
+        attachment_filename=attachment_filename)
+    return response
 
 
 @bp.route('/task_results', methods=['POST'])
@@ -507,13 +517,13 @@ def reset_to_previous_result(app):
 @bp.route('/get_classification_results/', methods=['GET'])
 def get_classification_results():
     username = request.args['username']
-    # list_name = request.args['list_name']
+    list_name = request.args['list_name']
     base = "http://{}:{}/{}".format(
         current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
-    view = f"_design/basic_views/_view/resultsClassify?key=\"{username}\""
+    view = f"_design/basic_views/_view/resultsClassify?key=[\"{username}\",\"{list_name}\"]"
     url = f"{base}/{view}"
-    # pdb.set_trace()
     response = check_if_admin_party_then_make_request(url)
+    # pdb.set_trace()
 
     return json.loads(response.content.decode('utf-8'))
 
