@@ -240,7 +240,7 @@ function TaskFeeder(config_obj) {
       return "no tasks left"
     } else {
       return new Promise((resolve, reject) => {
-        debugger;
+        // debugger;
         $.ajax({
           url: this.url_image_list_base + `?key=${task.list_name}`,
           type: 'GET',
@@ -268,11 +268,13 @@ function TaskFeeder(config_obj) {
 
   this.getBase64DataOfImageFromCouch = (image_id = 1, htmlID = "image0") => { // For later, not being used yet
     var url1 = `http://${DNS}:${HTTP_PORT}/get_image/${image_id}`
+    debugger
     return new Promise((resolve, reject) => {
       fetch(url1)
         .then(response => {
           response_headers = [...response.headers]
           // foreach this response_headers and find file name...also set filename from server
+          debugger
           response_headers.forEach((v,i,a)=>{
             if(v[0] === 'content-disposition'){
               filename = v[1].substring(v[1].search("filename=")+"filename=".length, v[1].length)

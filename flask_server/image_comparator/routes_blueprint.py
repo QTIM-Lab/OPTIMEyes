@@ -19,7 +19,6 @@ from flask import (
     jsonify,
     send_file
 )
-# from werkzeug.security import check_password_hash, generate_password_hash
 
 # self written utils
 from .utils.makeTask import makeTask  # for use in create_user
@@ -288,13 +287,13 @@ def get_image(image_id):
     response = check_if_admin_party_then_make_request(url_for_couchdb_image_name_fetch)
     image_meta_data = json.loads(response.content)
     attachment_filename = image_meta_data['origin']
+    attachment_extension = attachment_filename[-3:]
     # pdb.set_trace()
     response = send_file(
-        # io.BytesIO(response.content),
-        io.BytesIO(image_response),
-        mimetype='image/png',
+        path_or_file=io.BytesIO(image_response),
+        mimetype=f'image/{attachment_extension}',
         as_attachment=True,
-        attachment_filename=attachment_filename)
+        download_name=attachment_filename)
     return response
 
 

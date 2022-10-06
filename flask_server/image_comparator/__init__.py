@@ -2,16 +2,24 @@ import os
 
 from flask import Flask
 from flask_cors import CORS
+from flask_login import LoginManager
 from dotenv import load_dotenv
+
+login_manager = LoginManager()
 
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
-        SECRET_KEY=b'_5#y2L"F4Q8z\n\xec]/',
+        # SECRET_KEY=b'',
+        SECRET_KEY=os.getenv("SECRET_KEY"),
         # DATABASE=os.path.join(app.instance_path, 'image_comparator.sqlite'),
     )
-    CORS(app)
+    
+    # Initialize Plugins
+    login_manager.init_app(app)
+    # https://stackoverflow.com/questions/41543951/how-to-change-downloading-name-in-flask#:~:text=FileSaver%20will%20use%20the%20Content,as%20the%20filename%20by%20default.
+    CORS(app, expose_headers=["Content-Disposition"])
 
     if test_config is None:
         # load the instance config, if it exists, when not testing
@@ -36,9 +44,10 @@ def create_app(test_config=None):
     app.config['HTTP_PORT'] = os.getenv("HTTP_PORT")
     app.config['ADMIN_PARTY'] = True if os.getenv("ADMIN_PARTY") == 'True' else False
 
-    # from image_comparator import routes
-
+    # Register Blueprints
     from . import routes_blueprint
+    from . import auth_blueprint
     app.register_blueprint(routes_blueprint.bp)
+    app.register_blueprint(auth_blueprint.auth_bp)
 
     return app
