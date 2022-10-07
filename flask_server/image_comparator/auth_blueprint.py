@@ -1,4 +1,5 @@
 import pdb
+
 from flask import (
     Blueprint,
     render_template,
@@ -6,7 +7,9 @@ from flask import (
     request
 )
 from . import login_manager
-from flask_login import UserMixin, login_required, login_user, logout_user
+from image_comparator.db import get_db
+
+from flask_login import UserMixin, login_required, login_user, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # Blueprint Configuration
@@ -15,7 +18,6 @@ auth_bp = Blueprint(
     template_folder='templates',
     static_folder='static'
 )
-
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -26,7 +28,8 @@ def load_user(user_id):
     https://stackoverflow.com/questions/37227780/flask-session-persisting-after-close-browser
     """
     # It should return None (not raise an exception) if the ID is not valid. (In that case, the ID will manually be removed from the session and processing will continue.)
-    # pdb.set_trace()
+    pdb.set_trace()
+    couch = get_db()
     if type(user_id) == str:
         for usr in Users_DB:
             if usr.id == user_id:
@@ -111,9 +114,11 @@ def signup():
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     # Login route logic goes here
-    # pdb.set_trace()
     if request.method == 'GET':
-        return render_template('login.html', app_config=current_app.config)    
+        if current_user.is_authenticated:
+            return render_template('index.html')
+        else:
+            return render_template('login.html', app_config=current_app.config)    
     elif request.method == 'POST':
         # Search for user
         for usr in Users_DB:
@@ -122,11 +127,12 @@ def login():
                 # check password
                 if usr.check_password(request.form['psw']):
                     # If correct got to index
+                    login_user(usr, remember=True)
                     return render_template('index.html')
                 else:
-                    return render_template('login.html', app_config=current_app.config, message="Try again please.")
-        # User not found so create
-        pdb.set_trace()
+                    return render_template('login.html', app_config=current_app.config, message="Try again please, incorrect password.")
+        # User not found so let them know
+        return render_template('signup.html', app_config=current_app.config, message=f"You don't have an account, please sign up.")
     return render_template('login.html', app_config=current_app.config)
 
 
