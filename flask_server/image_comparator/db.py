@@ -22,6 +22,11 @@ def get_db():
     so current_app can be used.
     """
     if 'db' not in g:
-        g.db = couchdb.Server(f'http://{current_app.config["DNS"]}:{current_app.config["DB_PORT"]}')
+        U = current_app.config["DB_ADMIN_USER"]
+        P = current_app.config["DB_ADMIN_PASS"]
+        DNS = current_app.config["DNS"]
+        PORT = current_app.config["DB_PORT"]
+        url = f'http://{U}:{P}@{DNS}:{PORT}'
+        g.db = couchdb.Server(url)
 
     return g.db
