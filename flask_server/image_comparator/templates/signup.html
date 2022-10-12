@@ -1,3 +1,16 @@
+<!-- TEMPLATE -->
+{% extends "app_template.html" %}
+
+<!-- TITLE -->
+{% block title %}Sign Up{% endblock %}
+
+<!-- CSS -->
+{% block custom_css %}
+{% endblock %}
+
+<!-- BODY -->
+{% block content %}
+
 <form action="http://{{ app_config.DNS }}:{{ app_config.HTTP_PORT }}/signup" method="post">
 
 	<div class="container">
@@ -18,3 +31,5 @@
 	</div>
   
   </form>
+
+  {% endblock %}
