@@ -3,7 +3,7 @@ import click
 from flask import current_app, g
 
 
-def get_db():
+def get_server():
     """
     We add db to g to get access to app.config:
     https://flask.palletsprojects.com/en/2.2.x/tutorial/database/

@@ -16,13 +16,19 @@
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav navbar-right">
                 <li>
+                    {% if not current_user.username %}
                     <a href="/signup">SignUp</a>
+                    {% endif %}
                 </li>
                 <li>
+                    {% if not current_user.username %}
                     <a href="/login">Login</a>
+                    {% endif %}
                 </li>
                 <li>
-                    <a href="/logout">Logout</a>
+                    {% if current_user.username %}
+                    <a href="/logout">Logout - {{ current_user.username }}</a>
+                    {% endif %}
                 </li>
                 <li>
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="48" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16">

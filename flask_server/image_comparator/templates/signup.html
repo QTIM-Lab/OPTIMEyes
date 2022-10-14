@@ -1,5 +1,5 @@
 <!-- TEMPLATE -->
-{% extends "app_template.html" %}
+{% extends "base.html" %}
 
 <!-- TITLE -->
 {% block title %}Sign Up{% endblock %}
@@ -11,25 +11,45 @@
 <!-- BODY -->
 {% block content %}
 
-<form action="http://{{ app_config.DNS }}:{{ app_config.HTTP_PORT }}/signup" method="post">
 
-	<div class="container">
-	  <label for="username"><b>Username</b></label>
-	  <input type="text" placeholder="Enter Username" name="username" required>
-  
-	  <label for="email"><b>Email</b></label>
-	  <input type="text" placeholder="Enter Email" name="email" required>
-  
-	  <label for="psw"><b>Password</b></label>
-	  <input type="password" placeholder="Enter Password" name="psw" required>
-  
-	  <button type="submit">Sign Up</button>
-	</div>
+<form action="/signup" method="post">
 
-	<div>
-		<p>{{ message }}</p>
-	</div>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-1">
+            <label for="username">Username</label>    
+        </div>
+        <div class="col-md-1">
+            <input type="text" placeholder="Enter Username" name="username" required>    
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-1">
+            <label for="email">Email</label>
+        </div>
+        <div class="col-md-1">
+            <input type="text" placeholder="Enter Email" name="email" required>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-1">
+            <label for="psw">Password</label>
+        </div>
+        <div class="col-md-1">
+            <input type="password" placeholder="Enter Password" name="psw" required>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-2">
+            <button type="submit">Sign Up</button>
+        </div>
+      </div>
+
+    </div>
   
-  </form>
+</form>
 
   {% endblock %}

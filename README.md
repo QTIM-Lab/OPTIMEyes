@@ -79,7 +79,7 @@ Run addImages.py to add images:
 python3 flask_server/image_comparator/utils/addImages.py <path to Image-Comparator-Data> <imageSetName> [<fromCSV>]
 ```
 
-### Change flask_server/app/templates/app_template.html to have your users in this section:
+### Change flask_server/app/templates/base.html to have your users in this section:
 
 ```html
 <!-- manually add users that you assigned tasks too in makeTasks.rb -->

@@ -10,15 +10,14 @@ from flask import (
     current_app,
     Blueprint,
     flash,
-    g,  # not using yet
     redirect,
     render_template,
     request,
-    session,  # not used yet
-    url_for,  # not used yet
     jsonify,
-    send_file
+    send_file,
 )
+
+from flask_login import login_required
 
 # self written utils
 from .utils.makeTask import makeTask  # for use in create_user
@@ -32,6 +31,7 @@ bp = Blueprint('routes_blueprint', __name__, url_prefix='/')
 
 
 @bp.route('/hello')
+@login_required
 def hello():
     print(app)
     print(current_app.config["DNS"])
@@ -92,6 +92,11 @@ def config():
 @bp.route('/', methods=['GET'])
 def index():
     return render_template('index.html')
+
+@bp.route('/app_list', methods=['GET'])
+@login_required
+def app_list():
+    return render_template('app_list.html')
 
 
 @bp.route('/two_image', methods=['GET'])

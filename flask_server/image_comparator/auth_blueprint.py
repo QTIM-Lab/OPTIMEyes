@@ -4,10 +4,13 @@ from flask import (
     Blueprint,
     render_template,
     current_app,
-    request
+    request,
+    url_for,
+    redirect,
+    flash
 )
 from . import login_manager
-from image_comparator.db import get_db
+from image_comparator.db import get_server
 
 from flask_login import UserMixin, login_required, login_user, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -28,13 +31,22 @@ def load_user(user_id):
     https://stackoverflow.com/questions/37227780/flask-session-persisting-after-close-browser
     """
     # It should return None (not raise an exception) if the ID is not valid. (In that case, the ID will manually be removed from the session and processing will continue.)
-    pdb.set_trace()
-    couch = get_db()
-    if type(user_id) == str:
-        for usr in Users_DB:
-            if usr.id == user_id:
-                return usr # return User.get(user_id)
+    couch_server = get_server(); db = couch_server['image_comparator'];
+    users = [user for user in db.view("basic_views/users", key=user_id)]
+    if len(users) == 0:
         return None
+    elif len(users) > 1:
+        print("Somehow we have 2 users with the same ID...what to do??")
+        pdb.set_trace()
+    else:
+        user = User(id=user_id, username=users[0].value['username'], email=users[0].value['email'])
+        user.password = users[0].value['password']
+        return user
+        # Test dictionary DB
+        # for usr in Users_DB:
+        #     if usr.id == user_id:
+        #         return usr # return User.get(user_id)
+        # return None
     
 class User(UserMixin):
     """User account model."""
@@ -63,11 +75,20 @@ class User(UserMixin):
         except AttributeError:
             raise NotImplementedError("No `id` attribute - override `get_id`") from None
 
+    def serialize_for_couchdb(self):
+        dictionary_representation = {
+            "type":"user",
+            "username":self.username,
+            "email":self.email,
+            "password": self.password
+        }
+        return dictionary_representation
+
     def __repr__(self):
         return '<User {}>'.format(self.username)
    
 # Simulate DB
-user_bbearce = User(id='1',
+user_bbearce = User(id='user_bbearce',
                     username="bbearce",
                     email="bbearce@gmail.com")
 user_bbearce.set_password("pa$$word")
@@ -77,6 +98,7 @@ Users_DB = [user_bbearce]
 
 @auth_bp.route('/signup', methods=['GET', 'POST'])
 def signup():
+    couch_server = get_server(); db = couch_server['image_comparator'];
     # Signup logic goes here
     if request.method == 'GET':
         return render_template('signup.html', app_config=current_app.config)
@@ -89,57 +111,83 @@ def signup():
         if type(request.form['psw']) != str or len(request.form['psw']) == 0:
             return render_template('signup.html', app_config=current_app.config, message="Password is blank or not a string.")
         # Check if user exists already
-        for usr in Users_DB:
-            if usr.username == request.form['username']:
-                return render_template('signup.html', app_config=current_app.config, message="Username already exists, please use another.")
+        for row in db.view("basic_views/users"):
+            if row.id == f"user_{request.form['username']}":
+                flash(message="Username already exists, please use another.")
+                return render_template('signup.html', app_config=current_app.config)
+        # Test dictionary DB
+        # for usr in Users_DB:
+        #     if usr.username == request.form['username']:
+        #         return render_template('signup.html', app_config=current_app.config, message="Username already exists, please use another.")
         
-        # Find all user IDs and increment by 1
-        largest_user_id = 1
-        for usr in Users_DB:
-            largest_user_id = max(int(usr.get_id()), largest_user_id)
-            
-        user = User(id=str(largest_user_id),
+        # Create New User
+        user = User(id=f"user_{request.form['username']}",
                     username=request.form['username'],
                     email=request.form['email'])
         user.set_password(request.form['psw'])
-        Users_DB.append(user) # save action
-        
+        # Test dictionary DB
+        # Users_DB.append(user)
+
+        # Save New User
+        db[user.id] = user.serialize_for_couchdb()
         # Login
         login_user(user, remember=True)
-        
+        pdb.set_trace()
         return render_template('index.html')
 
     
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
+    couch_server = get_server(); db = couch_server['image_comparator'];
     # Login route logic goes here
     if request.method == 'GET':
         if current_user.is_authenticated:
-            return render_template('index.html')
+            return redirect(url_for('routes_blueprint.index'))
         else:
             return render_template('login.html', app_config=current_app.config)    
     elif request.method == 'POST':
         # Search for user
-        for usr in Users_DB:
-            # if found
-            if usr.username == request.form['username']:
-                # check password
-                if usr.check_password(request.form['psw']):
-                    # If correct got to index
-                    login_user(usr, remember=True)
-                    return render_template('index.html')
-                else:
-                    return render_template('login.html', app_config=current_app.config, message="Try again please, incorrect password.")
+        users = [user for user in db.view("basic_views/users", key=f"user_{request.form['username']}")]
+        users[0].value['username']
+        if len(users) == 0:
+            # No user found
+            flash("User not found. Please sign up! :)")
+            return redirect(url_for('auth_bp.signup'))
+        elif len(users) > 1:
+            print("In /login and we have multiple users for the given login username!")
+            pdb.set_trace()
+        # pdb.set_trace()
+        user = User(id=f"user_{users[0].value['username']}",username=users[0].value['username'],email=users[0].value['email'])
+        user.set_password(request.form['psw'])
+        if user.check_password(request.form['psw']):
+            login_user(user, remember=True)
+            return redirect(url_for('routes_blueprint.app_list'))
+        else:
+            flash("Try again please, incorrect password.")
+            return render_template('login.html')
+        # Test dictionary DB
+        # for usr in Users_DB:
+        #     # if found
+        #     if usr.username == request.form['username']:
+        #         # check password
+        #         if usr.check_password(request.form['psw']):
+        #             # If correct got to index
+        #             login_user(usr, remember=True)
+        #             return redirect(url_for('routes_blueprint.index'))
+        #         else:
+        #             return render_template('login.html', app_config=current_app.config, message="Try again please, incorrect password.")
         # User not found so let them know
-        return render_template('signup.html', app_config=current_app.config, message=f"You don't have an account, please sign up.")
-    return render_template('login.html', app_config=current_app.config)
+    flash("This is not a GET or POST request, which is required.")
+    return render_template('login.html')
 
 
 @auth_bp.route('/logout', methods=['GET', 'POST'])
 @login_required
 def logout():
     # Logout logic goes here
+
     logout_user()
-    return render_template('logout.html', app_config=current_app.config)
+    flash('You were successfully logged out')
+    return redirect(url_for('routes_blueprint.index'))
 

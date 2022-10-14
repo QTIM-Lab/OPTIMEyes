@@ -1,4 +1,16 @@
-<form action="http://{{ app_config.DNS }}:{{ app_config.HTTP_PORT }}/login" method="post">
+<!-- TEMPLATE -->
+{% extends "base.html" %}
+
+<!-- TITLE -->
+{% block title %}Sign Up{% endblock %}
+
+<!-- CSS -->
+{% block custom_css %}
+{% endblock %}
+
+<!-- BODY -->
+{% block content %}
+<form action="/login" method="post">
 
 	<div class="container">
 	  <label for="username"><b>Username</b></label>
@@ -13,4 +25,6 @@
 	<div>
 		<p>{{ message }}</p>
 	</div>
-  </form>
+</form>
+
+{% endblock %}

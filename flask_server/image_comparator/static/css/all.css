@@ -7,7 +7,7 @@ select {
   color: black; /* user dropdown */
 }
 
-h1, h2, label, span {
+h1, h2, li, label, span {
   color: white;
 }
 
