@@ -101,51 +101,55 @@ def signup():
     couch_server = get_server(); db = couch_server['image_comparator'];
     # Signup logic goes here
     if request.method == 'GET':
-        return render_template('signup.html', app_config=current_app.config)
+        return render_template('signup.html')
     elif request.method == 'POST':
         # Validate data
         if type(request.form['username']) != str or len(request.form['username']) == 0:
-            return render_template('signup.html', app_config=current_app.config, message="Username is blank or not a string.")
+            flash("Username is blank or not a string.")
+            return render_template('signup.html')
         if type(request.form['email']) != str or len(request.form['email']) == 0:
-            return render_template('signup.html', app_config=current_app.config, message="Email is blank or not a string.")
+            flash("Email is blank or not a string.")
+            return render_template('signup.html')
         if type(request.form['psw']) != str or len(request.form['psw']) == 0:
-            return render_template('signup.html', app_config=current_app.config, message="Password is blank or not a string.")
+            flash("Password is blank or not a string.")
+            return render_template('signup.html')
         # Check if user exists already
-        pdb.set_trace()
+        # pdb.set_trace()
         users = [user for user in db.view("basic_views/users", key=f"user_{request.form['username']}")]
         if len(users) == 0:
-            return None
             # Sign up...
-            user = User(id=user_id, username=users[0].value['username'], email=users[0].value['email'])
-            user.password = users[0].value['password']
+            # Create New User
+            user = User(id=f"user_{request.form['username']}",
+                        username=request.form['username'],
+                        email=request.form['email'])
+            user.set_password(request.form['psw'])
+            # Test dictionary DB
+            # Users_DB.append(user)
+
+            # Save New User
+            db[user.id] = user.serialize_for_couchdb()
+            # Login
+            login_user(user, remember=True)
         elif len(users) > 1:
             print("Somehow we have 2 users with the same ID...what to do??")
             pdb.set_trace()
         else:            
-            
-        # Test dictionary DB
-        # for row in db.view("basic_views/users"): # might have been indented differently
-        #     if row.id == f"user_{request.form['username']}":
-        #         flash(message="Username already exists, please use another.")
-        #         return render_template('signup.html', app_config=current_app.config)
-        # Test dictionary DB
-        # for usr in Users_DB:
-        #     if usr.username == request.form['username']:
-        #         return render_template('signup.html', app_config=current_app.config, message="Username already exists, please use another.")
-        
-        # Create New User
-        user = User(id=f"user_{request.form['username']}",
-                    username=request.form['username'],
-                    email=request.form['email'])
-        user.set_password(request.form['psw'])
-        # Test dictionary DB
-        # Users_DB.append(user)
+            # Test dictionary DB
+            # for row in db.view("basic_views/users"): # might have been indented differently
+            #     if row.id == f"user_{request.form['username']}":
+            #         flash(message="Username already exists, please use another.")
+            #         return render_template('signup.html', app_config=current_app.config)
+            # Test dictionary DB
+            # for usr in Users_DB:
+            #     if usr.username == request.form['username']:
+            #         return render_template('signup.html', app_config=current_app.config, message="Username already exists, please use another.")
 
-        # Save New User
-        db[user.id] = user.serialize_for_couchdb()
-        # Login
-        login_user(user, remember=True)
-        return render_template('index.html')
+            # User exists
+            # pdb.set_trace()
+            flash("User already exists. Try a new username.")
+            return render_template('signup.html')
+
+        return redirect(url_for('routes_blueprint.app_list'))
 
     
 

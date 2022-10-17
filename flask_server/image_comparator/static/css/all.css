@@ -19,3 +19,8 @@ h1, h2, li, label, span {
  {
   color: black;
 }
+
+.flask_flash_messages {
+  color: red;
+  list-style: none;
+}
