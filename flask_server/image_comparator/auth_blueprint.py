@@ -111,10 +111,23 @@ def signup():
         if type(request.form['psw']) != str or len(request.form['psw']) == 0:
             return render_template('signup.html', app_config=current_app.config, message="Password is blank or not a string.")
         # Check if user exists already
-        for row in db.view("basic_views/users"):
-            if row.id == f"user_{request.form['username']}":
-                flash(message="Username already exists, please use another.")
-                return render_template('signup.html', app_config=current_app.config)
+        pdb.set_trace()
+        users = [user for user in db.view("basic_views/users", key=f"user_{request.form['username']}")]
+        if len(users) == 0:
+            return None
+            # Sign up...
+            user = User(id=user_id, username=users[0].value['username'], email=users[0].value['email'])
+            user.password = users[0].value['password']
+        elif len(users) > 1:
+            print("Somehow we have 2 users with the same ID...what to do??")
+            pdb.set_trace()
+        else:            
+            
+        # Test dictionary DB
+        # for row in db.view("basic_views/users"): # might have been indented differently
+        #     if row.id == f"user_{request.form['username']}":
+        #         flash(message="Username already exists, please use another.")
+        #         return render_template('signup.html', app_config=current_app.config)
         # Test dictionary DB
         # for usr in Users_DB:
         #     if usr.username == request.form['username']:
@@ -132,7 +145,6 @@ def signup():
         db[user.id] = user.serialize_for_couchdb()
         # Login
         login_user(user, remember=True)
-        pdb.set_trace()
         return render_template('index.html')
 
     
@@ -149,7 +161,6 @@ def login():
     elif request.method == 'POST':
         # Search for user
         users = [user for user in db.view("basic_views/users", key=f"user_{request.form['username']}")]
-        users[0].value['username']
         if len(users) == 0:
             # No user found
             flash("User not found. Please sign up! :)")
