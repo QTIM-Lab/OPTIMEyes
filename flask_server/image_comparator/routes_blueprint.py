@@ -17,7 +17,7 @@ from flask import (
     send_file,
 )
 
-from flask_login import login_required
+from flask_login import login_required, current_user
 
 # self written utils
 from .utils.makeTask import makeTask  # for use in create_user
@@ -28,8 +28,6 @@ from .utils.makeTask import makeTask  # for use in create_user
 bp = Blueprint('routes_blueprint', __name__, url_prefix='/')
 
 # a simple page that says hello
-
-
 @bp.route('/hello')
 @login_required
 def hello():
@@ -74,6 +72,7 @@ def check_if_admin_party_then_make_request(url, method="GET", data="no data"):
 @bp.route('/configuration', methods=['GET'])
 def config():
     # pdb.set_trace()
+    
     """
     For the front end
     """
@@ -83,10 +82,16 @@ def config():
         "DB_PORT": current_app.config['DB_PORT'],
         "HTTP_PORT": current_app.config['HTTP_PORT'],
         "ADMIN_PARTY": current_app.config['ADMIN_PARTY'],
+        "USER_INFO":{"logged_in":current_user.is_authenticated}
+        
     }
     return jsonify(config)
 
 # Apps
+
+@bp.route('/vue_index', methods=['GET'])
+def vue_index():
+    return render_template('/vuetify_components/index.html', logged_in=current_user.is_authenticated)
 
 
 @bp.route('/', methods=['GET'])

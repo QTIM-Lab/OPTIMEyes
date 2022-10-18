@@ -95,6 +95,11 @@ user_bbearce.set_password("pa$$word")
 
 Users_DB = [user_bbearce]
  
+@auth_bp.route('/vuetify_test')
+def vuetify_test():
+    # pdb.set_trace()
+    return render_template('/vuetify_components/base.html', logged_in=current_user.is_authenticated)
+
 
 @auth_bp.route('/signup', methods=['GET', 'POST'])
 def signup():
