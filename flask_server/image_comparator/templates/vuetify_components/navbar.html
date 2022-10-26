@@ -7,13 +7,13 @@
         dark
         app
         >
-            <v-toolbar-title>Home [[ logged_in ]]</v-toolbar-title>
+            <v-toolbar-title>Home Are we logged in: [[ config.USER_INFO.logged_in ]]</v-toolbar-title>
 
             <v-spacer></v-spacer>
     
             <v-toolbar-title>Sign Up</v-toolbar-title>
             <v-toolbar-title>Login</v-toolbar-title>
-            <v-toolbar-title v-if="logged_in">Logout</v-toolbar-title>
+            <!-- <v-toolbar-title v-if="logged_in">Logout</v-toolbar-title> -->
 
             <v-menu
             left
@@ -36,7 +36,10 @@
                     @click="() => {}"
                     >
                     <v-list-item-title>
-                        <a href="/">[[ menu_item ]]</a>
+                        <v-btn
+                        block
+                        v-on:click="test(menu_item)"
+                        >[[ menu_item ]]</v-btn>
                     </v-list-item-title>
                     </v-list-item>
                 </v-list>
@@ -48,30 +51,40 @@
 <script>
     Vue.component('navbar-tag', {
         template: '#navbar',
-        data() {
+        data: function() {
             return { 
+                URLS: {
+                    "Sign Up": "/signup",
+                    "Login": "/login",
+                    "Logout": "/logout",
+                },
                 menu_items: ['Sign Up', 'Login', 'Logout'],
-                logged_in: {{ logged_in|tojson }},
-                config: null,
+                config: {USER_INFO: {"logged_in":false} },
             }
         },
         delimiters: ['[[',']]'],
         beforeCreate() {},
         created() {},
         beforeMount() {
+            
+        },
+        mounted() {
             this.get_config()
         },
-        mounted() {},
         methods: {
             get_config: function (){
-                debugger
                 fetch('/configuration')
                 .then((response) => response.json())
                 .then((data) => {
                     this.config = data
-                    console.log(this.config)
                 });
             },
+            test: function (nav_button){
+                console.log(nav_button)
+                console.log(this.URLS[nav_button])
+                window.location.href = this.URLS[nav_button];
+                // window.open(this.URLS[nav_button])
+            }
         },
     });
 </script>
