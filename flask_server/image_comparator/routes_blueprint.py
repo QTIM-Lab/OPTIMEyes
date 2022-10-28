@@ -76,14 +76,18 @@ def config():
     """
     For the front end
     """
+    # pdb.set_trace()
+    try:
+        USER_INFO = {"username":current_user.username, "logged_in":current_user.is_authenticated}
+    except:
+        USER_INFO = {"logged_in":current_user.is_authenticated}
     config = {
         "DNS": current_app.config['DNS'],
         "IMAGES_DB": current_app.config['IMAGES_DB'],
         "DB_PORT": current_app.config['DB_PORT'],
         "HTTP_PORT": current_app.config['HTTP_PORT'],
         "ADMIN_PARTY": current_app.config['ADMIN_PARTY'],
-        "USER_INFO":{"logged_in":current_user.is_authenticated}
-        
+        "USER_INFO": USER_INFO
     }
     return jsonify(config)
 
@@ -91,7 +95,7 @@ def config():
 
 @bp.route('/vue_index', methods=['GET'])
 def vue_index():
-    return render_template('/vuetify_components/index.html', logged_in=current_user.is_authenticated)
+    return render_template('/vuetify_components/index.html')
 
 
 @bp.route('/', methods=['GET'])

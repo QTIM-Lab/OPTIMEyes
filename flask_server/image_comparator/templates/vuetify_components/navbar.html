@@ -1,23 +1,31 @@
 
 <script type="text/template" id="navbar">
-
+    <div>
         <v-app-bar
         color="black accent-4"
         dense
         dark
         app
+        collapse-on-scroll
         >
-            <v-toolbar-title>Home Are we logged in: [[ config.USER_INFO.logged_in ]]</v-toolbar-title>
+        <v-app-bar-nav-icon @click="drawer = true"> </v-app-bar-nav-icon>
 
+            <v-toolbar-title 
+            v-if=config.USER_INFO.logged_in
+            >
+            Welcome [[ config.USER_INFO.username ]]</v-toolbar-title>
+        
             <v-spacer></v-spacer>
-    
-            <v-toolbar-title>Sign Up</v-toolbar-title>
-            <v-toolbar-title>Login</v-toolbar-title>
+            <v-btn elevation="2" v-if=!config.USER_INFO.logged_in>Sign Up</v-btn>
+            <div>|</div>
+            <v-btn elevation="2" v-if=!config.USER_INFO.logged_in>Login</v-btn>
+
             <!-- <v-toolbar-title v-if="logged_in">Logout</v-toolbar-title> -->
 
             <v-menu
-            left
+            right
             bottom
+            v-if=config.USER_INFO.logged_in
             >
                 <template v-slot:activator="{ on, attrs }">
                     <v-btn
@@ -46,6 +54,40 @@
             </v-menu>
         </v-app-bar>
 
+       <!-- Links to <v-app-bar-nav-icon></v-app-bar-nav-icon> -->
+        <v-navigation-drawer v-model="drawer" absolute temporary>
+            <v-list nav dense>
+              <v-list-item-group
+                v-model="group"
+                active-class="deep-purple--text text--accent-4"
+              >
+                <v-list-item>
+                  <v-list-item-icon>
+                    <v-icon>mdi-home</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-title>Home</v-list-item-title>
+                </v-list-item>
+      
+                <v-list-item>
+                  <v-list-item-icon>
+                    <v-icon>mdi-file-tree</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-title>Tasks</v-list-item-title>
+                </v-list-item>
+
+                <v-list-item>
+                    <v-list-item-icon>
+                      <v-icon>mdi-image-multiple-outline</v-icon>
+                    </v-list-item-icon>
+                    <v-list-item-title>My Images</v-list-item-title>
+                </v-list-item>
+
+              </v-list-item-group>
+            </v-list>
+        </v-navigation-drawer>
+
+    </div>
+
 </script>
 
 <script>
@@ -58,7 +100,9 @@
                     "Login": "/login",
                     "Logout": "/logout",
                 },
-                menu_items: ['Sign Up', 'Login', 'Logout'],
+                drawer:false,
+                group:null,
+                menu_items: ['Logout'], // ['Sign Up', 'Login', 'Logout']
                 config: {USER_INFO: {"logged_in":false} },
             }
         },
