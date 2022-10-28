@@ -1,0 +1,57 @@
+<!-- TEMPLATE -->
+{% extends "vuetify_components/base.html" %}
+
+<!-- TITLE -->
+{% block title %}Image Comparator - Dashboard{% endblock %}
+
+<!-- CSS -->
+{% block custom_css %}
+{% endblock %}
+
+
+
+<!-- BODY -->
+{% block content %}
+
+<!-- Components -->
+{% include 'vuetify_components/navbar.html' %}
+
+<!-- Index Vue App -->
+<div id="main_dashboard">
+    <v-app>
+        <navbar-tag></navbar-tag>
+      <v-main>
+          <v-container>
+            <h1>Main Dashboard [[ message ]]</h1>
+
+            <h2>Image Lists</h2>
+            <h2>Tasks</h2>
+
+          </v-container>
+      </v-main>
+    </v-app>
+</div>
+
+{% endblock %}
+
+
+
+{% block js_scripts %}
+
+<script>
+
+var main_dashboard =new Vue({
+    el: '#main_dashboard',
+    vuetify: new Vuetify(),
+
+    data: () => ({
+        message: '',
+
+    }),
+
+    delimiters: ['[[',']]'],
+  })
+</script>
+
+
+{% endblock %}

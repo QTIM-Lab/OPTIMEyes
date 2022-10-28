@@ -97,7 +97,15 @@ def config():
 def vue_index():
     return render_template('/vuetify_components/index.html')
 
+@bp.route('/template_app', methods=['GET'])
+def template_app():
+    return render_template('/vuetify_components/template_app.html')
 
+@bp.route('/main_dashboard', methods=['GET'])
+def main_dashboard():
+    return render_template('/vuetify_components/main_dashboard.html')
+
+# old
 @bp.route('/', methods=['GET'])
 def index():
     return render_template('index.html')
@@ -105,7 +113,8 @@ def index():
 @bp.route('/app_list', methods=['GET'])
 @login_required
 def app_list():
-    return render_template('app_list.html')
+    #return render_template('app_list.html')
+    return render_template('/vuetify_components/app_list.html')
 
 
 @bp.route('/two_image', methods=['GET'])

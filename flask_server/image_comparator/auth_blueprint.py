@@ -1,4 +1,4 @@
-import pdb
+import pdb, json
 
 from flask import (
     Blueprint,
@@ -7,7 +7,8 @@ from flask import (
     request,
     url_for,
     redirect,
-    flash
+    flash,
+    jsonify
 )
 from . import login_manager
 from image_comparator.db import get_server
@@ -106,7 +107,8 @@ def signup():
     couch_server = get_server(); db = couch_server['image_comparator'];
     # Signup logic goes here
     if request.method == 'GET':
-        return render_template('signup.html')
+        # return render_template('signup.html')
+        return render_template('vuetify_components/signup.html')
     elif request.method == 'POST':
         # Validate data
         if type(request.form['username']) != str or len(request.form['username']) == 0:
@@ -115,11 +117,10 @@ def signup():
         if type(request.form['email']) != str or len(request.form['email']) == 0:
             flash("Email is blank or not a string.")
             return render_template('signup.html')
-        if type(request.form['psw']) != str or len(request.form['psw']) == 0:
+        if type(request.form['password']) != str or len(request.form['password']) == 0:
             flash("Password is blank or not a string.")
             return render_template('signup.html')
         # Check if user exists already
-        # pdb.set_trace()
         users = [user for user in db.view("basic_views/users", key=f"user_{request.form['username']}")]
         if len(users) == 0:
             # Sign up...
@@ -127,7 +128,7 @@ def signup():
             user = User(id=f"user_{request.form['username']}",
                         username=request.form['username'],
                         email=request.form['email'])
-            user.set_password(request.form['psw'])
+            user.set_password(request.form['password'])
             # Test dictionary DB
             # Users_DB.append(user)
 
@@ -151,10 +152,11 @@ def signup():
 
             # User exists
             # pdb.set_trace()
-            flash("User already exists. Try a new username.")
-            return render_template('signup.html')
+            # flash("User already exists. Try a new username.")
+            
+            return(jsonify("User already exists. Try a new username."))
 
-        return redirect(url_for('routes_blueprint.app_list'))
+        return(jsonify(f"Created user {request.form['username']}."))
 
     
 
@@ -164,9 +166,11 @@ def login():
     # Login route logic goes here
     if request.method == 'GET':
         if current_user.is_authenticated:
-            return redirect(url_for('routes_blueprint.index'))
+            #return redirect(url_for('routes_blueprint.index'))
+            return redirect(url_for('routes_blueprint.vue_index'))
         else:
-            return render_template('login.html', app_config=current_app.config)    
+            #return render_template('login.html', app_config=current_app.config)
+            return render_template('vuetify_components/login.html')
     elif request.method == 'POST':
         # Search for user
         users = [user for user in db.view("basic_views/users", key=f"user_{request.form['username']}")]
@@ -179,10 +183,10 @@ def login():
             pdb.set_trace()
         # pdb.set_trace()
         user = User(id=f"user_{users[0].value['username']}",username=users[0].value['username'],email=users[0].value['email'])
-        user.set_password(request.form['psw'])
-        if user.check_password(request.form['psw']):
+        user.set_password(request.form['password'])
+        if user.check_password(request.form['password']):
             login_user(user, remember=True)
-            return redirect(url_for('routes_blueprint.app_list'))
+            return redirect(url_for('routes_blueprint.vue_index'))
         else:
             flash("Try again please, incorrect password.")
             return render_template('login.html')
@@ -191,7 +195,7 @@ def login():
         #     # if found
         #     if usr.username == request.form['username']:
         #         # check password
-        #         if usr.check_password(request.form['psw']):
+        #         if usr.check_password(request.form['password']):
         #             # If correct got to index
         #             login_user(usr, remember=True)
         #             return redirect(url_for('routes_blueprint.index'))
@@ -199,7 +203,7 @@ def login():
         #             return render_template('login.html', app_config=current_app.config, message="Try again please, incorrect password.")
         # User not found so let them know
     flash("This is not a GET or POST request, which is required.")
-    return render_template('login.html')
+    return render_template('vuetify_components/login.html')
 
 
 @auth_bp.route('/logout', methods=['GET', 'POST'])
@@ -209,5 +213,5 @@ def logout():
 
     logout_user()
     flash('You were successfully logged out')
-    return redirect(url_for('routes_blueprint.index'))
+    return redirect(url_for('routes_blueprint.vue_index'))
 

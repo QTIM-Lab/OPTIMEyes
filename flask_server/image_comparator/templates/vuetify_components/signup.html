@@ -1,0 +1,242 @@
+<!-- TEMPLATE -->
+{% extends "vuetify_components/base.html" %}
+
+<!-- TITLE -->
+{% block title %}Image Comparator - Sign Up{% endblock %}
+
+<!-- CSS -->
+{% block custom_css %}
+{% endblock %}
+
+
+
+<!-- BODY -->
+{% block content %}
+
+<!-- Components -->
+{% include 'vuetify_components/navbar.html' %}
+
+<!-- Index Vue App -->
+<div id="signup_page">
+    <v-app>
+        <navbar-tag></navbar-tag>
+      <v-main>
+          <v-container>
+            <h1>Sign Up:</h1>
+
+            <v-alert
+              border="top"
+              color="red lighten-2"
+              dark
+              v-if=flask_message
+            >
+              [[ flask_message ]]
+            </v-alert>
+
+            <v-form>
+                <v-text-field
+                  v-model="name"
+                  :error-messages="nameErrors"
+                  :counter="10"
+                  label="Username"
+                  required
+                  @input="$v.name.$touch()"
+                  @blur="$v.name.$touch()"
+                ></v-text-field>
+                <v-text-field
+                  v-model="email"
+                  :error-messages="emailErrors"
+                  label="E-mail"
+                  required
+                  @input="$v.email.$touch()"
+                  @blur="$v.email.$touch()"
+                ></v-text-field>
+                <v-text-field
+                  v-model="password"
+                  :error-messages="passwordErrors"
+                  label="Password"
+                  required
+                  type=password
+                  @input="$v.password.$touch()"
+                  @blur="$v.password.$touch()"
+                ></v-text-field>
+                <v-text-field
+                  v-model="repeatPassword"
+                  :error-messages="repeatPasswordErrors"
+                  label="Repeat password"
+                  required
+                  type=password
+                  @input="$v.repeatPassword.$touch()"
+                  @blur="$v.repeatPassword.$touch()"
+                ></v-text-field>
+                <!--
+                <v-select
+                  v-model="select"
+                  :items="items"
+                  :error-messages="selectErrors"
+                  label="Item"
+                  required
+                  @change="$v.select.$touch()"
+                  @blur="$v.select.$touch()"
+                ></v-select>
+                <v-checkbox
+                  v-model="checkbox"
+                  :error-messages="checkboxErrors"
+                  label="Do you agree?"
+                  required
+                  @change="$v.checkbox.$touch()"
+                  @blur="$v.checkbox.$touch()"
+                ></v-checkbox>
+                -->
+            
+                <v-btn
+                  class="mr-4"
+                  @click="signup"
+                >
+                  sign up
+                </v-btn>
+                <v-btn @click="clear">
+                  clear
+                </v-btn>
+            </v-form>
+        
+          </v-container>
+      </v-main>
+    </v-app>
+</div>
+
+{% endblock %}
+
+
+
+{% block js_scripts %}
+
+<script src="https://cdn.jsdelivr.net/npm/vuelidate/dist/vuelidate.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuelidate/dist/validators.min.js"></script>
+
+<script>
+// Vuelidate
+const { required, maxLength, minLength, email, sameAs } = validators
+const validationMixin = vuelidate.validationMixin
+
+Vue.use(vuelidate.default)
+
+var signup_page =new Vue({
+    el: '#signup_page',
+    vuetify: new Vuetify(),
+    mixins: [validationMixin],
+
+    validations: {
+        name: { required, maxLength: maxLength(10) },
+        email: { required, email },
+        password: { required, minLength: minLength(8) },
+        repeatPassword: { required, sameAsPassword: sameAs('password') }
+        //select: { required },
+        //checkbox: {
+        //  checked (val) {
+        //	return val
+        //  },
+        //},
+    },
+    data: () => ({
+        name: '',
+        email: '',
+        password: '',
+        repeatPassword: '',
+        flask_message: null
+        //select: null,
+        //items: [
+        //  'Item 1',
+        //  'Item 2',
+        //  'Item 3',
+        //  'Item 4',
+        //],
+        //checkbox: false,
+    }),
+    computed: {
+        //checkboxErrors () {
+        //  const errors = []
+        //  if (!this.$v.checkbox.$dirty) return errors
+        //  !this.$v.checkbox.checked && errors.push('You must agree to continue!')
+        //  return errors
+        //},
+        //selectErrors () {
+        //  const errors = []
+        //  if (!this.$v.select.$dirty) return errors
+        //  !this.$v.select.required && errors.push('Item is required')
+        //  return errors
+        //},
+        nameErrors () {
+          const errors = []
+          if (!this.$v.name.$dirty) return errors
+          !this.$v.name.maxLength && errors.push('Name must be at most 10 characters long')
+          !this.$v.name.required && errors.push('Name is required.')
+          return errors
+        },
+        emailErrors () {
+          const errors = []
+          if (!this.$v.email.$dirty) return errors
+          !this.$v.email.email && errors.push('Must be valid e-mail')
+          !this.$v.email.required && errors.push('E-mail is required')
+          return errors
+        },
+        passwordErrors () {
+            const errors = []
+            if (!this.$v.password.$dirty) return errors
+            !this.$v.password.minLength && errors.push('Password must be at least 8 characters long')
+            !this.$v.password.required && errors.push('Password is required')
+            return errors
+          },
+        repeatPasswordErrors () {
+            const errors = []
+            if (!this.$v.repeatPassword.$dirty) return errors
+            !this.$v.repeatPassword.sameAsPassword && errors.push('Passwords don\'t match')
+            !this.$v.repeatPassword.required && errors.push('Repeat password is required')
+            return errors
+        },
+    },
+
+    methods: {
+        signup () {
+          this.$v.$touch()
+          //this.$refs.form.$el.submit()
+          THIS=this;
+          var data = new FormData();
+          data.append('username', this.name)
+          data.append('email', this.email)
+          data.append('password', this.password)
+          //data = {'username':this.name,
+          //        'email':this.email,
+          //        'password':this.password,}
+          fetch('/signup', {
+            method: 'POST',
+            body: data
+          })
+          .then((response) => response.json())
+          .then((data) => {
+            debugger
+            if(data === "User already exists. Try a new username."){
+              signup_page.flask_message = data
+            }else{
+              window.location.href = "/app_list";
+            }
+            
+          })
+        },
+        clear () {
+          this.$v.$reset()
+          this.name = ''
+          this.email = ''
+          this.password = ''
+          this.repeatPassword = ''
+          //this.select = null
+          //this.checkbox = false
+        },
+    },
+
+    delimiters: ['[[',']]'],
+  })
+</script>
+
+
+{% endblock %}

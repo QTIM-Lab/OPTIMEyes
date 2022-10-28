@@ -1,0 +1,132 @@
+<!-- TEMPLATE -->
+{% extends "vuetify_components/base.html" %}
+
+<!-- TITLE -->
+{% block title %}Image Comparator - Login{% endblock %}
+
+<!-- CSS -->
+{% block custom_css %}
+{% endblock %}
+
+
+
+<!-- BODY -->
+{% block content %}
+
+<!-- Components -->
+{% include 'vuetify_components/navbar.html' %}
+
+<!-- Index Vue App -->
+<div id="login_page">
+    <v-app>
+        <navbar-tag></navbar-tag>
+      <v-main>
+          <v-container>
+            <h1>Login:</h1>
+            
+            <v-form action="/login" method="post" ref="form">
+                <v-text-field
+                  name="username"
+                  v-model="name"
+                  :error-messages="nameErrors"
+                  :counter="10"
+                  label="Username"
+                  required
+                  @input="$v.name.$touch()"
+                  @blur="$v.name.$touch()"
+                ></v-text-field>
+                <v-text-field
+                name="password"
+                v-model="password"
+                :error-messages="passwordErrors"
+                label="Password"
+                required
+                type=password
+                @input="$v.password.$touch()"
+                @blur="$v.password.$touch()"
+                ></v-text-field>
+            
+                <v-btn
+                  class="mr-4"
+                  @click="submit"
+                >
+                  login
+                </v-btn>
+                <v-btn @click="clear">
+                  clear
+                </v-btn>
+              </v-form>
+        
+          </v-container>
+      </v-main>
+    </v-app>
+</div>
+
+{% endblock %}
+
+
+
+{% block js_scripts %}
+
+<script src="https://cdn.jsdelivr.net/npm/vuelidate/dist/vuelidate.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuelidate/dist/validators.min.js"></script>
+
+<script>
+// Vuelidate
+const { required, maxLength } = validators
+const validationMixin = vuelidate.validationMixin
+
+Vue.use(vuelidate.default)
+
+var login_page =new Vue({
+    el: '#login_page',
+    vuetify: new Vuetify(),
+    mixins: [validationMixin],
+
+    validations: {
+        name: { required, maxLength: maxLength(10) },
+        password: { required },
+    },
+    data: () => ({
+        name: '',
+        password: '',
+
+    }),
+    computed: {
+
+        nameErrors () {
+          const errors = []
+          if (!this.$v.name.$dirty) return errors
+          !this.$v.name.maxLength && errors.push('Name must be at most 10 characters long')
+          !this.$v.name.required && errors.push('Name is required.')
+          return errors
+        },
+
+        passwordErrors () {
+            const errors = []
+            if (!this.$v.password.$dirty) return errors
+            !this.$v.password.required && errors.push('Password is required')
+            return errors
+          },
+
+    },
+
+    methods: {
+        submit () {
+          this.$v.$touch()
+          //debugger
+          this.$refs.form.$el.submit()
+        },
+        clear () {
+          this.$v.$reset()
+          this.name = ''
+          this.password = ''
+        },
+    },
+
+    delimiters: ['[[',']]'],
+  })
+</script>
+
+
+{% endblock %}

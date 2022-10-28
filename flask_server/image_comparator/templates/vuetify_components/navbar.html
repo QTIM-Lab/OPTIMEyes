@@ -10,15 +10,24 @@
         >
         <v-app-bar-nav-icon @click="drawer = true"> </v-app-bar-nav-icon>
 
-            <v-toolbar-title 
+            <v-toolbar-title
+            color="blue"
             v-if=config.USER_INFO.logged_in
             >
             Welcome [[ config.USER_INFO.username ]]</v-toolbar-title>
         
             <v-spacer></v-spacer>
-            <v-btn elevation="2" v-if=!config.USER_INFO.logged_in>Sign Up</v-btn>
-            <div>|</div>
-            <v-btn elevation="2" v-if=!config.USER_INFO.logged_in>Login</v-btn>
+            <v-btn elevation="2" 
+            v-if=!config.USER_INFO.logged_in 
+            href="/signup"
+            >Sign Up</v-btn>
+
+            <div v-if=!config.USER_INFO.logged_in>|</div>
+
+            <v-btn elevation="2" 
+            v-if=!config.USER_INFO.logged_in
+            href="/login"
+            >Login</v-btn>
 
             <!-- <v-toolbar-title v-if="logged_in">Logout</v-toolbar-title> -->
 
