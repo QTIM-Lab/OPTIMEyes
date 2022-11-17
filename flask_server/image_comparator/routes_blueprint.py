@@ -97,11 +97,14 @@ def config():
 def vue_index():
     return render_template('/vuetify_components/index.html')
 
+# Used as the start to a new app. Not meant to be a real route
 @bp.route('/template_app', methods=['GET'])
 def template_app():
     return render_template('/vuetify_components/template_app.html')
 
+
 @bp.route('/main_dashboard', methods=['GET'])
+@login_required
 def main_dashboard():
     return render_template('/vuetify_components/main_dashboard.html')
 

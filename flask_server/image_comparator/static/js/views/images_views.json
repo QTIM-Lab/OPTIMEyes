@@ -1,0 +1,9 @@
+{
+    "_id": "_design/images",
+    "language": "javascript",
+    "views": {
+        "images": {
+            "map": "function(doc) {\n  \n  if (doc.type === \"image\")\n    emit(doc.imageSetName, doc);\n}"
+        }
+    }
+}

@@ -167,7 +167,7 @@ def login():
     if request.method == 'GET':
         if current_user.is_authenticated:
             #return redirect(url_for('routes_blueprint.index'))
-            return redirect(url_for('routes_blueprint.vue_index'))
+            return redirect(url_for('routes_blueprint.main_dashboard'))
         else:
             #return render_template('login.html', app_config=current_app.config)
             return render_template('vuetify_components/login.html')
@@ -186,7 +186,7 @@ def login():
         user.set_password(request.form['password'])
         if user.check_password(request.form['password']):
             login_user(user, remember=True)
-            return redirect(url_for('routes_blueprint.vue_index'))
+            return redirect(url_for('routes_blueprint.main_dashboard'))
         else:
             flash("Try again please, incorrect password.")
             return render_template('login.html')
