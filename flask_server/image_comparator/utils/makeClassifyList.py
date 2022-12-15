@@ -37,18 +37,18 @@ else:
 
 def getURL(imageSet: str) -> str:
     url = f"http://{DNS}:{DB_PORT}/{IMAGES_DB}"
-    view = f'/_design/basic_views/_view/imageSet2ImageId?key="{imageSet}"'
+    view = f'/_design/images/_view/images?key="{imageSet}"'
     URL = url + view
     return URL
 
 
 def getImageIDs(url: str) -> list:
-    # pdb.set_trace()
     if ADMIN_PARTY:
         response = requests.get(url)
     else:
         response = requests.get(url, auth=(DB_ADMIN_USER, DB_ADMIN_PASS))
     response = response.content.decode('utf-8')
+    pdb.set_trace()
     response = json.loads(response)
     imageIDs = [int(row['id']) for row in response['rows']]
     imageIDs.sort()
@@ -61,7 +61,8 @@ def makeList(listName: str, images: list) -> None:
     uid = uuid.uuid1()
     t = datetime.now() - timedelta(hours=4)
     obj = {
-        "type": "image_classify_list",
+        "app": "classify",
+        "type": "imageList",
         "list_name": listName,
         "count": len(images),
         "list": images,

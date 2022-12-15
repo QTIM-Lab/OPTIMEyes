@@ -76,11 +76,13 @@ def config():
     """
     For the front end
     """
-    # pdb.set_trace()
     try:
-        USER_INFO = {"username":current_user.username, "logged_in":current_user.is_authenticated}
+        USER_INFO = {"username":current_user.username, 
+                     "logged_in":current_user.is_authenticated,
+                     "admin":current_user.admin}
     except:
         USER_INFO = {"logged_in":current_user.is_authenticated}
+    # pdb.set_trace()
     config = {
         "DNS": current_app.config['DNS'],
         "IMAGES_DB": current_app.config['IMAGES_DB'],
@@ -93,14 +95,22 @@ def config():
 
 # Apps
 
-@bp.route('/vue_index', methods=['GET'])
+# old and delete soon
+# @bp.route('/', methods=['GET'])
+# def index():
+#     return render_template('index.html')
+
+# @bp.route('/app_list', methods=['GET'])
+# @login_required
+# def app_list():
+#     #return render_template('app_list.html')
+#     return render_template('/vuetify_components/app_list.html')
+
+
+@bp.route('/', methods=['GET'])
 def vue_index():
     return render_template('/vuetify_components/index.html')
 
-# Used as the start to a new app. Not meant to be a real route
-@bp.route('/template_app', methods=['GET'])
-def template_app():
-    return render_template('/vuetify_components/template_app.html')
 
 
 @bp.route('/main_dashboard', methods=['GET'])
@@ -108,18 +118,18 @@ def template_app():
 def main_dashboard():
     return render_template('/vuetify_components/main_dashboard.html')
 
-# old
-@bp.route('/', methods=['GET'])
-def index():
-    return render_template('index.html')
 
-@bp.route('/app_list', methods=['GET'])
-@login_required
-def app_list():
-    #return render_template('app_list.html')
-    return render_template('/vuetify_components/app_list.html')
+@bp.route('/tasksList', methods=['GET'])
+def tasksList():
+    return render_template('/vuetify_components/tasksList.html')
 
 
+@bp.route('/compareApp', methods=['GET'])
+def compareApp():
+    return render_template('/vuetify_components/compareApp.html')
+
+
+# OLD apps
 @bp.route('/two_image', methods=['GET'])
 def two_image():
     con = json.loads(config().data)
@@ -146,7 +156,6 @@ def grid_class_dev():
     con['app'] = 'Grid'
     return render_template('grid_class_dev.html', app_config=con)
 
-
 @bp.route('/pair_image', methods=['GET'])
 def pair_image():
     con = json.loads(config().data)
@@ -171,6 +180,21 @@ def contact():
 
 
 # Action APIs
+@bp.route('/make_task', methods=['POST'])
+def make_task():
+    print("in /make_task")
+    user=request.form['user']
+    imageListName=request.form['imageListName']
+    imageListTypeSelect=request.form['imageListTypeSelect']
+    taskOrder=request.form['taskOrder']
+    pdb.set_trace()
+    # Make task for Image Compare - manually enter imageListName specific for now
+    makeTask(user, imageListName, imageListTypeSelect, taskOrder)
+    return redirect(f'/tasksList')
+    
+    
+
+
 @bp.route('/get_users', methods=['GET'])
 def get_users():
     print("in /get_users")
@@ -187,9 +211,12 @@ def get_tasks(app):
     username = request.args['username']
     base = "http://{}:{}/{}".format(
         current_app.config['DNS'], current_app.config['DB_PORT'], current_app.config["IMAGES_DB"])
-    view = f"_design/basic_views/_view/incomplete_{app}_tasks?key=\"{username}\""
+    # view = f"_design/basic_views/_view/incomplete_{app}_tasks?key=\"{username}\""
+    # view = f"_design/{app}App/_view/incomplete_{app}_tasks?key=\"{username}\""
+    view = f"_design/{app}App/_view/incompleteTasks?key=\"{username}\""
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
+    # pdb.set_trace()
     return json.loads(response.content.decode('utf-8'))
 
 
@@ -202,13 +229,15 @@ def get_image_compare_lists():
     except:
         print("in except")
         # pdb.set_trace()
-        view = f"_design/basic_views/_view/image_compare_lists"
+        # view = f"_design/basic_views/_view/image_compare_lists"
+        view = f"_design/compareApp/_view/imageLists"
         url = f"{base}/{view}"
         response = check_if_admin_party_then_make_request(url)
         return json.loads(response.content.decode('utf-8'))
     # pdb.set_trace()
     print("past except")
-    view = f"_design/basic_views/_view/image_compare_lists?key=\"{key}\""
+    # view = f"_design/basic_views/_view/image_compare_lists?key=\"{key}\""
+    view = f"_design/compareApp/_view/imageLists?key=\"{key}\""
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
     return json.loads(response.content.decode('utf-8'))
@@ -223,12 +252,14 @@ def get_image_classify_lists():
     except:
         print("in except")
         # pdb.set_trace()
-        view = f"_design/basic_views/_view/image_classify_lists"
+        # view = f"_design/basic_views/_view/image_classify_lists"
+        view = f"_design/classifyApp/_view/imageLists"
         url = f"{base}/{view}"
         response = check_if_admin_party_then_make_request(url)
         return json.loads(response.content.decode('utf-8'))
-    print("past except")
-    view = f"_design/basic_views/_view/image_classify_lists?key=\"{key}\""
+    pdb.set_trace()
+    # view = f"_design/basic_views/_view/image_classify_lists?key=\"{key}\""
+    view = f"_design/classifyApp/_view/imageLists?key=\"{key}\""
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
     # pdb.set_trace()

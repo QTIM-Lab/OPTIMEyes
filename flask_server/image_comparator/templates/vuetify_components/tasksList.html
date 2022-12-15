@@ -1,0 +1,115 @@
+<!-- TEMPLATE -->
+{% extends "vuetify_components/base.html" %}
+
+<!-- TITLE -->
+{% block title %}Image Comparator - Tasks{% endblock %}
+
+<!-- CSS -->
+{% block custom_css %}
+{% endblock %}
+
+
+
+<!-- BODY -->
+{% block content %}
+
+<!-- Components -->
+{% include 'vuetify_components/navbar.html' %}
+
+<!-- Index Vue App -->
+<div id="tasksList">
+    <v-app>
+        <navbar-tag></navbar-tag>
+      <v-main>
+          <v-container>
+            <v-row>
+
+              <v-col cols=6>
+
+                <h2>Tasks:</h2>
+                <h3>Classify Tasks:</h3>
+                <ul>
+                  <li v-for="item in classifyTasks">
+                    Task Type: [[ item.value.app ]]; Completed: [[ item.value.completed ]]; Associated List: [[ item.value.list_name ]]; Priority: [[ item.value.task_order ]]
+                  </li>
+                </ul>
+                <h3>Compare Tasks:</h3>
+                <ul>
+                  <li v-for="item in compareTasks">
+                    Task Type: [[ item.value.app ]]; Completed: [[ item.value.completed ]]; Associated List: [[ item.value.list_name ]]; Priority: [[ item.value.task_order ]]
+                  </li>
+                </ul>
+                
+              </v-col>
+
+              <v-col cols=6>
+                <h2>Create Task:</h2>
+                <v-form action="/make_task" method="post" ref="form">
+                  <v-text-field
+                    name="user"
+                    v-model="user"
+                    :error-messages="userErrors"
+                    :counter="10"
+                    label="User"
+                    required
+                    @input="$v.user.$touch()"
+                    @blur="$v.user.$touch()"
+                  ></v-text-field>
+                  <v-text-field
+                    name="imageListName"
+                    v-model="imageListName"
+                    :error-messages="imageListNameErrors"
+                    label="Image List Name"
+                    required
+                    @input="$v.imageListName.$touch()"
+                    @blur="$v.imageListName.$touch()"
+                  ></v-text-field>
+                  <v-select
+                  name="imageListTypeSelect"
+                  v-model="imageListTypeSelect"
+                  :items="imageListTypeSelectItems"
+                  :error-messages="imageListTypeSelectErrors"
+                  label="Image List Type"
+                  required
+                  @change="$v.imageListTypeSelect.$touch()"
+                  @blur="$v.imageListTypeSelect.$touch()"
+                ></v-select>
+                  <v-text-field
+                    name="taskOrder"
+                    v-model="taskOrder"
+                    :error-messages="taskOrderErrors"
+                    label="Task Order"
+                    required
+                    @input="$v.taskOrder.$touch()"
+                    @blur="$v.taskOrder.$touch()"
+                  ></v-text-field>
+
+                  <v-btn
+                    class="mr-4"
+                    @click="submit"
+                  >
+                    submit
+                  </v-btn>
+                  <v-btn @click="clear">
+                    clear
+                  </v-btn>
+                </v-form>
+              </v-col>
+
+           </v-row>
+
+          </v-container>
+      </v-main>
+    </v-app>
+</div>
+
+{% endblock %}
+
+
+
+{% block js_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/vuelidate/dist/vuelidate.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuelidate/dist/validators.min.js"></script>
+
+<script src="{{ url_for('static', filename='js/vuetify_components/tasksList.js') }}"></script>
+{% endblock %}

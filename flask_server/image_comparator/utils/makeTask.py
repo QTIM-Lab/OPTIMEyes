@@ -32,10 +32,11 @@ else:
 def testt(): # Delete soon 12.7.2021
     print("testt")
 
-def makeTask(user: str, imageListName: str, imageListType: str, taskOrder: int, linkedWithImageListName: str) -> None:
+def makeTask(user: str, imageListName: str, imageListType: str, taskOrder: int, linkedWithImageListName: str = None) -> None:
     t = datetime.now() - timedelta(hours=4)
     obj = {"type": "task",
-           "task_type": imageListType,
+        #    "task_type": imageListType,
+           "app": imageListType,
            "list_name": imageListName,
            "task_order": taskOrder,
            "user": user,

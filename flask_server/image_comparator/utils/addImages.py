@@ -38,9 +38,9 @@ def main(path_to_images: str, imageSetName: str, fromCSV: str = None):
 
     # We need to check current current image counts
     db = couch[IMAGES_DB]
-    count_image_docs = [i for i in db.view("basic_views/count_image_docs")]
+    count_image_docs = [i for i in db.view("images/count_image_docs")]
     imgCount = count_image_docs[0].value if len(count_image_docs) > 0 else 0
-
+    # pdb.set_trace()
     # If from csv we need to get the extra column data and save it
     if fromCSV != None:
         images_csv = pd.read_csv(os.path.join(path_to_images, fromCSV))
@@ -73,7 +73,7 @@ def main(path_to_images: str, imageSetName: str, fromCSV: str = None):
             obj = {"_id": str(i+imgCount+1),
                    "origin": image,
                    "id": str(uuid.uuid1()),
-                   "type": "imageDoc",
+                   "type": "image",
                    "imageSetName": imageSetName,
                    "timeAdded": t.strftime('%Y-%m-%d %H:%M:%S')}
 

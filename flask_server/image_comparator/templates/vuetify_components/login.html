@@ -27,13 +27,13 @@
             <v-form action="/login" method="post" ref="form">
                 <v-text-field
                   name="username"
-                  v-model="name"
+                  v-model="username"
                   :error-messages="nameErrors"
                   :counter="10"
                   label="Username"
                   required
-                  @input="$v.name.$touch()"
-                  @blur="$v.name.$touch()"
+                  @input="$v.username.$touch()"
+                  @blur="$v.username.$touch()"
                 ></v-text-field>
                 <v-text-field
                 name="password"
@@ -55,7 +55,7 @@
                 <v-btn @click="clear">
                   clear
                 </v-btn>
-              </v-form>
+            </v-form>
         
           </v-container>
       </v-main>
@@ -84,11 +84,11 @@ var login_page =new Vue({
     mixins: [validationMixin],
 
     validations: {
-        name: { required, maxLength: maxLength(10) },
+        username: { required, maxLength: maxLength(10) },
         password: { required },
     },
     data: () => ({
-        name: '',
+        username: '',
         password: '',
 
     }),
@@ -96,9 +96,9 @@ var login_page =new Vue({
 
         nameErrors () {
           const errors = []
-          if (!this.$v.name.$dirty) return errors
-          !this.$v.name.maxLength && errors.push('Name must be at most 10 characters long')
-          !this.$v.name.required && errors.push('Name is required.')
+          if (!this.$v.username.$dirty) return errors
+          !this.$v.username.maxLength && errors.push('Name must be at most 10 characters long')
+          !this.$v.username.required && errors.push('Name is required.')
           return errors
         },
 
@@ -114,12 +114,12 @@ var login_page =new Vue({
     methods: {
         submit () {
           this.$v.$touch()
-          //debugger
+          debugger
           this.$refs.form.$el.submit()
         },
         clear () {
           this.$v.$reset()
-          this.name = ''
+          this.username = ''
           this.password = ''
         },
     },

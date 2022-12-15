@@ -1,49 +1,32 @@
 // source: https://gist.github.com/paldepind/7211654
 
-var HOST = "terry"
+var HOST = "chris"
 var PORT = "5984"
 var DB = "image_comparator"
 var DB_USER = "admin"
 var DB_PASS = "password"
 var ADMIN_PARTY = false
-var VIEWS_CATEGORY_NAME = "basic_views"
 
 // let VIEW = "imageSet2ImageId"
 
-function delete_docs_in_view(VIEW) {
-
-    var url_getViewDocs = `http://${HOST}:${PORT}/${DB}/_design/${VIEWS_CATEGORY_NAME}/_view/${VIEW}`
+async function delete_docs_in_view(design_doc, view) {
+    var url_getViewDocs = `http://${HOST}:${PORT}/${DB}/_design/${design_doc}/_view/${view}`
     var url_delete_doc = `http://${HOST}:${PORT}/${DB}`
 
-    // auth
-    auth = () => { } // ADMIN PARTY
-    if (!ADMIN_PARTY) {
-        var auth = (xhr) => {
-            xhr.setRequestHeader('Authorization', 'Basic ' + btoa(`${DB_USER}:${DB_PASS}`));
-        }
-    }
-
-    // AJAX
-    $.ajax({
-        url: url_getViewDocs,
-        type: 'GET',
-        beforeSend: auth,
-        success: (data) => {
-            data.rows.forEach(function (doc) {
-                // debugger
-                // AJAX
-                $.ajax({
-                    url: url_delete_doc + `/${doc.id}?rev=${doc.value._rev}`,
-                    type: 'DELETE',
-                    beforeSend: auth,
-                    success: function (result) {
-                        console.log("Deleted document with id " + doc.key[1]);
-                    }
-                });
-            });
-        },
-
+    // fetch
+    response = await fetch(url_getViewDocs, {
+        method: 'GET',
+        headers: { 'Authorization': 'Basic ' + btoa(`${DB_USER}:${DB_PASS}`) }
     })
+    data = await response.json();
+    data.rows.forEach(async function (doc) {
+        response_delete = await fetch(url_delete_doc + `/${doc.id}?rev=${doc.value._rev}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Basic ' + btoa(`${DB_USER}:${DB_PASS}`) }
+        })
+        data_delete = await response_delete.json();
+        console.log("Deleted document with id " + data_delete.id);
+    });
 
 }
 
@@ -51,11 +34,11 @@ function delete_docs_in_view(VIEW) {
 
 // Dangerous!!!
 // views_to_clear = ['users', 'taskresults', 'tasks', 'classifyResults', 'image_classify_lists', 'image_compare_lists', 'image_grid_lists', 'imageSet2ImageId_deleteme']
-// views_to_clear = ['imageSet2ImageId_TEST']
-views_to_clear = ['classifyResults']
+views_to_clear = ['images']
+// views_to_clear = ['classifyResults']
 
 views_to_clear.forEach((v, i, a) => {
-    delete_docs_in_view(v) //delete al docs in this view
+    delete_docs_in_view(design_doc = 'images', view = v) //delete al docs in this view
 })
 
 

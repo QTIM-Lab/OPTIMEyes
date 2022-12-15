@@ -74,22 +74,37 @@
                   <v-list-item-icon>
                     <v-icon>mdi-home</v-icon>
                   </v-list-item-icon>
-                  <v-list-item-title>Home</v-list-item-title>
+                  <v-list-item-title>
+                    <a href="{{url_for('routes_blueprint.vue_index')}}">Home</a>
+                  </v-list-item-title>
                 </v-list-item>
       
                 <v-list-item>
                   <v-list-item-icon>
                     <v-icon>mdi-file-tree</v-icon>
                   </v-list-item-icon>
-                  <v-list-item-title>Tasks</v-list-item-title>
+                  <v-list-item-title>
+                    <a href="{{url_for('routes_blueprint.tasksList')}}">Tasks</a>
+                  </v-list-item-title>
                 </v-list-item>
 
+                <v-list-item>
+                  <v-list-item-icon>
+                    <v-icon>mdi-arrange-send-backward</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-title>
+                    <a href="{{url_for('routes_blueprint.compareApp')}}">Compare App</a>
+                  </v-list-item-title>
+                </v-list-item>
+
+                <!--
                 <v-list-item>
                     <v-list-item-icon>
                       <v-icon>mdi-image-multiple-outline</v-icon>
                     </v-list-item-icon>
                     <v-list-item-title>My Images</v-list-item-title>
                 </v-list-item>
+              -->
 
               </v-list-item-group>
             </v-list>

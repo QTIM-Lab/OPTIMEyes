@@ -37,7 +37,7 @@ else:
 
 def getURL(imageSet: str) -> str:
     url = f"http://{DNS}:{DB_PORT}/{IMAGES_DB}"
-    view = f'/_design/basic_views/_view/imageSet2ImageId?key="{imageSet}"'
+    view = f'/_design/images/_view/images?key="{imageSet}"'
     URL = url + view
     return URL
 
@@ -61,7 +61,8 @@ def makeList(listName: str, pairs: list) -> None:
     uid = uuid.uuid1()
     t = datetime.now() - timedelta(hours=4)
     obj = {
-        "type": "image_compare_list",
+        "app": "compare",
+        "type": "imageList",
         "list_name": listName,
         "count": len(pairs),
         "list": pairs,

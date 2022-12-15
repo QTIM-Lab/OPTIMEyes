@@ -33,14 +33,17 @@ def load_user(user_id):
     """
     # It should return None (not raise an exception) if the ID is not valid. (In that case, the ID will manually be removed from the session and processing will continue.)
     couch_server = get_server(); db = couch_server['image_comparator'];
-    users = [user for user in db.view("basic_views/users", key=user_id)]
+    users = [user for user in db.view("users/users", key=user_id)]
     if len(users) == 0:
         return None
     elif len(users) > 1:
         print("Somehow we have 2 users with the same ID...what to do??")
-        pdb.set_trace()
     else:
-        user = User(id=user_id, username=users[0].value['username'], email=users[0].value['email'])
+        # pdb.set_trace()
+        user = User(id=user_id, 
+                    username=users[0].value['username'], 
+                    email=users[0].value['email'], 
+                    admin=users[0].value['admin'])
         user.password = users[0].value['password']
         return user
         # Test dictionary DB
@@ -52,10 +55,11 @@ def load_user(user_id):
 class User(UserMixin):
     """User account model."""
 
-    def __init__(self, id, username, email):
+    def __init__(self, id, username, email, admin):
         self.id = id
         self.username = username
         self.email = email
+        self.admin = admin
     
     def set_password(self, password):
         """Create hashed password."""
@@ -81,20 +85,22 @@ class User(UserMixin):
             "type":"user",
             "username":self.username,
             "email":self.email,
+            "admin":self.admin,
             "password": self.password
         }
+        # pdb.set_trace()
         return dictionary_representation
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
    
 # Simulate DB
-user_bbearce = User(id='user_bbearce',
-                    username="bbearce",
-                    email="bbearce@gmail.com")
-user_bbearce.set_password("pa$$word")
+# user_bbearce = User(id='user_bbearce',
+#                     username="bbearce",
+#                     email="bbearce@gmail.com")
+# user_bbearce.set_password("pa$$word")
 
-Users_DB = [user_bbearce]
+# Users_DB = [user_bbearce]
  
 @auth_bp.route('/vuetify_test')
 def vuetify_test():
@@ -121,13 +127,14 @@ def signup():
             flash("Password is blank or not a string.")
             return render_template('signup.html')
         # Check if user exists already
-        users = [user for user in db.view("basic_views/users", key=f"user_{request.form['username']}")]
+        users = [user for user in db.view("users/users", key=f"user_{request.form['username']}")]
         if len(users) == 0:
             # Sign up...
             # Create New User
             user = User(id=f"user_{request.form['username']}",
                         username=request.form['username'],
-                        email=request.form['email'])
+                        email=request.form['email'],
+                        admin=False)
             user.set_password(request.form['password'])
             # Test dictionary DB
             # Users_DB.append(user)
@@ -141,7 +148,7 @@ def signup():
             pdb.set_trace()
         else:            
             # Test dictionary DB
-            # for row in db.view("basic_views/users"): # might have been indented differently
+            # for row in db.view("users/users"): # might have been indented differently
             #     if row.id == f"user_{request.form['username']}":
             #         flash(message="Username already exists, please use another.")
             #         return render_template('signup.html', app_config=current_app.config)
@@ -173,7 +180,7 @@ def login():
             return render_template('vuetify_components/login.html')
     elif request.method == 'POST':
         # Search for user
-        users = [user for user in db.view("basic_views/users", key=f"user_{request.form['username']}")]
+        users = [user for user in db.view("users/users", key=f"user_{request.form['username']}")]
         if len(users) == 0:
             # No user found
             flash("User not found. Please sign up! :)")
@@ -182,7 +189,7 @@ def login():
             print("In /login and we have multiple users for the given login username!")
             pdb.set_trace()
         # pdb.set_trace()
-        user = User(id=f"user_{users[0].value['username']}",username=users[0].value['username'],email=users[0].value['email'])
+        user = User(id=f"user_{users[0].value['username']}",username=users[0].value['username'],email=users[0].value['email'],admin=users[0].value['admin'])
         user.set_password(request.form['password'])
         if user.check_password(request.form['password']):
             login_user(user, remember=True)
