@@ -1,0 +1,54 @@
+<!-- TEMPLATE -->
+{% extends "vuetify_components/base.html" %}
+
+<!-- TITLE -->
+{% block title %}Images Dashboard{% endblock %}
+
+<!-- CSS -->
+{% block custom_css %}
+{% endblock %}
+
+
+
+<!-- BODY -->
+{% block content %}
+
+<!-- Components -->
+{% include 'vuetify_components/navbar.html' %}
+
+<!-- Index Vue App -->
+<div id="imagesDashboard">
+    <v-app>
+        <navbar-tag></navbar-tag>
+      <v-main>
+          <v-container>
+            <h1>Template App: [[ message ]]</h1>
+
+          </v-container>
+      </v-main>
+    </v-app>
+</div>
+
+{% endblock %}
+
+
+
+{% block js_scripts %}
+
+<script>
+
+var template_app =new Vue({
+    el: '#imagesDashboard',
+    vuetify: new Vuetify(),
+
+    data: () => ({
+        message: 'This is the images dashboard',
+
+    }),
+
+    delimiters: ['[[',']]'],
+  })
+</script>
+
+
+{% endblock %}

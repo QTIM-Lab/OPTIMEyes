@@ -128,6 +128,10 @@ def tasksList():
 def compareApp():
     return render_template('/vuetify_components/compareApp.html')
 
+@bp.route('/imagesDashboard', methods=['GET'])
+def imagesDashboard():
+    return render_template('/vuetify_components/imagesDashboard.html')
+
 
 # OLD apps
 @bp.route('/two_image', methods=['GET'])
@@ -180,6 +184,19 @@ def contact():
 
 
 # Action APIs
+@bp.route('/add_images', methods=['POST'])
+def add_images():
+    print("in /add_images")
+    user=request.form['user']
+    imageListName=request.form['imageListName']
+    imageListTypeSelect=request.form['imageListTypeSelect']
+    taskOrder=request.form['taskOrder']
+    # pdb.set_trace()
+    # Make task for Image Compare - manually enter imageListName specific for now
+    makeTask(user, imageListName, imageListTypeSelect, taskOrder)
+    return redirect(f'/tasksList')
+    
+    
 @bp.route('/make_task', methods=['POST'])
 def make_task():
     print("in /make_task")
@@ -187,7 +204,7 @@ def make_task():
     imageListName=request.form['imageListName']
     imageListTypeSelect=request.form['imageListTypeSelect']
     taskOrder=request.form['taskOrder']
-    pdb.set_trace()
+    # pdb.set_trace()
     # Make task for Image Compare - manually enter imageListName specific for now
     makeTask(user, imageListName, imageListTypeSelect, taskOrder)
     return redirect(f'/tasksList')
