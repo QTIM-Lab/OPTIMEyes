@@ -21,9 +21,7 @@ from flask_login import login_required, current_user
 
 # self written utils
 from .utils.makeTask import makeTask  # for use in create_user
-
-# from .utils.makeTask import testt # for use in create_user
-# testt()
+from .utils.addImages import addImages  # for use in addImages
 
 bp = Blueprint('routes_blueprint', __name__, url_prefix='/')
 
@@ -132,6 +130,14 @@ def compareApp():
 def imagesDashboard():
     return render_template('/vuetify_components/imagesDashboard.html')
 
+@bp.route('/image_list_summary/<imageList>', methods=['GET'])
+def goToImageListSummary(imageList):
+    print("in /goToImageListSummary")
+    return render_template('/vuetify_components/ImageListSummary.html', imageList=imageList)
+    
+
+
+
 
 # OLD apps
 @bp.route('/two_image', methods=['GET'])
@@ -187,14 +193,11 @@ def contact():
 @bp.route('/add_images', methods=['POST'])
 def add_images():
     print("in /add_images")
-    user=request.form['user']
+    folder=request.form['folder']
     imageListName=request.form['imageListName']
     imageListTypeSelect=request.form['imageListTypeSelect']
-    taskOrder=request.form['taskOrder']
-    # pdb.set_trace()
-    # Make task for Image Compare - manually enter imageListName specific for now
-    makeTask(user, imageListName, imageListTypeSelect, taskOrder)
-    return redirect(f'/tasksList')
+    addImages(folder, imageListName, imageListTypeSelect)
+    return redirect(f'/add_images')
     
     
 @bp.route('/make_task', methods=['POST'])
@@ -204,13 +207,9 @@ def make_task():
     imageListName=request.form['imageListName']
     imageListTypeSelect=request.form['imageListTypeSelect']
     taskOrder=request.form['taskOrder']
-    # pdb.set_trace()
-    # Make task for Image Compare - manually enter imageListName specific for now
     makeTask(user, imageListName, imageListTypeSelect, taskOrder)
     return redirect(f'/tasksList')
     
-    
-
 
 @bp.route('/get_users', methods=['GET'])
 def get_users():
@@ -218,6 +217,27 @@ def get_users():
     base = "http://{}:{}/{}".format(
         current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
     view = f"_design/basic_views/_view/users"
+    url = f"{base}/{view}"
+    response = check_if_admin_party_then_make_request(url)
+    return json.loads(response.content.decode('utf-8'))
+
+
+@bp.route('/get_image_lists', methods=['GET'])
+def get_image_lists():
+    print("in /get_image_lists")
+    base = "http://{}:{}/{}".format(
+        current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
+    view = f"_design/images/_view/images?group_level=1"
+    url = f"{base}/{view}"
+    response = check_if_admin_party_then_make_request(url)
+    return json.loads(response.content.decode('utf-8'))
+
+@bp.route('/get_images_by_list/<imageList>', methods=['GET'])
+def get_images_by_list(imageList):
+    print("in /get_images_by_list")
+    base = "http://{}:{}/{}".format(
+        current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
+    view = f'_design/images/_view/imagesByList?key="{imageList}"'
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
     return json.loads(response.content.decode('utf-8'))

@@ -1,0 +1,166 @@
+<!-- TEMPLATE -->
+{% extends "vuetify_components/base.html" %}
+
+<!-- TITLE -->
+{% block title %}Image List Summary{% endblock %}
+
+<!-- CSS -->
+{% block custom_css %}
+{% endblock %}
+
+
+
+<!-- BODY -->
+{% block content %}
+
+<!-- Components -->
+{% include 'vuetify_components/navbar.html' %}
+
+<!-- Index Vue App -->
+<div id="template_app">
+    <v-app>
+        <navbar-tag></navbar-tag>
+      <v-main>
+          <v-container>
+            <h1>Template App: [[ message ]]</h1>
+
+            <v-row>
+              <v-col
+                v-for="image in images"
+                :key="image"
+                class="d-flex child-flex"
+                cols="4"
+              >
+                <v-img
+                  :src="`https://picsum.photos/500/300?image=${n * 5 + 10}`"
+                  :lazy-src="`https://picsum.photos/10/6?image=${n * 5 + 10}`"
+                  aspect-ratio="1"
+                  class="grey lighten-2"
+                >
+                  <template v-slot:placeholder>
+                    <v-row
+                      class="fill-height ma-0"
+                      align="center"
+                      justify="center"
+                    >
+                      <v-progress-circular
+                        indeterminate
+                        color="grey lighten-5"
+                      ></v-progress-circular>
+                    </v-row>
+                  </template>
+                </v-img>
+              </v-col>
+            </v-row>
+
+          </v-container>
+      </v-main>
+    </v-app>
+</div>
+
+{% endblock %}
+
+
+
+{% block js_scripts %}
+
+<script>
+
+var template_app =new Vue({
+    el: '#template_app',
+    vuetify: new Vuetify(),
+
+    data: () => ({
+        message: 'This is an image summary test {{ imageList }}',
+        imageList: "{{ imageList }}",
+        images: [],
+
+    }),
+    async mounted() {
+      configuration = await this.getConfiguration()
+      this.DNS = configuration.DNS;
+      this.IMAGES_DB = configuration.IMAGES_DB;
+      this.DB_PORT = configuration.DB_PORT;
+      this.HTTP_PORT = configuration.HTTP_PORT;
+      this.ADMIN_PARTY = configuration.ADMIN_PARTY;
+      this.USER_INFO = configuration.USER_INFO;
+      this.buildGrid();    
+    },
+
+    computed: {
+      // General
+      URLS() {
+          return {
+              configuration: "/configuration",
+              getImagesByList: `http://${this.DNS}:${this.HTTP_PORT}/get_images_by_list`
+          }
+      },
+    },
+    methods: {
+      async getConfiguration() {
+          // https://dmitripavlutin.com/javascript-fetch-async-await/
+          const response = await fetch('/configuration');
+          if (!response.ok) {
+              const message = `An error has occured: ${response.status}`;
+              throw new Error(message);
+          }
+          const configuration = await response.json();
+          return configuration;
+      },
+      buildGrid() {
+        console.log("buildGrid")
+        getImagesByListURL = this.URLS.getImagesByList + `/${this.imageList}`
+        fetch(getImagesByListURL)
+            .then((response) => response.json())
+            .then((data) => {
+              data.rows.forEach((v, i, a) => {
+                this.images.push(v)
+                this.getBase64DataOfImageFromCouch(v['id'])
+
+              })
+              
+            })
+      },
+      getBase64DataOfImageFromCouch(image_id) {
+        //debugger
+        var url = `http://${this.DNS}:${this.HTTP_PORT}/get_image/${image_id}`
+        ILS = this;
+        particularImage = image_id
+        fetch(url)
+          .then(response => {
+            //response_headers = [...response.headers]
+            //// foreach this response_headers and find file name...also set filename from server
+            //debugger
+            //response_headers.forEach((v,i,a)=>{
+            //  if(v[0] === 'content-disposition'){
+            //    filename = v[1].substring(v[1].search("filename=")+"filename=".length, v[1].length)
+            //    if (TF.app === 'classify'){
+            //      TF.nextImg = filename
+            //    }else if (TF.app === 'grid'){
+            //      TF.cachedClassifyResults[image_id]['image_name'] = filename
+            //      // debugger;
+            //      document.getElementById(`${htmlID}_filename`).innerHTML=`filename: ${filename}`
+            //    }
+            //  }
+            //})
+            //load_messaging_div = document.getElementById("load_messaging")
+            //var image_load_message = document.createElement("p");
+            //image_load_message.innerHTML = `Loading image: ${image_id} ...`
+            //image_load_message.id = image_id
+            //load_messaging_div.appendChild(image_load_message)
+            return response.text();
+          })
+          .then(data => {
+            debugger
+            DATA='data:image/png;base64,' + data
+            ILS
+          })
+      },
+    },
+
+    delimiters: ['[[',']]'],
+})
+</script>
+
+
+{% endblock %}

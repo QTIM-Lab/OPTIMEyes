@@ -3,7 +3,7 @@
     "language": "javascript",
     "views": {
         "images": {
-            "map": "function(doc) {\n  \n  if (doc.type === \"image\")\n    emit(doc.imageSetName, doc);\n}"
+            "map": "function(doc) {\n  \n  if (doc.type === \"image\")\n    emit([doc.imageListName, doc.origin], doc);\n}"
         },
         "count_image_docs": {
             "map": "function(doc) {\n  if (doc._attachments && doc._attachments.image)\n    emit (doc.id);\n}",

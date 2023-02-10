@@ -3,7 +3,7 @@
     "language": "javascript",
     "views": {
         "users": {
-            "map": "function(doc) {\n  if (doc.type===\"user\")\n    emit(doc._id, {username:doc.username, email:doc.email, password:doc.password});\n}"
+            "map": "function(doc) {\n  if (doc.type===\"user\")\n    emit(doc._id, {username:doc.username, email:doc.email, admin:doc.admin, password:doc.password});\n}"
         }
     }
 }

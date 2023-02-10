@@ -22,7 +22,94 @@
         <navbar-tag></navbar-tag>
       <v-main>
           <v-container>
-            <h1>Template App: [[ message ]]</h1>
+            <v-row>
+              <v-col cols=6>
+                <h2>Image Lists:</h2>
+
+                <v-simple-table>
+                  <template v-slot:default>
+                    <thead>
+                      <tr>
+                        <th class="text-left">
+                          Image List
+                        </th>
+                        <th class="text-left">
+                          Images
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        v-for="item in imageLists"
+                        :key="item.imageList"
+                      >
+                        <td>
+                          <v-btn
+                          elevation="2"
+                          @click="goToImageSummary([[ item.imageList ]])" 
+                          >[[ item.imageList ]]</v-btn>
+                        </td>
+                        <td>[[ item.images ]]</td>
+                      </tr>
+                    </tbody>
+                  </template>
+                </v-simple-table>
+
+              </v-col>
+
+              <v-col cols=6>
+                <v-alert
+                  color="blue"
+                  elevation="4"
+                  type="success"
+                >Make sure you've moved the data you want to upload to the Image-Comparator-Data directory within a folder. Enter the folder name into the form so the app knows where to get the data.
+                </v-alert>
+                <h2>Create Image List:</h2>
+                <v-form action="/add_images" method="post" ref="form">
+                  <v-text-field
+                    name="folder"
+                    v-model="folder"
+                    :error-messages="folderErrors"
+                    :counter="20"
+                    label='Folder within "Image-Comparator-Data" Folder'
+                    required
+                    @input="$v.folder.$touch()"
+                    @blur="$v.folder.$touch()"
+                  ></v-text-field>
+                  <v-text-field
+                    name="imageListName"
+                    v-model="imageListName"
+                    :error-messages="imageListNameErrors"
+                    label="Image List Name"
+                    required
+                    @input="$v.imageListName.$touch()"
+                    @blur="$v.imageListName.$touch()"
+                  ></v-text-field>
+                  <v-select
+                  name="imageListTypeSelect"
+                  v-model="imageListTypeSelect"
+                  :items="imageListTypeSelectItems"
+                  :error-messages="imageListTypeSelectErrors"
+                  label="Image List Type"
+                  required
+                  @change="$v.imageListTypeSelect.$touch()"
+                  @blur="$v.imageListTypeSelect.$touch()"
+                ></v-select>
+
+                  <v-btn
+                    class="mr-4"
+                    @click="submit"
+                  >
+                    submit
+                  </v-btn>
+                  <v-btn @click="clear">
+                    clear
+                  </v-btn>
+                </v-form>
+              </v-col>
+
+
+            </v-row>
 
           </v-container>
       </v-main>
@@ -34,17 +121,121 @@
 
 
 {% block js_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/vuelidate/dist/vuelidate.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuelidate/dist/validators.min.js"></script>
+
 
 <script>
+const { required, maxLength } = validators
+const validationMixin = vuelidate.validationMixin
+
+Vue.use(vuelidate.default)
 
 var template_app =new Vue({
     el: '#imagesDashboard',
     vuetify: new Vuetify(),
+    mixins: [validationMixin],
+
+    validations: {
+      folder: { required, maxLength: maxLength(20) },
+      imageListName: { required },
+      imageListTypeSelect: { required },
+    },
 
     data: () => ({
         message: 'This is the images dashboard',
+        imageLists: [],
+        // form data
+        folder: '',
+        imageListName: '',
+        imageListTypeSelect: null,
+        imageListTypeSelectItems: ['non-DICOM', 'DICOM'],
 
     }),
+    
+    async mounted() {
+      configuration = await this.getConfiguration()
+      this.DNS = configuration.DNS;
+      this.IMAGES_DB = configuration.IMAGES_DB;
+      this.DB_PORT = configuration.DB_PORT;
+      this.HTTP_PORT = configuration.HTTP_PORT;
+      this.ADMIN_PARTY = configuration.ADMIN_PARTY;
+      this.USER_INFO = configuration.USER_INFO;
+      this.getImageLists();
+  },
+
+  computed: {
+    // General
+    URLS() {
+        return {
+            configuration: "/configuration",
+            getImageLists: `http://${this.DNS}:${this.HTTP_PORT}/get_image_lists`,
+            goToImageSummary: `http://${this.DNS}:${this.HTTP_PORT}`,
+        }
+    },
+    // Right Column
+    folderErrors() {
+        const errors = []
+        if (!this.$v.folder.$dirty) return errors
+        !this.$v.folder.maxLength && errors.push('Folder must be at most 20 characters long')
+        !this.$v.folder.required && errors.push('Folder is required.')
+        return errors
+    },
+    imageListNameErrors() {
+        const errors = []
+        if (!this.$v.imageListName.$dirty) return errors
+        !this.$v.imageListName.required && errors.push('User is required.')
+        return errors
+    },
+    imageListTypeSelectErrors() {
+        const errors = []
+        if (!this.$v.imageListTypeSelect.$dirty) return errors
+        !this.$v.imageListTypeSelect.required && errors.push('List Type is required.')
+        return errors
+    },
+  },
+
+  methods: {
+    async getConfiguration() {
+      // https://dmitripavlutin.com/javascript-fetch-async-await/
+      const response = await fetch('/configuration');
+      if (!response.ok) {
+          const message = `An error has occured: ${response.status}`;
+          throw new Error(message);
+      }
+      const configuration = await response.json();
+      return configuration;
+    },
+    getImageLists() {
+      console.log("getImageLists")
+      fetch(this.URLS.getImageLists)
+          .then((response) => response.json())
+          .then((data) => {
+              data.rows.forEach((v, i, a) => {
+                cleaned_data = {imageList:v.key[0], images: v.value}
+                this.imageLists.push(cleaned_data)
+              })
+          })
+    },
+    goToImageSummary(imageList) {
+      console.log("goToImageSummary")
+      window.open(this.URLS.goToImageSummary + `/image_list_summary/${imageList}`)
+    },
+    // Right Column
+    submit() {
+      this.$v.$touch()
+      //debugger
+      this.$refs.form.$el.submit()
+    },
+    clear() {
+      this.$v.$reset()
+      this.folder = ''
+      this.imageListName = ''
+      this.imageListTypeSelect = ''
+    },
+
+
+  },
 
     delimiters: ['[[',']]'],
   })

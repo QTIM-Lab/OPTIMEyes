@@ -8,7 +8,7 @@ import pdb
 import pprint as pp
 import pandas as pd
 from PIL import Image
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
 # UTILS_DIR = "flask_server/image_comparator/utils"
@@ -17,6 +17,7 @@ load_dotenv("flask_server/.env", verbose=True)
 DB_ADMIN_USER = os.getenv("DB_ADMIN_USER")
 DB_ADMIN_PASS = os.getenv("DB_ADMIN_PASS")
 DNS = os.getenv("DNS")
+IMAGE_COMPARATOR_DATA = os.getenv("IMAGE_COMPARATOR_DATA")
 IMAGES_DB = os.getenv("IMAGES_DB")
 DB_PORT = os.getenv("DB_PORT")
 ADMIN_PARTY = True if os.getenv("ADMIN_PARTY") == 'True' else False
@@ -28,75 +29,83 @@ else:
     couch = couchdb.Server(
         f'http://{DB_ADMIN_USER}:{DB_ADMIN_PASS}@{DNS}:{DB_PORT}')
 
-
-def main(path_to_images: str, imageSetName: str, fromCSV: str = None):
-    # pdb.set_trace()
+def addImages(path_to_images: str, imageListName: str, imageSetType: str = 'non-DICOM', fromCSV: str = None):
     # get images
-    images_unfiltered = os.listdir(path_to_images)
-    images = list(filter(lambda x: x.find(".jpg") != -
-                  1 or x.find(".png") != -1, images_unfiltered))
+    images_path = os.path.join(IMAGE_COMPARATOR_DATA, path_to_images)
+    images_unfiltered = os.listdir(images_path)
+    images = list(filter(lambda x: x.find(".jpg") != -1 \
+                         or x.find(".png") != -1 \
+                         or x.find(".bmp") != -1 \
+                         or x.find(".tiff") != -1, \
+                         images_unfiltered))
 
     # We need to check current current image counts
     db = couch[IMAGES_DB]
+    # I DON'T THINK WE NEED THIS IF WE USE COMPLEX IMAGE NAMES
     count_image_docs = [i for i in db.view("images/count_image_docs")]
     imgCount = count_image_docs[0].value if len(count_image_docs) > 0 else 0
-    # pdb.set_trace()
+    # I DON'T THINK WE NEED THIS IF WE USE COMPLEX IMAGE NAMES
     # If from csv we need to get the extra column data and save it
     if fromCSV != None:
-        images_csv = pd.read_csv(os.path.join(path_to_images, fromCSV))
+        images_csv = pd.read_csv(images_path, fromCSV)
         records = images_csv.to_dict(orient="records")
         for i, record in enumerate(records):
             t = datetime.now() - timedelta(hours=4)
             # mandatory fields
             # pdb.set_trace()
-            record['_id'] = str(i+imgCount+1)
-            record['origin'] = record.pop('image')
+            image = record.pop('image')
+            _id = imageListName + "_" + image
+            record['_id'] = _id
+            record['origin'] = image
             record['id'] = str(uuid.uuid1())
-            record['type'] = "imageDoc"
-            record['imageSetName'] = imageSetName
+            record['type'] = "image"
+            record['imageListName'] = imageListName
+            record['imageSetType'] = imageSetType
             record['timeAdded'] = t.strftime('%Y-%m-%d %H:%M:%S')
 
             db.save(record)
             print(f"Saved record: {record['origin']}")
             image_content = open(os.path.join(
-                path_to_images, record['origin']), "rb")
+                images_path, record['origin']), "rb")
             image_extension = record['origin'].split(".")[-1]
             db.put_attachment(doc=record, content=image_content,
                               filename="image", content_type=f'image/{image_extension}')
             print(f"Added image attachment ({image_extension})")
-            # pdb.set_trace()
 
     else:
         for i, image in enumerate(images):
             # pdb.set_trace()
             t = datetime.now() - timedelta(hours=4)
-            obj = {"_id": str(i+imgCount+1),
+            _id = imageListName + "_" + image
+            obj = {"_id": _id,
                    "origin": image,
                    "id": str(uuid.uuid1()),
                    "type": "image",
-                   "imageSetName": imageSetName,
+                   "imageListName": imageListName,
                    "timeAdded": t.strftime('%Y-%m-%d %H:%M:%S')}
 
             db.save(obj)
             print(f"Saved record: {obj}")
-            # image_content = Image.open(os.path.join(path_to_images,image))
-            image_content = open(os.path.join(path_to_images, image), "rb")
+            image_content = open(os.path.join(images_path, image), "rb")
             image_extension = image.split(".")[-1]
             db.put_attachment(doc=obj, content=image_content,
                               filename="image", content_type=f'image/{image_extension}')
 
+def main(path_to_images: str, imageListName: str, imageSetType: str = 'non-DICOM', fromCSV: str = None):
+    addImages(path_to_images, imageListName, imageSetType, fromCSV)
+   
 
 if __name__ == "__main__":
     try:
         try:
             # pdb.set_trace()
-            main(sys.argv[1], sys.argv[2], sys.argv[3])
-            print("* csv used to help guide import *")
+            main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+            print("* csv used to help guide import*")
         except IndexError as err:
             print("* Assuming no csv to help guide import *")
-            main(sys.argv[1], sys.argv[2])
+            main(sys.argv[1], sys.argv[2], sys.argv[3])
     except IndexError as err:
         print(f"""
         Error: {err}, and probably means you 
-        didn't provide <path_to_images> or <imageSetName>, with optional [<fromCSV>]
+        didn't provide <path_to_images> or <imageListName>, with optional [<fromCSV>]
         """)
