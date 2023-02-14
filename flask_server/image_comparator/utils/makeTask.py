@@ -32,15 +32,16 @@ else:
 def makeTask(user: str, imageListName: str, imageListType: str, taskOrder: int, linkedWithImageListName: str = None) -> None:
     t = datetime.now() - timedelta(hours=4)
     obj = {"type": "task",
-        #    "task_type": imageListType,
            "app": imageListType,
            "list_name": imageListName,
            "task_order": taskOrder,
            "user": user,
            "time_added": t.strftime('%Y-%m-%d %H:%M:%S'),
            "current_idx": 0,
-           "completed": False}
-    if linkedWithImageListName != "none":
+           "completed": False,
+           "tool_set": None,
+    }
+    if linkedWithImageListName is not None:
         obj['linked_with_image_list_name'] = linkedWithImageListName
 
     db = couch[IMAGES_DB]

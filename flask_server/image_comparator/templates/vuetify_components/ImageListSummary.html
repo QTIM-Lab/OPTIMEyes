@@ -17,39 +17,57 @@
 {% include 'vuetify_components/navbar.html' %}
 
 <!-- Index Vue App -->
-<div id="template_app">
+<div id="imageListSummary">
     <v-app>
         <navbar-tag></navbar-tag>
       <v-main>
           <v-container>
-            <h1>Template App: [[ message ]]</h1>
+            <div>
+              <h1>[[ message ]]</h1>
+  
+              <v-select
+                v-model="cols_selected"
+                :items="columns"
+                label="Columns"
+                outlined
+              ></v-select>
+            </div>
 
             <v-row>
               <v-col
                 v-for="image in images"
-                :key="image"
+                :key="image.value._id"
                 class="d-flex child-flex"
-                cols="4"
+                :cols="grid_cols"
               >
-                <v-img
-                  :src="`https://picsum.photos/500/300?image=${n * 5 + 10}`"
-                  :lazy-src="`https://picsum.photos/10/6?image=${n * 5 + 10}`"
-                  aspect-ratio="1"
-                  class="grey lighten-2"
-                >
-                  <template v-slot:placeholder>
-                    <v-row
-                      class="fill-height ma-0"
-                      align="center"
-                      justify="center"
-                    >
-                      <v-progress-circular
-                        indeterminate
-                        color="grey lighten-5"
-                      ></v-progress-circular>
-                    </v-row>
-                  </template>
-                </v-img>
+                <v-card>
+                
+                  <v-img
+                    :src="image.value.base64"
+                    :lazy-src="image.value.base64"
+                    aspect-ratio="1"
+                    class="grey lighten-2"
+                  >
+                    <template v-slot:placeholder>
+                      <v-row
+                        class="fill-height ma-0"
+                        align="center"
+                        justify="center"
+                      >
+                        <v-progress-circular
+                          indeterminate
+                          color="grey lighten-5"
+                        ></v-progress-circular>
+                      </v-row>
+                    </template>
+                  </v-img>
+
+                  <v-card-text>
+                    [[ image.value._id ]]
+                  </v-card-text>
+
+                </v-card>
+
               </v-col>
             </v-row>
 
@@ -66,14 +84,17 @@
 
 <script>
 
-var template_app =new Vue({
-    el: '#template_app',
+var imageListSummary =new Vue({
+    el: '#imageListSummary',
     vuetify: new Vuetify(),
 
     data: () => ({
-        message: 'This is an image summary test {{ imageList }}',
+        message: `Image List: {{ imageList }} `,
         imageList: "{{ imageList }}",
         images: [],
+        // select
+        columns: [1,2,3,4,6,12],
+        cols_selected: 12,
 
     }),
     async mounted() {
@@ -95,6 +116,11 @@ var template_app =new Vue({
               getImagesByList: `http://${this.DNS}:${this.HTTP_PORT}/get_images_by_list`
           }
       },
+      grid_cols() {
+        grid_col_key = {1:12, 2:6, 3:4, 4:3, 6:2, 12:1 }
+        return grid_col_key[this.cols_selected]
+      }
+
     },
     methods: {
       async getConfiguration() {
@@ -114,6 +140,7 @@ var template_app =new Vue({
             .then((response) => response.json())
             .then((data) => {
               data.rows.forEach((v, i, a) => {
+                v['value']['base64'] = ''
                 this.images.push(v)
                 this.getBase64DataOfImageFromCouch(v['id'])
 
@@ -122,38 +149,20 @@ var template_app =new Vue({
             })
       },
       getBase64DataOfImageFromCouch(image_id) {
-        //debugger
         var url = `http://${this.DNS}:${this.HTTP_PORT}/get_image/${image_id}`
-        ILS = this;
-        particularImage = image_id
+        let ILS = this; // Image List Summary Vue Object
+        let I_ID = image_id;
         fetch(url)
           .then(response => {
-            //response_headers = [...response.headers]
-            //// foreach this response_headers and find file name...also set filename from server
-            //debugger
-            //response_headers.forEach((v,i,a)=>{
-            //  if(v[0] === 'content-disposition'){
-            //    filename = v[1].substring(v[1].search("filename=")+"filename=".length, v[1].length)
-            //    if (TF.app === 'classify'){
-            //      TF.nextImg = filename
-            //    }else if (TF.app === 'grid'){
-            //      TF.cachedClassifyResults[image_id]['image_name'] = filename
-            //      // debugger;
-            //      document.getElementById(`${htmlID}_filename`).innerHTML=`filename: ${filename}`
-            //    }
-            //  }
-            //})
-            //load_messaging_div = document.getElementById("load_messaging")
-            //var image_load_message = document.createElement("p");
-            //image_load_message.innerHTML = `Loading image: ${image_id} ...`
-            //image_load_message.id = image_id
-            //load_messaging_div.appendChild(image_load_message)
             return response.text();
           })
           .then(data => {
-            debugger
             DATA='data:image/png;base64,' + data
-            ILS
+            ILS.images.forEach((v,i,a)=>{
+              if (v['value']['_id'] === I_ID){
+                ILS.images[i]['value']['base64'] = DATA
+              }
+            })
           })
       },
     },

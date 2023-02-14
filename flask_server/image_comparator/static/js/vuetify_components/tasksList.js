@@ -20,6 +20,7 @@ var tasksList = new Vue({
         message: 'This is a template app',
         classifyTasks: [],
         compareTasks: [],
+        alert_message: null,
         // Right Column - Create Task
         user: '',
         imageListName: '',
@@ -44,8 +45,10 @@ var tasksList = new Vue({
         URLS() {
             return {
                 configuration: "/configuration",
+                getBase: `http://${this.DNS}:${this.HTTP_PORT}`,
                 getCompareTasks: `http://${this.DNS}:${this.HTTP_PORT}/get_tasks/compare?username=${this.USER_INFO.username}`,
                 getClassifyTasks: `http://${this.DNS}:${this.HTTP_PORT}/get_tasks/classify?username=${this.USER_INFO.username}`,
+                goToImageSummary: `http://${this.DNS}:${this.HTTP_PORT}/image_list_summary`,
                 getImageCompareListNames: `http://${this.DNS}:${this.HTTP_PORT}/get_image_compare_lists`,
                 getImageClassifyListNames: `http://${this.DNS}:${this.HTTP_PORT}/get_image_classify_lists`,
                 getImageGridListNames: `http://${this.DNS}:${this.HTTP_PORT}/get_image_grid_lists`,
@@ -98,6 +101,7 @@ var tasksList = new Vue({
                 .then((response) => response.json())
                 .then((data) => {
                     data.rows.forEach((v, i, a) => {
+                        //debugger
                         this.classifyTasks.push(v)
                     })
                 })
@@ -108,6 +112,21 @@ var tasksList = new Vue({
                         this.compareTasks.push(v)
                     })
                 })
+        },
+        goToImageSummary(imageList) {
+            console.log("goToImageSummary")
+            debugger
+            if (imageList != null){
+                window.location.replace(this.URLS.goToImageSummary + `/${imageList}`)
+            }else {
+                this.alert_message = "No Image List Associated"
+                setTimeout(()=>{this.alert_message = null}, 2000)
+            }
+          },
+        goToApp(task) {
+          debugger
+          console.log(`goToApp(${task.value.user}, ${task.value.list_name})`)
+          window.location.replace(this.URLS.getBase + `/${task.value.app}App/${task.value.user}/${task.value.list_name}`)
         },
         // Right Column
         submit() {

@@ -29,6 +29,10 @@ else:
     couch = couchdb.Server(
         f'http://{DB_ADMIN_USER}:{DB_ADMIN_PASS}@{DNS}:{DB_PORT}')
 
+
+def getBase64Representation(image_id: str):
+    pdb.set_trace()
+
 def addImages(path_to_images: str, imageListName: str, imageSetType: str = 'non-DICOM', fromCSV: str = None):
     # get images
     images_path = os.path.join(IMAGE_COMPARATOR_DATA, path_to_images)
@@ -71,6 +75,7 @@ def addImages(path_to_images: str, imageListName: str, imageSetType: str = 'non-
             db.put_attachment(doc=record, content=image_content,
                               filename="image", content_type=f'image/{image_extension}')
             print(f"Added image attachment ({image_extension})")
+            # getBase64Representation(_id)
 
     else:
         for i, image in enumerate(images):
@@ -90,6 +95,7 @@ def addImages(path_to_images: str, imageListName: str, imageSetType: str = 'non-
             image_extension = image.split(".")[-1]
             db.put_attachment(doc=obj, content=image_content,
                               filename="image", content_type=f'image/{image_extension}')
+            # getBase64Representation(_id)
 
 def main(path_to_images: str, imageListName: str, imageSetType: str = 'non-DICOM', fromCSV: str = None):
     addImages(path_to_images, imageListName, imageSetType, fromCSV)

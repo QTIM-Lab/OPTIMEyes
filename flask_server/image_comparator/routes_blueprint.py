@@ -22,6 +22,10 @@ from flask_login import login_required, current_user
 # self written utils
 from .utils.makeTask import makeTask  # for use in create_user
 from .utils.addImages import addImages  # for use in addImages
+from .utils.deleteImageList import deleteImageList  # for use in deleteImageList
+
+# DB
+from image_comparator.db import get_server
 
 bp = Blueprint('routes_blueprint', __name__, url_prefix='/')
 
@@ -118,8 +122,15 @@ def main_dashboard():
 
 
 @bp.route('/tasksList', methods=['GET'])
+@login_required
 def tasksList():
     return render_template('/vuetify_components/tasksList.html')
+
+@bp.route('/classifyApp/<user>/<list_name>', methods=['GET'])
+def classifyApp(user, list_name):
+    # pdb.set_trace()
+    task_dict = {"user":user, "list_name":list_name}
+    return render_template('/vuetify_components/classifyApp.html', task=task_dict)
 
 
 @bp.route('/compareApp', methods=['GET'])
@@ -127,12 +138,13 @@ def compareApp():
     return render_template('/vuetify_components/compareApp.html')
 
 @bp.route('/imagesDashboard', methods=['GET'])
+@login_required
 def imagesDashboard():
     return render_template('/vuetify_components/imagesDashboard.html')
 
 @bp.route('/image_list_summary/<imageList>', methods=['GET'])
+@login_required
 def goToImageListSummary(imageList):
-    print("in /goToImageListSummary")
     return render_template('/vuetify_components/ImageListSummary.html', imageList=imageList)
     
 
@@ -197,7 +209,15 @@ def add_images():
     imageListName=request.form['imageListName']
     imageListTypeSelect=request.form['imageListTypeSelect']
     addImages(folder, imageListName, imageListTypeSelect)
-    return redirect(f'/add_images')
+    return redirect('/imagesDashboard')
+   
+@bp.route('/delete_image_list/<imageList>', methods=['DELETE'])
+def delete_image_list(imageList):
+    print("in /delete_image_list")
+    deleted_images = deleteImageList(imageList)
+    # pdb.set_trace()
+    return deleted_images
+   
     
     
 @bp.route('/make_task', methods=['POST'])
@@ -251,6 +271,26 @@ def get_tasks(app):
     # view = f"_design/basic_views/_view/incomplete_{app}_tasks?key=\"{username}\""
     # view = f"_design/{app}App/_view/incomplete_{app}_tasks?key=\"{username}\""
     view = f"_design/{app}App/_view/incompleteTasks?key=\"{username}\""
+    url = f"{base}/{view}"
+    response = check_if_admin_party_then_make_request(url)
+    # pdb.set_trace()
+    return json.loads(response.content.decode('utf-8'))
+
+@bp.route('/get_task/<app>/<user>/<list_name>', methods=['GET'])
+def get_task(app, user, list_name):
+    base = "http://{}:{}/{}".format(
+        current_app.config['DNS'], current_app.config['DB_PORT'], current_app.config["IMAGES_DB"])
+    view = f"_design/{app}App/_view/tasksByUserAndListName?key=[\"{user}\", \"{list_name}\"]"
+    url = f"{base}/{view}"
+    response = check_if_admin_party_then_make_request(url)
+    # pdb.set_trace()
+    return json.loads(response.content.decode('utf-8'))
+
+@bp.route('/get_toolset/<app>/<tool_set>', methods=['GET'])
+def get_toolset(app,tool_set):
+    base = "http://{}:{}/{}".format(
+        current_app.config['DNS'], current_app.config['DB_PORT'], current_app.config["IMAGES_DB"])
+    view = f"_design/{app}App/_view/toolSets?key=\"{tool_set}\""
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
     # pdb.set_trace()
@@ -390,10 +430,14 @@ def get_image(image_id):
         download_name=attachment_filename)
     return response
 
+# OLD
+# @bp.route('/task_results', methods=['POST'])
 
-@bp.route('/task_results', methods=['POST'])
-def task_results():
-    print("in /task_results")
+@bp.route('/task_result', methods=['POST'])
+def task_result():
+    print("in /task_result")
+    couch_server = get_server(); db = couch_server['image_comparator'];
+    pdb_set_trace()
     if current_app.config["ADMIN_PARTY"]:
         couch = couchdb.Server(
             f'http://{current_app.config["DNS"]}:{current_app.config["DB_PORT"]}')

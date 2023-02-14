@@ -25,6 +25,18 @@
             <v-row>
               <v-col cols=6>
                 <h2>Image Lists:</h2>
+                
+                <v-alert
+                  color="red"
+                  elevation="4"
+                  type="success"
+                  v-if="deleted_images != null"
+                >
+                  <p>Deleted [[ deleted_images.count ]] images.</p>
+                  <ul v-for="image in deleted_images.image_ids">
+                    <li>[[ image ]]</li>
+                  </ul>
+                </v-alert>
 
                 <v-simple-table>
                   <template v-slot:default>
@@ -35,6 +47,9 @@
                         </th>
                         <th class="text-left">
                           Images
+                        </th>
+                        <th class="text-left">
+                          Action
                         </th>
                       </tr>
                     </thead>
@@ -50,6 +65,12 @@
                           >[[ item.imageList ]]</v-btn>
                         </td>
                         <td>[[ item.images ]]</td>
+                        <td>
+                          <v-btn
+                          elevation="2"
+                          @click="deleteImageList([[ item.imageList ]])" 
+                          >Delete</v-btn>
+                        </td>
                       </tr>
                     </tbody>
                   </template>
@@ -150,6 +171,8 @@ var template_app =new Vue({
         imageListName: '',
         imageListTypeSelect: null,
         imageListTypeSelectItems: ['non-DICOM', 'DICOM'],
+        // delete variables
+        deleted_images: null
 
     }),
     
@@ -170,7 +193,8 @@ var template_app =new Vue({
         return {
             configuration: "/configuration",
             getImageLists: `http://${this.DNS}:${this.HTTP_PORT}/get_image_lists`,
-            goToImageSummary: `http://${this.DNS}:${this.HTTP_PORT}`,
+            goToImageSummary: `http://${this.DNS}:${this.HTTP_PORT}/image_list_summary`,
+            deleteImageList: `http://${this.DNS}:${this.HTTP_PORT}/delete_image_list`,
         }
     },
     // Right Column
@@ -217,9 +241,29 @@ var template_app =new Vue({
               })
           })
     },
+    deleteImageList(imageList) {
+      console.log("deleteImageList")
+      IL = imageList[0][0];
+      fetch(this.URLS.deleteImageList+`/${imageList}`, {
+        method: 'DELETE',
+      })
+      .then((response) => response.json())
+      .then((data) => {
+        this.deleted_images = data
+        setTimeout(()=>{
+          this.deleted_images = null;
+          this.imageLists.forEach((v,i,a)=>{
+            if (v['imageList'] === IL){
+              debugger
+              this.imageLists.splice(i, 1)
+            }
+          })
+        }, 2000)
+      })
+    },
     goToImageSummary(imageList) {
       console.log("goToImageSummary")
-      window.open(this.URLS.goToImageSummary + `/image_list_summary/${imageList}`)
+      window.location.replace(this.URLS.goToImageSummary + `/${imageList}`)
     },
     // Right Column
     submit() {
