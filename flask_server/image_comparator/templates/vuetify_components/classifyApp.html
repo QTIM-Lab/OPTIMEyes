@@ -54,30 +54,41 @@
               sm="2"
               >
                 <!-- Tools -->
+                <!--https://codepen.io/zed_at_home/pen/LYpWyEM-->
                 <v-form v-if="tool_set" action="/task_result" method="post" ref="form">
-
                   <div
-                    v-for="checkbox_category in Object.keys(result.checkbox_categories)"
+                    v-for="(checkbox_category, index_checkbox_category) in tool_set.checkbox_categories"
+                    :key="checkbox_category['category_id']"
                   >
-                  <!--https://codepen.io/zed_at_home/pen/LYpWyEM-->
+                    <p>[[ checkbox_category['category_id'] ]]</p>
+
                     <v-checkbox
                       @click="test"
-                      v-for="checkbox in Object.keys(result.checkbox_categories[checkbox_category])"
-                      v-model="result.checkbox_categories[checkbox_category][checkbox]"
-                      :label="`label: ${checkbox} checked: ${result.checkbox_categories[checkbox_category][checkbox]}`"
+                      v-for="(checkbox, indexCheckbox) in checkbox_category['checkboxes']"
+                      :key="checkbox['checkbox_id']"
+                      v-model="result.checkbox_categories[index_checkbox_category].checkboxes[indexCheckbox].checked"
+                      :label="`${result.checkbox_categories[index_checkbox_category].checkboxes[indexCheckbox].checked.toString()}`"
                       color="red"
                       hide-details
                     ></v-checkbox>
 
                   </div>
 
-<!--
-                  <v-radio-group>
-                    <v-radio label="Radio 1" value="1"></v-radio>
-                    <v-radio label="Radio 2" value="2"></v-radio>
-                    <v-radio label="Radio 3" value="3"></v-radio>
+                  <v-radio-group
+                    v-for="(radio_button_category, index_radio_category) in tool_set.radio_button_categories"
+                    :key="radio_button_category['category_id']"
+                    v-model="result.radio_button_categories[index_radio_category].selected"
+                  >
+                    <p>[[ radio_button_category['category_id'] ]]</p>
+                    <v-radio
+                      @click="test"
+                      v-for="(radio_button, index_radio_button) in radio_button_category['buttons']"
+                      :key="radio_button['button_id']"
+                      :label="`${result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id}`"
+                      :value="`${result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id}`"
+                    ></v-radio>
+
                   </v-radio-group>
--->
 <!--
                   <v-text-field
                     name="imageListName"
@@ -121,6 +132,13 @@ var classify_app =new Vue({
     vuetify: new Vuetify(),
 
     data: () => ({
+      test_list_list: [{"Key": "key1", "List": [{"key": 1, "name": "a"}, {"key": 2, "name": "b"}]},
+                       {"Key": "key2", "List": [{"key": 3, "name": "c"}, {"key": 4, "name": "d"}]}      
+      ],
+      result_list_list: [{"Key": "key1", "List": [{"key": 1, "name": "a"}, {"key": 2, "name": "b"}]},
+                         {"Key": "key2", "List": [{"key": 3, "name": "c"}, {"key": 4, "name": "d"}]}      
+      ],
+      test_list: [{"key": 1, "name": "e"}, {"key": 2, "name": "f"}],
       app: "classify",
       user: "{{ task.user }}",
       list_name: "{{ task.list_name }}",
@@ -189,7 +207,7 @@ var classify_app =new Vue({
             }
           })
       },
-      test() {debugger},
+      test() {debugger}, ///////////delete meeeeeeeeeeeeeeeeeeeeeeeeeee
       getTools(app, tool_set) {
         console.log("getTask")
         fetch(this.URLS.getToolSet + `/${app}/${tool_set}`)
@@ -197,39 +215,11 @@ var classify_app =new Vue({
         .then((data) => {
           if (data.rows.length === 1){
             // Store tool_set and make results object to match
-            var tool_set = data.rows[0]
-            CA = this
-            CA.result = {}; 
-            Object.keys(tool_set.value.tools).forEach((v,i,a) =>{
-              TS = tool_set
-              CBCs = tool_set.value.tools.checkboxes
-              RBCs = tool_set.value.tools.radio_buttons
-              TIs = tool_set.value.tools.text_inputs
-              if (v === 'checkboxes'){
-                // create checkbox categories section
-                //CA.result['checkbox_categories'] = [];
-                CA.result['checkbox_categories'] = []; //old
-                Object.keys(CBCs).forEach((vv, ii, aa) => {
-                  // create category for checkboxes
-                  //CA.result['checkbox_categories'].push({vv: []})
-                  CA.result['checkbox_categories'][vv] = {} //old
-                  CBCs[vv].forEach((vvv, iii, aaa) => {
-                    //debugger
-                    // create checkbox in specific category
-                    
-                    CA.result['checkbox_categories'][vv][vvv] = false
-                  })
-                }, this)
-              }else if (v === "radio_buttons"){
-                //debugger
-                RBCs
-              }else if (v === "text_inputs"){
-                //debugger
-                TIs
-              }
-            })
-            this.tool_set = tool_set; ///////////////
+            var tool_set = data.rows[0].value.tools
+            var result = JSON.parse(JSON.stringify(data.rows[0].value.tools));
             debugger
+            this.result = result; 
+            this.tool_set = tool_set;
           }else{
             this.alert_error = "Can't find specified tool set"
             setTimeout(()=>{this.alert_error = null}, 2000)
