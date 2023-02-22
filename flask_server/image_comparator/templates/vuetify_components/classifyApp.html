@@ -89,16 +89,21 @@
                     ></v-radio>
 
                   </v-radio-group>
-<!--
-                  <v-text-field
-                    name="imageListName"
-                    v-model="imageListName"
-                    label="Image List Name"
-                    required
-                    @input="$v.imageListName.$touch()"
-                    @blur="$v.imageListName.$touch()"
-                  ></v-text-field>
--->
+
+                  <div
+                  v-for="(text_input_category, index_text_input_category) in tool_set.text_input_categories"
+                  :key="text_input_category['category_id']"
+                  >
+                    <p>[[ text_input_category.category_id ]]</p>
+                    <v-textarea
+                      v-for="(text_input, index_text_input) in text_input_category['text_inputs']"
+                      :key="text_input['text_input_id']"
+                      v-model="result.text_input_categories[index_text_input_category].text_inputs[index_text_input].message"
+                      :label="`${result.text_input_categories[index_text_input_category].text_inputs[index_text_input].text_input_id}`"
+                    ></v-textarea>
+
+                  </div>
+
                   <v-btn
                     class="mr-4"
                     @click="submit"
@@ -132,13 +137,6 @@ var classify_app =new Vue({
     vuetify: new Vuetify(),
 
     data: () => ({
-      test_list_list: [{"Key": "key1", "List": [{"key": 1, "name": "a"}, {"key": 2, "name": "b"}]},
-                       {"Key": "key2", "List": [{"key": 3, "name": "c"}, {"key": 4, "name": "d"}]}      
-      ],
-      result_list_list: [{"Key": "key1", "List": [{"key": 1, "name": "a"}, {"key": 2, "name": "b"}]},
-                         {"Key": "key2", "List": [{"key": 3, "name": "c"}, {"key": 4, "name": "d"}]}      
-      ],
-      test_list: [{"key": 1, "name": "e"}, {"key": 2, "name": "f"}],
       app: "classify",
       user: "{{ task.user }}",
       list_name: "{{ task.list_name }}",
