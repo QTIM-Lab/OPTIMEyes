@@ -6,7 +6,7 @@
             "map": "function(doc) {\n  if (doc.type === \"task\" && doc.app === \"compare\") {\n    emit (doc.user, doc);\n  }\n}"
         },
         "completedTasks": {
-            "map": "function(doc) {\n  if (doc.type === \"task\" && doc.app === \"compare\" && doc.completed === true) {\n    emit (doc.user, doc);\n  }\n}"
+            "map": "function(doc) {\n  if (doc.type === \"task\" && doc.app === \"compare\" && doc.completed === true) {\n    emit ([doc.user, doc.list_name], doc);\n  }\n}"
         },
         "incompleteTasks": {
             "map": "function(doc) {\n  if (doc.type === \"task\" && doc.app === \"compare\" && doc.completed === false) {\n    emit (doc.user, doc);\n  }\n}"

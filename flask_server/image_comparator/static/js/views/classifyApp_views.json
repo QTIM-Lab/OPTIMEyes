@@ -6,8 +6,8 @@
             "map": "function(doc) {\n  if (doc.type === \"task\" && doc.app === \"classify\") {\n    emit (doc.user, doc);\n  }\n}"
         },
         "completedTasks": {
-            "map": "function(doc) {\n  if (doc.type === \"task\" && doc.app === \"classify\" && doc.completed === true) {\n    emit (doc.user, doc);\n  }\n}"
-        },
+            "map": "function(doc) {\n  if (doc.type === \"task\" && doc.app === \"classify\" && doc.completed === true) {\n    emit ([doc.user, doc.list_name], doc);\n  }\n}"
+          },
         "incompleteTasks": {
             "map": "function(doc) {\n  if (doc.type === \"task\" && doc.app === \"classify\" && doc.completed === false) {\n    emit (doc.user, doc);\n  }\n}"
         },
@@ -19,6 +19,9 @@
         },
         "results": {
             "map": "function(doc) {\n  if (doc.type === \"result\" && doc.app === \"classify\")\n    emit(doc.user, doc);\n}"
-        }
+        },
+        "tasksByUserAndListName": {
+            "map": "function(doc) {\n  if (doc.type === \"task\" && doc.app === \"classify\") {\n    emit ([doc.user, doc.list_name], doc);\n  }\n}"
+          }
     }
 }
