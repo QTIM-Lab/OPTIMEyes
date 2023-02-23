@@ -39,7 +39,7 @@ def makeTask(user: str, imageListName: str, imageListType: str, taskOrder: int, 
            "time_added": t.strftime('%Y-%m-%d %H:%M:%S'),
            "current_idx": 0,
            "completed": False,
-           "tool_set": None,
+           "tool_set": "tool_set_template",
     }
     if linkedWithImageListName is not None:
         obj['linked_with_image_list_name'] = linkedWithImageListName

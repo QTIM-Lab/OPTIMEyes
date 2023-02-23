@@ -47,6 +47,10 @@ curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASSWORD@0.0.0.0:$DB_PORT/$DB_NAME/_de
 
 curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASSWORD@0.0.0.0:$DB_PORT/$DB_NAME/_design/classifyApp -d @flask_server/image_comparator/static/js/views/classifyApp_views.json
 
+curl -X POST http://$COUCHDB_USER:$COUCHDB_PASSWORD@0.0.0.0:$DB_PORT/$DB_NAME \
+  -H 'Content-Type: application/json' \
+  -d @flask_server/image_comparator/static/js/views/classify_tool_set_template.json
+
 curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASSWORD@0.0.0.0:$DB_PORT/$DB_NAME/_design/compareApp -d @flask_server/image_comparator/static/js/views/compareApp_views.json
 
 curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASSWORD@0.0.0.0:$DB_PORT/$DB_NAME/_design/images -d @flask_server/image_comparator/static/js/views/images_views.json

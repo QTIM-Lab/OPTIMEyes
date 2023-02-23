@@ -140,6 +140,7 @@ var classify_app =new Vue({
       app: "classify",
       user: "{{ task.user }}",
       list_name: "{{ task.list_name }}",
+      images: [],
       task: null,
       tool_set: null,
       result: null,
@@ -158,6 +159,7 @@ var classify_app =new Vue({
         this.ADMIN_PARTY = configuration.ADMIN_PARTY;
         this.USER_INFO = configuration.USER_INFO;
         await this.getTask(this.app, this.user, this.list_name);
+        await this.getImageList(this.app, this.user, this.list_name);
         //debugger
         this.getTools(this.app, this.task.value.tool_set)
         // Need to get image compare list so we can get pair to display based on current_idx
@@ -170,10 +172,7 @@ var classify_app =new Vue({
               configuration: "/configuration",
               getTask: `http://${this.DNS}:${this.HTTP_PORT}/get_task/${this.app}/${this.user}/${this.list_name}`,
               getToolSet: `http://${this.DNS}:${this.HTTP_PORT}/get_toolset/`,
-              getImageCompareListNames: `http://${this.DNS}:${this.HTTP_PORT}/get_image_compare_lists`,
-              getImageClassifyListNames: `http://${this.DNS}:${this.HTTP_PORT}/get_image_classify_lists`,
-              getImageGridListNames: `http://${this.DNS}:${this.HTTP_PORT}/get_image_grid_lists`,
-              getImagePairListNames: `http://${this.DNS}:${this.HTTP_PORT}/get_image_pair_lists`
+              getImageList: `http://${this.DNS}:${this.HTTP_PORT}/get_image_classify_lists/`,
           }
       },
     },
@@ -196,6 +195,7 @@ var classify_app =new Vue({
           .then((data) => {
             if (data.rows.length === 1){
               this.task = data.rows[0]
+              debugger
               if (this.task.value.completed){
                 this.alert_warning = "This task is completed"
                 setTimeout(()=>{this.alert_warning = null}, 2000)
@@ -204,6 +204,23 @@ var classify_app =new Vue({
               alert("more than one task or less than 1 task...debug...")
             }
           })
+      },
+      async getImageList(app, user, list_name) {
+        console.log("getImageList")
+        await fetch(this.URLS.getImageList)
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.rows.length === 1){
+            this.task = data.rows[0]
+            debugger
+            if (this.task.value.completed){
+              this.alert_warning = "This task is completed"
+              setTimeout(()=>{this.alert_warning = null}, 2000)
+            }
+          }else{
+            alert("more than one task or less than 1 task...debug...")
+          }
+        })
       },
       test() {debugger}, ///////////delete meeeeeeeeeeeeeeeeeeeeeeeeeee
       getTools(app, tool_set) {
@@ -215,7 +232,6 @@ var classify_app =new Vue({
             // Store tool_set and make results object to match
             var tool_set = data.rows[0].value.tools
             var result = JSON.parse(JSON.stringify(data.rows[0].value.tools));
-            debugger
             this.result = result; 
             this.tool_set = tool_set;
           }else{

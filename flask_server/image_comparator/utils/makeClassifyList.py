@@ -37,7 +37,7 @@ else:
 
 def getURL(imageSet: str) -> str:
     url = f"http://{DNS}:{DB_PORT}/{IMAGES_DB}"
-    view = f'/_design/images/_view/images?key="{imageSet}"'
+    view = f'/_design/images/_view/imagesByList?key="{imageSet}"'
     URL = url + view
     return URL
 
@@ -48,39 +48,41 @@ def getImageIDs(url: str) -> list:
     else:
         response = requests.get(url, auth=(DB_ADMIN_USER, DB_ADMIN_PASS))
     response = response.content.decode('utf-8')
-    pdb.set_trace()
+    #pdb.set_trace()
     response = json.loads(response)
-    imageIDs = [int(row['id']) for row in response['rows']]
+    imageIDs = [row['id'] for row in response['rows']]
     imageIDs.sort()
 
     return imageIDs
 
 
-def makeList(listName: str, images: list) -> None:
-    # pdb.set_trace()
-    uid = uuid.uuid1()
-    t = datetime.now() - timedelta(hours=4)
-    obj = {
-        "app": "classify",
-        "type": "imageList",
-        "list_name": listName,
-        "count": len(images),
-        "list": images,
-        "time_added": t.strftime('%Y-%m-%d %H:%M:%S')}
-    db = couch[IMAGES_DB]
-    print(f"Created Classify List: {listName}")
-    doc_id, doc_rev = db.save(obj)
-
-
-def main(imageSet: str, listName: str, pctRepeat: int = 0):
+#def makeClassifyList(classifyListName: str, images: list) -> None:
+def makeClassifyList(imageSet: str, classifyListName: str, pctRepeat: int = 0) -> None:
     url = getURL(imageSet)
+    # pdb.set_trace()
     imageIDs = getImageIDs(url)
     # create all unique combinations
     amountRepeat = math.ceil(pctRepeat/100 * len(imageIDs))
     random.shuffle(imageIDs)
     repeats = random.sample(imageIDs, amountRepeat)
     images = imageIDs + repeats
-    makeList(listName, images)
+
+    uid = uuid.uuid1()
+    t = datetime.now() - timedelta(hours=4)
+    obj = {
+        "app": "classify",
+        "type": "imageList",
+        "list_name": classifyListName,
+        "count": len(images),
+        "list": images,
+        "time_added": t.strftime('%Y-%m-%d %H:%M:%S')}
+    db = couch[IMAGES_DB]
+    print(f"Created Classify List: {classifyListName}")
+    doc_id, doc_rev = db.save(obj)
+
+
+def main(imageSet: str, classifyListName: str, pctRepeat: int = 0):
+    makeClassifyList(imageSet, classifyListName, pctRepeat)
 
 
 if __name__ == "__main__":
@@ -95,5 +97,5 @@ if __name__ == "__main__":
     except IndexError as err:
         print(f"""
         Error: {err}, and probably means you 
-        didn't provide <imageSet>, <listName>, with optional [<pctRepeat>]
+        didn't provide <imageSet>, <classifyListName>, with optional [<pctRepeat>]
         """)

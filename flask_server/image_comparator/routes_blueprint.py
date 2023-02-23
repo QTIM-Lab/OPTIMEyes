@@ -21,6 +21,7 @@ from flask_login import login_required, current_user
 
 # self written utils
 from .utils.makeTask import makeTask  # for use in create_user
+from .utils.makeClassifyList import makeClassifyList  # for use in create_user
 from .utils.addImages import addImages  # for use in addImages
 from .utils.deleteImageList import deleteImageList  # for use in deleteImageList
 
@@ -227,7 +228,10 @@ def make_task():
     imageListName=request.form['imageListName']
     imageListTypeSelect=request.form['imageListTypeSelect']
     taskOrder=request.form['taskOrder']
-    makeTask(user, imageListName, imageListTypeSelect, taskOrder)
+    #pdb.set_trace()
+    classifyListName=f"CLImageSet-{imageListName}"
+    makeClassifyList(imageSet=imageListName, classifyListName=classifyListName, pctRepeat=0)
+    makeTask(user, classifyListName, imageListTypeSelect, taskOrder)
     return redirect(f'/tasksList')
     
 
