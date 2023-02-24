@@ -70,9 +70,10 @@ def makeClassifyList(imageSet: str, classifyListName: str, pctRepeat: int = 0) -
     uid = uuid.uuid1()
     t = datetime.now() - timedelta(hours=4)
     obj = {
+        "_id":classifyListName,
         "app": "classify",
         "type": "imageList",
-        "list_name": classifyListName,
+        "imageSet": imageSet, # probably redundant now
         "count": len(images),
         "list": images,
         "time_added": t.strftime('%Y-%m-%d %H:%M:%S')}

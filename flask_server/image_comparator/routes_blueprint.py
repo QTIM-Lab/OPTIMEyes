@@ -225,13 +225,23 @@ def delete_image_list(imageList):
 def make_task():
     print("in /make_task")
     user=request.form['user']
-    imageListName=request.form['imageListName']
+    imageListName=request.form['imageListName'] # pre-existing; imageSet
     imageListTypeSelect=request.form['imageListTypeSelect']
+    pctRepeat = 0
     taskOrder=request.form['taskOrder']
     #pdb.set_trace()
-    classifyListName=f"CLImageSet-{imageListName}"
-    makeClassifyList(imageSet=imageListName, classifyListName=classifyListName, pctRepeat=0)
-    makeTask(user, classifyListName, imageListTypeSelect, taskOrder)
+    if imageListTypeSelect == "classify":
+        listName=f"{imageListName}-{imageListTypeSelect}-{pctRepeat}" # Placeholder and won't allow duplicates; add form entry to truly customze and add duplicates
+        makeClassifyList(imageSet=imageListName, classifyListName=listName, pctRepeat=pctRepeat)
+    elif imageListTypeSelect == "compare":
+        pass
+    elif imageListTypeSelect == "grid":
+        pass
+    elif imageListTypeSelect == "pair":
+        pass
+    elif imageListTypeSelect == "flicker":
+        pass
+    makeTask(user=user, imageListName=listName, imageSet=imageListName, imageListType=imageListTypeSelect, taskOrder=taskOrder)
     return redirect(f'/tasksList')
     
 
@@ -258,6 +268,14 @@ def get_image_lists():
 
 @bp.route('/get_images_by_list/<imageList>', methods=['GET'])
 def get_images_by_list(imageList):
+    """_summary_
+
+    Args:
+        imageList (_type_): image set or raw images list name
+
+    Returns:
+        _type_: list of image ids from the database
+    """
     print("in /get_images_by_list")
     base = "http://{}:{}/{}".format(
         current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
@@ -274,7 +292,7 @@ def get_tasks(app):
         current_app.config['DNS'], current_app.config['DB_PORT'], current_app.config["IMAGES_DB"])
     # view = f"_design/basic_views/_view/incomplete_{app}_tasks?key=\"{username}\""
     # view = f"_design/{app}App/_view/incomplete_{app}_tasks?key=\"{username}\""
-    view = f"_design/{app}App/_view/incompleteTasks?key=\"{username}\""
+    view = f"_design/{app}App/_view/tasks?key=\"{username}\""
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
     # pdb.set_trace()
@@ -338,7 +356,7 @@ def get_image_classify_lists():
         url = f"{base}/{view}"
         response = check_if_admin_party_then_make_request(url)
         return json.loads(response.content.decode('utf-8'))
-    pdb.set_trace()
+    # pdb.set_trace()
     # view = f"_design/basic_views/_view/image_classify_lists?key=\"{key}\""
     view = f"_design/classifyApp/_view/imageLists?key=\"{key}\""
     url = f"{base}/{view}"
@@ -422,11 +440,11 @@ def get_image(image_id):
     image_response = base64.b64encode(response.content)
     # Fetch image name
     url_for_couchdb_image_name_fetch = f'http://{current_app.config["DNS"]}:{current_app.config["DB_PORT"]}/{current_app.config["IMAGES_DB"]}/{IMAGE_ID}/'
+    # pdb.set_trace()
     response = check_if_admin_party_then_make_request(url_for_couchdb_image_name_fetch)
     image_meta_data = json.loads(response.content)
     attachment_filename = image_meta_data['origin']
     attachment_extension = attachment_filename[-3:]
-    # pdb.set_trace()
     response = send_file(
         path_or_file=io.BytesIO(image_response),
         mimetype=f'image/{attachment_extension}',
@@ -441,7 +459,6 @@ def get_image(image_id):
 def task_result():
     print("in /task_result")
     couch_server = get_server(); db = couch_server['image_comparator'];
-    pdb_set_trace()
     if current_app.config["ADMIN_PARTY"]:
         couch = couchdb.Server(
             f'http://{current_app.config["DNS"]}:{current_app.config["DB_PORT"]}')
@@ -456,7 +473,7 @@ def task_result():
     doc = db.get(doc_id)  # the doc we saved if we need it
 
     # Determine task type
-    if results['type'] == "gridResult":  # fix to be grid specific
+    if results['app'] == "grid": # I've modified without back testing
         # pdb.set_trace()
         # 2 needs to mark grid task being referenced as "completed"
         x = db.find({'selector': {
@@ -466,7 +483,7 @@ def task_result():
         grid_list = db[_id]
         grid_list['completed'] = True
         db[_id] = grid_list
-    elif results['type'] == "compareResult":
+    elif results['app'] == "compare": # I've modified without back testing
         # pdb.set_trace()
         # 2 needs to mark compare task being referenced as "completed" if this was the last task
         #   or we need to increment the current_idx on the task
@@ -491,23 +508,25 @@ def task_result():
             task['current_idx'] += 1
             db[task['_id']] = task
         return jsonify('asdf')  # ! What is this
-    elif results['type'] == "classifyResult":
+    elif results['app'] == "classify": # I've modified without back testing
         # 2 needs to mark compare task being referenced as "completed" if this was the last task
         #   or we need to increment the current_idx on the task
         # Get Task
         task_map = db.find({'selector': {
-            "_id": results['task'],
-            'list_name': results['task_list_name'],
+            "_id": results['taskid'],
+            'list_name': results['list_name'],
+            'app': results['app'],
             'type': 'task',
             'user': results['user']}})
+        
         # Get Classify List
         classify_list_map = db.find(
             {'selector': {
-                "list_name": results['task_list_name'],
-                "type": "image_classify_list"}})
+                "_id": results['list_name'],
+                "type": "imageList"}})
         task = task_map.__next__()
-        # pdb.set_trace()
         classify_list = classify_list_map.__next__()
+        # pdb.set_trace()
         if task['current_idx'] == classify_list['count'] - 1:
             # That was the last task so mark task as complete
             # pdb.set_trace()
@@ -518,8 +537,8 @@ def task_result():
             task['current_idx'] += 1
             db[task['_id']] = task
 
-        return jsonify('asdf')  # ! What is this
-    elif results['type'] == "pairResult":
+        return jsonify('success')  # ! What is this
+    elif results['app'] == "pair": # I've modified without back testing
         # 2 needs to mark compare task being referenced as "completed" if this was the last task
         #   or we need to increment the current_idx on the task
         task_list_name = results['task_list_name']

@@ -29,11 +29,13 @@ else:
 #     URL = url + view
 #     return URL
 
-def makeTask(user: str, imageListName: str, imageListType: str, taskOrder: int, linkedWithImageListName: str = None) -> None:
+def makeTask(user: str, imageListName: str, imageSet: str, imageListType: str, taskOrder: int, linkedWithImageListName: str = None) -> None:
     t = datetime.now() - timedelta(hours=4)
-    obj = {"type": "task",
+    obj = {"_id":f"{user}-{imageListName}",
+           "type": "task",
            "app": imageListType,
-           "list_name": imageListName,
+           "list_name": f"{imageListName}",
+           "imageSet": f"{imageSet}",
            "task_order": taskOrder,
            "user": user,
            "time_added": t.strftime('%Y-%m-%d %H:%M:%S'),
@@ -48,9 +50,9 @@ def makeTask(user: str, imageListName: str, imageListType: str, taskOrder: int, 
     doc_id, doc_rev = db.save(obj) # currently doc_id, doc_rev unused
     print(pp.pprint(f"created object {obj}"))
 
-def main(user: str, imageListName: str, imageListType: str, taskOrder: int, linkedWithImageListName: str = "none"):
+def main(user: str, imageListName: str, imageSet: str, imageListType: str, taskOrder: int, linkedWithImageListName: str = "none"):
     # pdb.set_trace()
-    makeTask(user, imageListName, imageListType, taskOrder, linkedWithImageListName)
+    makeTask(user, imageListName, imageSet, imageListType, taskOrder, linkedWithImageListName)
 
 if __name__ == "__main__":
     try:
