@@ -1,0 +1,54 @@
+<!-- TEMPLATE -->
+{% extends "vuetify_components/base.html" %}
+
+<!-- TITLE -->
+{% block title %}Image Comparator{% endblock %}
+
+<!-- CSS -->
+{% block custom_css %}
+{% endblock %}
+
+
+
+<!-- BODY -->
+{% block content %}
+
+<!-- Components -->
+{% include 'vuetify_components/navbar.html' %}
+
+<!-- Index Vue App -->
+<div id="ohif">
+    <v-app>
+        <navbar-tag></navbar-tag>
+      <v-main>
+          <v-container>
+            <h1>Template App: [[ message ]]</h1>
+            <iframe width="100%" height="1300px" src="http://localhost:37107/"></iframe>
+          </v-container>
+      </v-main>
+    </v-app>
+</div>
+
+{% endblock %}
+
+
+
+{% block js_scripts %}
+
+<script>
+
+var ohif = new Vue({
+    el: '#ohif',
+    vuetify: new Vuetify(),
+
+    data: () => ({
+        message: 'This is a demo of OHIF inlaid with an <iframe>',
+
+    }),
+
+    delimiters: ['[[',']]'],
+  })
+</script>
+
+
+{% endblock %}

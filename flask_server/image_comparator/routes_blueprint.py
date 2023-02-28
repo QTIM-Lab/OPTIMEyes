@@ -115,7 +115,6 @@ def vue_index():
     return render_template('/vuetify_components/index.html')
 
 
-
 @bp.route('/main_dashboard', methods=['GET'])
 @login_required
 def main_dashboard():
@@ -137,6 +136,12 @@ def classifyApp(user, list_name):
 @bp.route('/compareApp', methods=['GET'])
 def compareApp():
     return render_template('/vuetify_components/compareApp.html')
+
+@bp.route('/ohif', methods=['GET'])
+@login_required
+def ohif():
+    return render_template('/vuetify_components/ohif.html')
+
 
 @bp.route('/imagesDashboard', methods=['GET'])
 @login_required
@@ -443,6 +448,7 @@ def get_image(image_id):
     # pdb.set_trace()
     response = check_if_admin_party_then_make_request(url_for_couchdb_image_name_fetch)
     image_meta_data = json.loads(response.content)
+    #pdb.set_trace()
     attachment_filename = image_meta_data['origin']
     attachment_extension = attachment_filename[-3:]
     response = send_file(
