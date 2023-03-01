@@ -37,7 +37,7 @@ else:
 
 def getURL(imageSet: str) -> str:
     url = f"http://{DNS}:{DB_PORT}/{IMAGES_DB}"
-    view = f'/_design/images/_view/images?key="{imageSet}"'
+    view = f'/_design/images/_view/imagesBySet?key="{imageSet}"'
     URL = url + view
     return URL
 
@@ -49,40 +49,48 @@ def getImageIDs(url: str) -> list:
     else:
         response = requests.get(url, auth=(DB_ADMIN_USER, DB_ADMIN_PASS))
     response = response.content.decode('utf-8')
+    # pdb.set_trace()
     response = json.loads(response)
-    imageIDs = [int(row['id']) for row in response['rows']]
-    imageIDs.sort()
+    imageIDs = [row['id'] for row in response['rows']]
 
     return imageIDs
 
 
-def makeList(listName: str, pairs: list) -> None:
-    # pdb.set_trace()
+def makeCompareList(imageSet: str, compareListName: str, pctRepeat: int, combos: bool = False) -> None:
+    url = getURL(imageSet)
+    imageIDs = getImageIDs(url)
+    # create all unique combinations
+    if combos:
+        unique_pairs = [list(comb) for comb in combinations(imageIDs, 2)]
+        random.shuffle(unique_pairs)
+        amountRepeat = math.ceil(pctRepeat/100 * len(unique_pairs))
+        repeats = random.sample(unique_pairs, amountRepeat)
+        pairs = unique_pairs + repeats
+    else:
+        pdb.set_trace()
+        group_size = 2
+        pairs = list(zip(*(iter(imageIDs),) * group_size))
+        pairs = [[i,j] for i,j in pairs]
+     
     uid = uuid.uuid1()
     t = datetime.now() - timedelta(hours=4)
     obj = {
+        "_id": compareListName,
         "app": "compare",
         "type": "imageList",
-        "list_name": listName,
+        "imageSet": imageSet,
         "count": len(pairs),
         "list": pairs,
         "time_added": t.strftime('%Y-%m-%d %H:%M:%S')}
     db = couch[IMAGES_DB]
     # pdb.set_trace()
-    print(f"Created Compare List: {listName}")
+    print(f"Created Compare List: {compareListName}")
     doc_id, doc_rev = db.save(obj)
 
 
-def main(imageSet: str, listName: str, pctRepeat: int = 0):
-    url = getURL(imageSet)
-    imageIDs = getImageIDs(url)
-    # create all unique combinations
-    unique_pairs = [list(comb) for comb in combinations(imageIDs, 2)]
-    random.shuffle(unique_pairs)
-    amountRepeat = math.ceil(pctRepeat/100 * len(unique_pairs))
-    repeats = random.sample(unique_pairs, amountRepeat)
-    pairs = unique_pairs + repeats
-    makeList(listName, pairs)
+def main(imageSet: str, compareListName: str, pctRepeat: int = 0):
+    pdb.set_trace()
+    makeCompareList(imageSet, compareListName, pctRepeat)
 
 
 if __name__ == "__main__":
@@ -97,5 +105,5 @@ if __name__ == "__main__":
     except IndexError as err:
         print(f"""
         Error: {err}, and probably means you 
-        didn't provide <imageSet>, <listName>, with optional [<pctRepeat>]
+        didn't provide <imageSet>, <compareListName>, with optional [<pctRepeat>]
         """)

@@ -30,6 +30,7 @@
                   type="warning"
                   v-if="alert_message"
                 >[[ alert_message ]]</v-alert>
+                
                 <h3>Classify Tasks:</h3>
 
                 <v-simple-table>
@@ -89,16 +90,14 @@
 
 
                 <h3>Compare Tasks:</h3>
-                <ul>
-                  <li v-for="item in compareTasks">
-                    Task Type: [[ item.value.app ]]; Completed: [[ item.value.completed ]]; Associated List: [[ item.value.list_name ]]; Priority: [[ item.value.task_order ]]
-                  </li>
-                </ul>
                 
                 <v-simple-table>
                   <template v-slot:default>
                     <thead>
                       <tr>
+                        <th class="text-left">
+                          Start/Continue
+                        </th>
                         <th class="text-left">
                           Image List
                         </th>
@@ -122,12 +121,16 @@
                         :key="item.value.list_name"
                       >
                         <td>
-                          <td>
-                            <v-btn
-                            elevation="2"
-                            @click="goToImageSummary(item.value.list_name)" 
-                            >[[ item.value.list_name ]]</v-btn>
-                          </td>
+                          <v-btn
+                          elevation="2"
+                          @click="goToApp(item)" 
+                          >Start/Continue</v-btn>
+                        </td> 
+                        <td>
+                          <v-btn
+                          elevation="2"
+                          @click="goToImageSummary(item.value.imageSet)" 
+                          >[[ item.value.imageSet ]]</v-btn>
                         </td> 
                         <td>[[ item.value.app ]]</td> 
                         <td>[[ item.value.completed ]]</td> 
@@ -136,7 +139,7 @@
                           elevation="2"
                           @click="goToImageSummary(item.value.linked_with_image_list_name)" 
                           >[[ item.value.linked_with_image_list_name ? item.value.linked_with_image_list_name : "None" ]]</v-btn>
-                        </td>
+                        </td> 
                         <td>[[ item.value.task_order ]]</td> 
                       </tr>
                     </tbody>
@@ -160,13 +163,13 @@
                     @blur="$v.user.$touch()"
                   ></v-text-field>
                   <v-text-field
-                    name="imageListName"
-                    v-model="imageListName"
-                    :error-messages="imageListNameErrors"
-                    label="Image List Name"
+                    name="imageSetName"
+                    v-model="imageSetName"
+                    :error-messages="imageSetNameErrors"
+                    label="Image Set Name"
                     required
-                    @input="$v.imageListName.$touch()"
-                    @blur="$v.imageListName.$touch()"
+                    @input="$v.imageSetName.$touch()"
+                    @blur="$v.imageSetName.$touch()"
                   ></v-text-field>
                   <v-select
                   name="imageListTypeSelect"

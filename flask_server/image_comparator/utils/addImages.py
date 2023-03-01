@@ -35,6 +35,7 @@ def getBase64Representation(image_id: str):
 
 def addImages(path_to_images: str, imageSetName: str, imageSetType: str = 'non-DICOM', fromCSV: str = None):
     # get images
+    # pdb.set_trace()
     images_path = os.path.join(IMAGE_COMPARATOR_DATA, path_to_images)
     images_unfiltered = os.listdir(images_path)
     images = list(filter(lambda x: x.find(".jpg") != -1 \

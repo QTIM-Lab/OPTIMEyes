@@ -10,7 +10,7 @@ var tasksList = new Vue({
 
     validations: {
         user: { required, maxLength: maxLength(10) },
-        imageListName: { required },
+        imageSetName: { required },
         imageListTypeSelect: { required },
         taskOrder: { required },
     },
@@ -23,7 +23,7 @@ var tasksList = new Vue({
         alert_message: null,
         // Right Column - Create Task
         user: '',
-        imageListName: '',
+        imageSetName: '',
         imageListTypeSelect: null,
         imageListTypeSelectItems: ['compare', 'classify', 'grid'],
         taskOrder: '',
@@ -48,7 +48,7 @@ var tasksList = new Vue({
                 getBase: `http://${this.DNS}:${this.HTTP_PORT}`,
                 getCompareTasks: `http://${this.DNS}:${this.HTTP_PORT}/get_tasks/compare?username=${this.USER_INFO.username}`,
                 getClassifyTasks: `http://${this.DNS}:${this.HTTP_PORT}/get_tasks/classify?username=${this.USER_INFO.username}`,
-                goToImageSummary: `http://${this.DNS}:${this.HTTP_PORT}/image_list_summary`,
+                goToImageSummary: `http://${this.DNS}:${this.HTTP_PORT}/image_set_summary`,
                 getImageCompareListNames: `http://${this.DNS}:${this.HTTP_PORT}/get_image_compare_lists`,
                 getImageClassifyListNames: `http://${this.DNS}:${this.HTTP_PORT}/get_image_classify_lists`,
                 getImageGridListNames: `http://${this.DNS}:${this.HTTP_PORT}/get_image_grid_lists`,
@@ -63,10 +63,10 @@ var tasksList = new Vue({
             !this.$v.user.required && errors.push('User is required.')
             return errors
         },
-        imageListNameErrors() {
+        imageSetNameErrors() {
             const errors = []
-            if (!this.$v.imageListName.$dirty) return errors
-            !this.$v.imageListName.required && errors.push('User is required.')
+            if (!this.$v.imageSetName.$dirty) return errors
+            !this.$v.imageSetName.required && errors.push('Image Set Name required.')
             return errors
         },
         imageListTypeSelectErrors() {
@@ -78,7 +78,7 @@ var tasksList = new Vue({
         taskOrderErrors() {
             const errors = []
             if (!this.$v.taskOrder.$dirty) return errors
-            !this.$v.taskOrder.required && errors.push('User is required.')
+            !this.$v.taskOrder.required && errors.push('Task Order is required.')
             return errors
         },
     },
@@ -137,7 +137,7 @@ var tasksList = new Vue({
         clear() {
             this.$v.$reset()
             this.user = ''
-            this.imageListName = ''
+            this.imageSetName = ''
             this.imageListTypeSelect = ''
             this.taskOrder = ''
         },

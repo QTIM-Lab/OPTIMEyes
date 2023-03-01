@@ -37,7 +37,7 @@ else:
 
 def getURL(imageSet: str) -> str:
     url = f"http://{DNS}:{DB_PORT}/{IMAGES_DB}"
-    view = f'/_design/images/_view/imagesByList?key="{imageSet}"'
+    view = f'/_design/images/_view/imagesBySet?key="{imageSet}"'
     URL = url + view
     return URL
 

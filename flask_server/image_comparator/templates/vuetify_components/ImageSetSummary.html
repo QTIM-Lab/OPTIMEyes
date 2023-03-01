@@ -140,7 +140,7 @@ var imageSetSummary =new Vue({
             .then((response) => response.json())
             .then((data) => {
               data.rows.forEach((v, i, a) => {
-                debugger
+                //debugger
                 v['value']['base64'] = ''
                 this.images.push(v)
                 this.getBase64DataOfImageFromCouch(v['id'])
@@ -161,6 +161,7 @@ var imageSetSummary =new Vue({
             DATA='data:image/png;base64,' + data
             ILS.images.forEach((v,i,a)=>{
               if (v['value']['_id'] === I_ID){
+                //debugger
                 ILS.images[i]['value']['base64'] = DATA
               }
             })

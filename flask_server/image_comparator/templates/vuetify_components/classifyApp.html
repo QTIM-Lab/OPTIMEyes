@@ -200,6 +200,7 @@ var classify_app =new Vue({
           setTimeout(()=>{this.alert_info = null}, 2000)
           setTimeout(()=>{window.location.replace(this.URLS.taskList);}, 2000)
         }else{
+          debugger
           await this.getImageList();
           this.getTools(this.app, this.task.value.tool_set)
           // Need to get image compare list so we can get pair to display based on current_idx
@@ -236,6 +237,7 @@ var classify_app =new Vue({
       },
       async getTask(app, user, list_name) {
           console.log("getTask")
+          debugger
           await fetch(this.URLS.getTask)
           .then((response) => response.json())
           .then((data) => {
@@ -324,6 +326,7 @@ var classify_app =new Vue({
         })
 
       },
+      // This might be a relect of a copy and paste...don't think this is used
       clear() {
         this.$v.$reset()
         this.user = ''
