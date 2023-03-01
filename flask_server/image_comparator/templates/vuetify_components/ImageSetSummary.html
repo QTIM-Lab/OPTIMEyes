@@ -2,7 +2,7 @@
 {% extends "vuetify_components/base.html" %}
 
 <!-- TITLE -->
-{% block title %}Image List Summary{% endblock %}
+{% block title %}Image Set Summary{% endblock %}
 
 <!-- CSS -->
 {% block custom_css %}
@@ -17,7 +17,7 @@
 {% include 'vuetify_components/navbar.html' %}
 
 <!-- Index Vue App -->
-<div id="imageListSummary">
+<div id="imageSetSummary">
     <v-app>
         <navbar-tag></navbar-tag>
       <v-main>
@@ -84,13 +84,13 @@
 
 <script>
 
-var imageListSummary =new Vue({
-    el: '#imageListSummary',
+var imageSetSummary =new Vue({
+    el: '#imageSetSummary',
     vuetify: new Vuetify(),
 
     data: () => ({
-        message: `Image List: {{ imageList }} `,
-        imageList: "{{ imageList }}",
+        message: `Image Set: {{ imageSet }} `,
+        imageSet: "{{ imageSet }}",
         images: [],
         // select
         columns: [1,2,3,4,6,12],
@@ -113,7 +113,7 @@ var imageListSummary =new Vue({
       URLS() {
           return {
               configuration: "/configuration",
-              getImagesByList: `http://${this.DNS}:${this.HTTP_PORT}/get_images_by_list`
+              getImagesBySet: `http://${this.DNS}:${this.HTTP_PORT}/get_images_by_set`
           }
       },
       grid_cols() {
@@ -135,11 +135,12 @@ var imageListSummary =new Vue({
       },
       buildGrid() {
         console.log("buildGrid")
-        getImagesByListURL = this.URLS.getImagesByList + `/${this.imageList}`
-        fetch(getImagesByListURL)
+        getImagesBySetURL = this.URLS.getImagesBySet + `/${this.imageSet}`
+        fetch(getImagesBySetURL)
             .then((response) => response.json())
             .then((data) => {
               data.rows.forEach((v, i, a) => {
+                debugger
                 v['value']['base64'] = ''
                 this.images.push(v)
                 this.getBase64DataOfImageFromCouch(v['id'])
@@ -150,7 +151,7 @@ var imageListSummary =new Vue({
       },
       getBase64DataOfImageFromCouch(image_id) {
         var url = `http://${this.DNS}:${this.HTTP_PORT}/get_image/${image_id}`
-        let ILS = this; // Image List Summary Vue Object
+        let ILS = this; // Image Set Summary Vue Object
         let I_ID = image_id;
         fetch(url)
           .then(response => {

@@ -24,7 +24,7 @@
           <v-container>
             <v-row>
               <v-col cols=6>
-                <h2>Image Lists:</h2>
+                <h2>Image Sets:</h2>
                 
                 <v-alert
                   color="red"
@@ -43,7 +43,7 @@
                     <thead>
                       <tr>
                         <th class="text-left">
-                          Image List
+                          Image Set
                         </th>
                         <th class="text-left">
                           Images
@@ -55,20 +55,20 @@
                     </thead>
                     <tbody>
                       <tr
-                        v-for="item in imageLists"
-                        :key="item.imageList"
+                        v-for="item in imageSets"
+                        :key="item.imageSet"
                       >
                         <td>
                           <v-btn
                           elevation="2"
-                          @click="goToImageSummary([[ item.imageList ]])" 
-                          >[[ item.imageList ]]</v-btn>
+                          @click="goToImageSummary([[ item.imageSet ]])" 
+                          >[[ item.imageSet ]]</v-btn>
                         </td>
                         <td>[[ item.images ]]</td>
                         <td>
                           <v-btn
                           elevation="2"
-                          @click="deleteImageList([[ item.imageList ]])" 
+                          @click="deleteImageSet([[ item.imageSet ]])" 
                           >Delete</v-btn>
                         </td>
                       </tr>
@@ -85,7 +85,7 @@
                   type="success"
                 >Make sure you've moved the data you want to upload to the Image-Comparator-Data directory within a folder. Enter the folder name into the form so the app knows where to get the data.
                 </v-alert>
-                <h2>Create Image List:</h2>
+                <h2>Create Image Set:</h2>
                 <v-form action="/add_images" method="post" ref="form">
                   <v-text-field
                     name="folder"
@@ -98,23 +98,23 @@
                     @blur="$v.folder.$touch()"
                   ></v-text-field>
                   <v-text-field
-                    name="imageListName"
-                    v-model="imageListName"
-                    :error-messages="imageListNameErrors"
-                    label="Image List Name"
+                    name="imageSetName"
+                    v-model="imageSetName"
+                    :error-messages="imageSetNameErrors"
+                    label="Image Set Name"
                     required
-                    @input="$v.imageListName.$touch()"
-                    @blur="$v.imageListName.$touch()"
+                    @input="$v.imageSetName.$touch()"
+                    @blur="$v.imageSetName.$touch()"
                   ></v-text-field>
                   <v-select
-                  name="imageListTypeSelect"
-                  v-model="imageListTypeSelect"
-                  :items="imageListTypeSelectItems"
-                  :error-messages="imageListTypeSelectErrors"
-                  label="Image List Type"
+                  name="imageSetTypeSelect"
+                  v-model="imageSetTypeSelect"
+                  :items="imageSetTypeSelectItems"
+                  :error-messages="imageSetTypeSelectErrors"
+                  label="Image Set Type"
                   required
-                  @change="$v.imageListTypeSelect.$touch()"
-                  @blur="$v.imageListTypeSelect.$touch()"
+                  @change="$v.imageSetTypeSelect.$touch()"
+                  @blur="$v.imageSetTypeSelect.$touch()"
                 ></v-select>
 
                   <v-btn
@@ -159,18 +159,18 @@ var template_app =new Vue({
 
     validations: {
       folder: { required, maxLength: maxLength(20) },
-      imageListName: { required },
-      imageListTypeSelect: { required },
+      imageSetName: { required },
+      imageSetTypeSelect: { required },
     },
 
     data: () => ({
         message: 'This is the images dashboard',
-        imageLists: [],
+        imageSets: [],
         // form data
         folder: '',
-        imageListName: '',
-        imageListTypeSelect: null,
-        imageListTypeSelectItems: ['non-DICOM', 'DICOM'],
+        imageSetName: '',
+        imageSetTypeSelect: null,
+        imageSetTypeSelectItems: ['non-DICOM', 'DICOM'],
         // delete variables
         deleted_images: null
 
@@ -184,7 +184,7 @@ var template_app =new Vue({
       this.HTTP_PORT = configuration.HTTP_PORT;
       this.ADMIN_PARTY = configuration.ADMIN_PARTY;
       this.USER_INFO = configuration.USER_INFO;
-      this.getImageLists();
+      this.getImageSets();
   },
 
   computed: {
@@ -192,9 +192,9 @@ var template_app =new Vue({
     URLS() {
         return {
             configuration: "/configuration",
-            getImageLists: `http://${this.DNS}:${this.HTTP_PORT}/get_image_lists`,
-            goToImageSummary: `http://${this.DNS}:${this.HTTP_PORT}/image_list_summary`,
-            deleteImageList: `http://${this.DNS}:${this.HTTP_PORT}/delete_image_list`,
+            getImageSets: `http://${this.DNS}:${this.HTTP_PORT}/get_image_sets`,
+            goToImageSummary: `http://${this.DNS}:${this.HTTP_PORT}/image_set_summary`,
+            deleteImageSet: `http://${this.DNS}:${this.HTTP_PORT}/delete_image_set`,
         }
     },
     // Right Column
@@ -205,16 +205,16 @@ var template_app =new Vue({
         !this.$v.folder.required && errors.push('Folder is required.')
         return errors
     },
-    imageListNameErrors() {
+    imageSetNameErrors() {
         const errors = []
-        if (!this.$v.imageListName.$dirty) return errors
-        !this.$v.imageListName.required && errors.push('User is required.')
+        if (!this.$v.imageSetName.$dirty) return errors
+        !this.$v.imageSetName.required && errors.push('User is required.')
         return errors
     },
-    imageListTypeSelectErrors() {
+    imageSetTypeSelectErrors() {
         const errors = []
-        if (!this.$v.imageListTypeSelect.$dirty) return errors
-        !this.$v.imageListTypeSelect.required && errors.push('List Type is required.')
+        if (!this.$v.imageSetTypeSelect.$dirty) return errors
+        !this.$v.imageSetTypeSelect.required && errors.push('Set Type is required.')
         return errors
     },
   },
@@ -230,21 +230,22 @@ var template_app =new Vue({
       const configuration = await response.json();
       return configuration;
     },
-    getImageLists() {
-      console.log("getImageLists")
-      fetch(this.URLS.getImageLists)
+    getImageSets() {
+      console.log("getImageSets")
+      fetch(this.URLS.getImageSets)
           .then((response) => response.json())
           .then((data) => {
               data.rows.forEach((v, i, a) => {
-                cleaned_data = {imageList:v.key[0], images: v.value}
-                this.imageLists.push(cleaned_data)
+                debugger
+                cleaned_data = {imageSet:v.key[0], images: v.value}
+                this.imageSets.push(cleaned_data)
               })
           })
     },
-    deleteImageList(imageList) {
-      console.log("deleteImageList")
-      IL = imageList[0][0];
-      fetch(this.URLS.deleteImageList+`/${imageList}`, {
+    deleteImageSet(imageSet) {
+      console.log("deleteImageSet")
+      IL = imageSet[0][0];
+      fetch(this.URLS.deleteImageSet+`/${imageSet}`, {
         method: 'DELETE',
       })
       .then((response) => response.json())
@@ -252,18 +253,18 @@ var template_app =new Vue({
         this.deleted_images = data
         setTimeout(()=>{
           this.deleted_images = null;
-          this.imageLists.forEach((v,i,a)=>{
-            if (v['imageList'] === IL){
+          this.imageSets.forEach((v,i,a)=>{
+            if (v['imageSet'] === IL){
               debugger
-              this.imageLists.splice(i, 1)
+              this.imageSets.splice(i, 1)
             }
           })
         }, 2000)
       })
     },
-    goToImageSummary(imageList) {
+    goToImageSummary(imageSet) {
       console.log("goToImageSummary")
-      window.location.replace(this.URLS.goToImageSummary + `/${imageList}`)
+      window.location.replace(this.URLS.goToImageSummary + `/${imageSet}`)
     },
     // Right Column
     submit() {
@@ -274,8 +275,8 @@ var template_app =new Vue({
     clear() {
       this.$v.$reset()
       this.folder = ''
-      this.imageListName = ''
-      this.imageListTypeSelect = ''
+      this.imageSetName = ''
+      this.imageSetTypeSelect = ''
     },
 
 

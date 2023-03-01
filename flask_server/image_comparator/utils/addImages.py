@@ -33,7 +33,7 @@ else:
 def getBase64Representation(image_id: str):
     pdb.set_trace()
 
-def addImages(path_to_images: str, imageListName: str, imageSetType: str = 'non-DICOM', fromCSV: str = None):
+def addImages(path_to_images: str, imageSetName: str, imageSetType: str = 'non-DICOM', fromCSV: str = None):
     # get images
     images_path = os.path.join(IMAGE_COMPARATOR_DATA, path_to_images)
     images_unfiltered = os.listdir(images_path)
@@ -58,12 +58,12 @@ def addImages(path_to_images: str, imageListName: str, imageSetType: str = 'non-
             # mandatory fields
             # pdb.set_trace()
             image = record.pop('image')
-            _id = imageListName + "_" + image
+            _id = imageSetName + "_" + image
             record['_id'] = _id
             record['origin'] = image
             record['id'] = str(uuid.uuid1())
             record['type'] = "image"
-            record['imageListName'] = imageListName
+            record['imageSetName'] = imageSetName
             record['imageSetType'] = imageSetType
             record['timeAdded'] = t.strftime('%Y-%m-%d %H:%M:%S')
 
@@ -81,12 +81,12 @@ def addImages(path_to_images: str, imageListName: str, imageSetType: str = 'non-
         for i, image in enumerate(images):
             # pdb.set_trace()
             t = datetime.now() - timedelta(hours=4)
-            _id = imageListName + "_" + image
+            _id = imageSetName + "_" + image
             obj = {"_id": _id,
                    "origin": image,
                    "id": str(uuid.uuid1()),
                    "type": "image",
-                   "imageListName": imageListName,
+                   "imageSetName": imageSetName,
                    "timeAdded": t.strftime('%Y-%m-%d %H:%M:%S')}
 
             db.save(obj)
@@ -97,8 +97,8 @@ def addImages(path_to_images: str, imageListName: str, imageSetType: str = 'non-
                               filename="image", content_type=f'image/{image_extension}')
             # getBase64Representation(_id)
 
-def main(path_to_images: str, imageListName: str, imageSetType: str = 'non-DICOM', fromCSV: str = None):
-    addImages(path_to_images, imageListName, imageSetType, fromCSV)
+def main(path_to_images: str, imageSetName: str, imageSetType: str = 'non-DICOM', fromCSV: str = None):
+    addImages(path_to_images, imageSetName, imageSetType, fromCSV)
    
 
 if __name__ == "__main__":
@@ -113,5 +113,5 @@ if __name__ == "__main__":
     except IndexError as err:
         print(f"""
         Error: {err}, and probably means you 
-        didn't provide <path_to_images> or <imageListName>, with optional [<fromCSV>]
+        didn't provide <path_to_images> or <imageSetName>, with optional [<fromCSV>]
         """)

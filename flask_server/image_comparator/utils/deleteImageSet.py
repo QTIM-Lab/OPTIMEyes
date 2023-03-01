@@ -24,26 +24,26 @@ else:
     couch = couchdb.Server(
         f'http://{DB_ADMIN_USER}:{DB_ADMIN_PASS}@{DNS}:{DB_PORT}')
 
-def deleteClassifyImageListBasedOnImageList(imageListName: str):
+def deleteClassifyImageListBasedOnImageSet(imageSetName: str):
     pass
 
-def deleteCompareImageListBasedOnImageList(imageListName: str):
+def deleteCompareImageListBasedOnImageSet(imageSetName: str):
     pass
 
-def deleteClassifyResults(imageListName: str):
+def deleteClassifyResults(imageSetName: str):
     pass
 
-def deleteCompareResults(imageListName: str):
+def deleteCompareResults(imageSetName: str):
     pass
 
 
-def deleteImageList(imageListName: str):
-    # Delete Image List
+def deleteImageSet(imageSetName: str):
+    # Delete Image Set
     db = couch[IMAGES_DB]
-    imagesByList = db.iterview("images/imagesByList", 10, key=imageListName)
+    imagesBySet = db.iterview("images/imagesBySet", 10, key=imageSetName)
     count = 0
     image_ids = []
-    for i in imagesByList:
+    for i in imagesBySet:
         # pdb.set_trace()
         count += 1
         doc = db[i['id']]
@@ -52,20 +52,20 @@ def deleteImageList(imageListName: str):
     # pdb.set_trace()
     return json.dumps({"image_ids": image_ids, "count":count})
     # Delete Related App Image Lists
-    # deleteClassifyImageListBasedOnImageList(imageListName)
-    # deleteCompareImageListBasedOnImageList(imageListName)
+    # deleteClassifyImageListBasedOnImageSet(imageSetName)
+    # deleteCompareImageListBasedOnImageSet(imageSetName)
     
     # Delete Related Results
-    # deleteClassifyResults(imageListName)
-    # deleteCompareResults(imageListName)
+    # deleteClassifyResults(imageSetName)
+    # deleteCompareResults(imageSetName)
 
 
-def main(imageListName: str):
-    deleteImageList(imageListName)
+def main(imageSetName: str):
+    deleteImageSet(imageSetName)
    
 
 if __name__ == "__main__":
     try:
         main(sys.argv[1])
     except IndexError as err:
-        raise Exception("* No imageList provided *")
+        raise Exception("* No imageSet provided *")

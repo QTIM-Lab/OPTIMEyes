@@ -23,7 +23,7 @@ from flask_login import login_required, current_user
 from .utils.makeTask import makeTask  # for use in create_user
 from .utils.makeClassifyList import makeClassifyList  # for use in create_user
 from .utils.addImages import addImages  # for use in addImages
-from .utils.deleteImageList import deleteImageList  # for use in deleteImageList
+from .utils.deleteImageSet import deleteImageSet  # for use in deleteImageSet
 
 # DB
 from image_comparator.db import get_server
@@ -148,10 +148,10 @@ def ohif():
 def imagesDashboard():
     return render_template('/vuetify_components/imagesDashboard.html')
 
-@bp.route('/image_list_summary/<imageList>', methods=['GET'])
+@bp.route('/image_set_summary/<imageSet>', methods=['GET'])
 @login_required
-def goToImageListSummary(imageList):
-    return render_template('/vuetify_components/ImageListSummary.html', imageList=imageList)
+def image_set_summary(imageSet):
+    return render_template('/vuetify_components/ImageSetSummary.html', imageSet=imageSet)
     
 
 
@@ -211,16 +211,17 @@ def contact():
 @bp.route('/add_images', methods=['POST'])
 def add_images():
     print("in /add_images")
+    # pdb.set_trace()
     folder=request.form['folder']
-    imageListName=request.form['imageListName']
-    imageListTypeSelect=request.form['imageListTypeSelect']
-    addImages(folder, imageListName, imageListTypeSelect)
+    imageSetName=request.form['imageSetName']
+    imageSetTypeSelect=request.form['imageSetTypeSelect']
+    addImages(folder, imageSetName, imageSetTypeSelect)
     return redirect('/imagesDashboard')
    
-@bp.route('/delete_image_list/<imageList>', methods=['DELETE'])
-def delete_image_list(imageList):
-    print("in /delete_image_list")
-    deleted_images = deleteImageList(imageList)
+@bp.route('/delete_image_set/<imageSet>', methods=['DELETE'])
+def delete_image_set(imageSet):
+    print("in /delete_image_set")
+    deleted_images = deleteImageSet(imageSet)
     # pdb.set_trace()
     return deleted_images
    
@@ -261,9 +262,9 @@ def get_users():
     return json.loads(response.content.decode('utf-8'))
 
 
-@bp.route('/get_image_lists', methods=['GET'])
-def get_image_lists():
-    print("in /get_image_lists")
+@bp.route('/get_image_sets', methods=['GET'])
+def get_image_sets():
+    print("in /get_image_sets")
     base = "http://{}:{}/{}".format(
         current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
     view = f"_design/images/_view/images?group_level=1"
@@ -271,20 +272,21 @@ def get_image_lists():
     response = check_if_admin_party_then_make_request(url)
     return json.loads(response.content.decode('utf-8'))
 
-@bp.route('/get_images_by_list/<imageList>', methods=['GET'])
-def get_images_by_list(imageList):
+
+@bp.route('/get_images_by_set/<imageSet>', methods=['GET'])
+def get_images_by_set(imageSet):
     """_summary_
 
     Args:
-        imageList (_type_): image set or raw images list name
+        imageSet (_type_): image set or raw images set name
 
     Returns:
-        _type_: list of image ids from the database
+        _type_: set of image ids from the database
     """
-    print("in /get_images_by_list")
+    print("in /get_images_by_set")
     base = "http://{}:{}/{}".format(
         current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
-    view = f'_design/images/_view/imagesByList?key="{imageList}"'
+    view = f'_design/images/_view/imagesBySet?key="{imageSet}"'
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
     return json.loads(response.content.decode('utf-8'))
