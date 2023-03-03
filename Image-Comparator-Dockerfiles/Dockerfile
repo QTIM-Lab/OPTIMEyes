@@ -14,4 +14,4 @@ RUN apt-get install curl -y
 COPY requirements.txt /
 RUN pip install -r requirements.txt
 
-ENTRYPOINT ["bash"]
+#ENTRYPOINT ["bash"]

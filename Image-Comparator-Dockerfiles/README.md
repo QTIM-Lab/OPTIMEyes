@@ -51,6 +51,8 @@ Build a new image for flask and serve in the context of the flask_server folder:
 ```bash
 cd Image-Comparator-Dockerfiles
 MACHINE_PORT="8080"
+CONTAINER_NAME=image-comparator
+CONTAINER_TAG=flask
 
 docker build . -f Dockerfile --force-rm -t $CONTAINER_NAME:$CONTAINER_TAG
 
@@ -68,11 +70,5 @@ docker run \
   -e FLASK_APP=image_comparator \
   -e MACHINE_PORT=$MACHINE_PORT \
   --name image-comparator-flask-"$APP_NAME" \
-  image-comparator:flask
+  image-comparator:flask flask run --port $MACHINE_PORT --host 0.0.0.0
 ```
-
-#### Run flask server
-```bash
-flask run --port $MACHINE_PORT --host 0.0.0.0
-```
-
