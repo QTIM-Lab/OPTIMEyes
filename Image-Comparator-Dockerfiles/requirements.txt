@@ -1,4 +1,5 @@
 Flask
+flask_login
 python-dotenv
 flask_cors
 requests

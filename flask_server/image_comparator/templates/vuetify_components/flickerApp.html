@@ -1,0 +1,460 @@
+<!-- TEMPLATE -->
+{% extends "vuetify_components/base.html" %}
+
+<!-- TITLE -->
+{% block title %}Image Flicker{% endblock %}
+
+<!-- CSS -->
+{% block custom_css %}
+<style>
+  .parent {
+    position: relative;
+    top: 0;
+    left: 0;
+  }
+  
+  .image1 {
+    position: relative;
+    top: 0;
+    left: 0;
+    border: 1px red solid;
+  }
+  
+  .image2 {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    border: 1px green solid;
+  }
+</style>
+{% endblock %}
+
+
+
+<!-- BODY -->
+{% block content %}
+
+<!-- Components -->
+{% include 'vuetify_components/navbar.html' %}
+
+<!-- Index Vue App -->
+<div id="flicker_app">
+    <v-app>
+        <navbar-tag></navbar-tag>
+      <v-main>
+          <v-container class="ma-0">
+            <h2>
+              flicker Task for Image List [[ list_name ]] | On Pair
+              <span
+                v-if="current_deck.length != 0"
+                >[[ this.task.value.current_idx + 1 ]] of [[ this.current_deck.length ]]
+              </span>
+            </h2>
+            <p>[[ time_point_message ]]</p>
+
+            <!-- Alert -->
+            <v-alert
+              title="Info"
+              color="blue"
+              elevation="4"
+              type="info"
+              v-if="alert_info != null"
+            >
+              [[ alert_info ]]
+            </v-alert>
+            <v-alert
+              title="Error"
+              color="red"
+              elevation="4"
+              type="error"
+              v-if="alert_error != null"
+            >
+              [[ alert_error ]]
+            </v-alert>
+
+
+            <v-row>
+              <!-- Col for two images -->
+              <v-col
+                cols="12"
+                md="9"
+              >
+                <!-- Div parent for two images -->
+                <v-container class="ma-0 parent">
+ 
+                    <v-img
+                      class="image1"
+                      :style="{ border: borderImage1, opacity: result.slider_input_categories[0].slider_inputs[0].value/100 }"
+                      width="100%"
+                      v-if="pair[0].base64"
+                      :lazy-src="pair[0].base64"
+                      :src="pair[0].base64"
+                      aspect-ratio="1/1"
+                      @click="cycleImages"
+                    ></v-img>
+
+                    <v-img
+                      class="image2"
+                      :style="{ border: borderImage2, opacity: result.slider_input_categories[0].slider_inputs[1].value/100 }"
+                      width="100%"
+                      v-if="pair[1].base64"
+                      :lazy-src="pair[1].base64"
+                      :src="pair[1].base64"
+                      aspect-ratio="1/1"
+                      @click="cycleImages"
+                    ></v-img>
+
+                </v-container>
+
+              </v-col>
+
+              <!-- Col for tool_set -->
+              <v-col
+              cols="12"
+              md="3"
+              >
+
+                <!-- Tools -->
+                <!--https://codepen.io/zed_at_home/pen/LYpWyEM-->
+                <v-form v-if="tool_set" action="/task_result" method="post" ref="form">
+
+                  <v-row no-gutters>
+                    <v-col
+                    cols="12"
+                    md="6"
+                    >
+                      <div
+                        v-for="(checkbox_category, index_checkbox_category) in tool_set.checkbox_categories"
+                        :key="checkbox_category['category_id']"
+                      >
+                      <p>[[ checkbox_category['category_id'] ]]</p>
+
+                      <v-checkbox
+                        v-for="(checkbox, indexCheckbox) in checkbox_category['checkboxes']"
+                        :key="checkbox['checkbox_id']"
+                        v-model="result.checkbox_categories[index_checkbox_category].checkboxes[indexCheckbox].checked"
+                        :label="`${result.checkbox_categories[index_checkbox_category].checkboxes[indexCheckbox].checked.toString()}`"
+                        color="red"
+                        hide-details
+                      ></v-checkbox>
+
+                      </div>
+
+                      <v-radio-group
+                        v-for="(radio_button_category, index_radio_category) in tool_set.radio_button_categories"
+                        :key="radio_button_category['category_id']"
+                        v-model="result.radio_button_categories[index_radio_category].selected"
+                      >
+                        <p>[[ radio_button_category['category_id'] ]]</p>
+                        <v-radio
+                          v-for="(radio_button, index_radio_button) in radio_button_category['buttons']"
+                          :key="radio_button['button_id']"
+                          :label="`${result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id}`"
+                          :value="`${result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id}`"
+                        ></v-radio>
+
+                      </v-radio-group>
+                    </v-col>
+                    <v-col
+                    cols="12"
+                    md="6"
+                    >
+  
+                      <div
+                        v-for="(text_input_category, index_text_input_category) in tool_set.text_input_categories"
+                        :key="text_input_category['category_id']"
+                      >
+                        <p>[[ text_input_category.category_id ]]</p>
+                        <v-textarea
+                          v-for="(text_input, index_text_input) in text_input_category['text_inputs']"
+                          :key="text_input['text_input_id']"
+                          v-model="result.text_input_categories[index_text_input_category].text_inputs[index_text_input].message"
+                          :label="`${result.text_input_categories[index_text_input_category].text_inputs[index_text_input].text_input_id}`"
+                        ></v-textarea>
+    
+                      </div>
+
+
+
+                    </v-col>
+
+                  </v-row>
+                  
+                  <!-- Slider -->
+                  <div
+                    v-for="(slider_input_category, index_slider_input_category) in tool_set.slider_input_categories"
+                    :key="slider_input_category['category_id']"
+                  >
+                    <p>[[ slider_input_category.category_id ]]</p>
+                    <v-row
+                      v-for="(slider_input, index_slider_input) in slider_input_category['slider_inputs']"
+                    >
+                    <v-slider
+                      v-if="result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].label.search('Image') != -1"
+                      v-model="result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].value"
+                      prepend-icon="mdi-opacity"
+                      direction=""
+                      :min="`${result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].min}`"
+                      :max="`${result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].max}`"
+                      :label="`${result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].label}`"
+                    ></v-slider>
+                    <v-slider
+                    v-if="result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].label.search('Fade') != -1"
+                      v-model="result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].value"
+                      prepend-icon="mdi-opacity"
+                      direction=""
+                      :min="`${result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].min}`"
+                      :max="`${result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].max}`"
+                      :label="`${result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].label}`"
+                      @input="fadeImages"
+                    ></v-slider>
+                    </v-row>
+                  </div>              
+                    
+
+                  <v-btn
+                    class="mr-4"
+                    @click="submit"
+                  >
+                    submit
+                  </v-btn>
+                  <v-btn @click="clear">
+                    clear
+                  </v-btn>
+
+
+                </v-form>
+
+              </v-col>
+
+
+
+
+
+
+            </v-row>
+
+          </v-container>
+      </v-main>
+    </v-app>
+</div>
+
+{% endblock %}
+
+
+
+{% block js_scripts %}
+
+<script>
+
+var flicker_app =new Vue({
+    el: '#flicker_app',
+    vuetify: new Vuetify(),
+
+    data: () => ({
+      app: "flicker",
+      user: "{{ task.user }}",
+      list_name: "{{ task.list_name }}",
+      current_deck: [],
+      current_image_index: 0,
+      time_point_message: "Time Point 1",
+      //showImage1: "", 
+      borderImage1: "5px solid green",
+      //showImage2: "none", 
+      borderImage2: "5px solid red",
+      pair: [{image_id: null, base64: null}, {image_id: null, base64: null}],
+      task: null,
+      tool_set: null,
+      result: null,
+      alert_info: null,
+      alert_error: null
+    }),
+
+    delimiters: ['[[',']]'],
+
+    async mounted() {
+      configuration = await this.getConfiguration()
+        this.DNS = configuration.DNS;
+        this.IMAGES_DB = configuration.IMAGES_DB;
+        this.DB_PORT = configuration.DB_PORT;
+        this.HTTP_PORT = configuration.HTTP_PORT;
+        this.ADMIN_PARTY = configuration.ADMIN_PARTY;
+        this.USER_INFO = configuration.USER_INFO;
+        await this.getTask(this.app, this.user, this.list_name);
+        if (this.task.value.completed){
+          this.alert_info = "This task is completed"
+          setTimeout(()=>{this.alert_info = null}, 2000)
+          setTimeout(()=>{window.location.replace(this.URLS.taskList);}, 2000)
+        }else{
+          await this.getImageList();
+          this.getTools(this.app, this.task.value.tool_set)
+          //debugger
+          // Need to get image flicker list so we can get pair to display based on current_idx
+          //debugger
+          this.displayImages(current_idx=this.task.value.current_idx);
+        }
+    },
+
+    computed: {
+      // General
+      URLS() {
+          return {
+              configuration: "/configuration",
+              flickerApp: `http://${this.DNS}:${this.HTTP_PORT}/flickerApp/${this.user}/${this.list_name}`,
+              getTask: `http://${this.DNS}:${this.HTTP_PORT}/get_task/${this.app}/${this.user}/${this.list_name}`,
+              taskList: `http://${this.DNS}:${this.HTTP_PORT}/tasksList`,
+              getToolSet: `http://${this.DNS}:${this.HTTP_PORT}/get_toolset`,
+              getImageList: `http://${this.DNS}:${this.HTTP_PORT}/get_image_flicker_lists`,
+              taskResult: `http://${this.DNS}:${this.HTTP_PORT}/task_result`,
+          }
+      },
+    },
+
+    methods: {
+      async getConfiguration() {
+          // https://dmitripavlutin.com/javascript-fetch-async-await/
+          const response = await fetch('/configuration');
+          if (!response.ok) {
+              const message = `An error has occured: ${response.status}`;
+              throw new Error(message);
+          }
+          const configuration = await response.json();
+          return configuration;
+      },
+      async getTask(app, user, list_name) {
+          console.log("getTask")
+          await fetch(this.URLS.getTask)
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.rows.length === 1){
+              this.task = data.rows[0]
+            }else{
+              alert("more than one task or less than 1 task...debug...")
+            }
+          })
+      },
+      async getImageList() {
+        console.log("getImageList")
+        let CA = this; // flicker App Vue Object
+        await fetch(this.URLS.getImageList+`?key=${this.list_name}`)
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.rows.length === 1){
+            this.current_deck = data.rows[0].value.list
+            if (this.current_deck.length === 0){
+              this.alert_error = "Image list has no elements."
+              setTimeout(()=>{this.alert_error = null}, 2000)
+            }
+          }else{
+            alert("more than one task or less than 1 task...debug...")
+          }
+        })
+      },
+      displayImages(current_idx) {
+        //debugger
+        this.pair[0]['image_id'] = this.current_deck[current_idx][0]
+        this.pair[1]['image_id'] = this.current_deck[current_idx][1]
+        this.getBase64DataOfImageFromCouch(this.pair[0].image_id, pair_index=0)
+        this.getBase64DataOfImageFromCouch(this.pair[1].image_id, pair_index=1)
+      },
+      getTools(app, tool_set) {
+        console.log("getTools")
+        fetch(this.URLS.getToolSet + `/${app}/${tool_set}`)
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.rows.length === 1){
+            //debugger
+            // Store tool_set and make results object to match
+            var tool_set = data.rows[0].value.tools
+            var result = JSON.parse(JSON.stringify(data.rows[0].value.tools));
+            this.result = result; 
+            this.tool_set = tool_set;
+          }else{
+            this.alert_error = "Can't find specified tool set"
+            setTimeout(()=>{this.alert_error = null}, 2000)
+          }
+        })
+      },
+      getBase64DataOfImageFromCouch(image_id, pair_index) {
+        var url = `http://${this.DNS}:${this.HTTP_PORT}/get_image/${image_id}`
+        let CA = this; // flicker App Vue Object
+        let I_ID = image_id;
+        let P_INDEX = pair_index;
+        //debugger
+        fetch(url)
+          .then(response => {
+            return response.text();
+          })
+          .then(data => {
+            DATA='data:image/png;base64,' + data
+            //debugger
+            CA.pair[P_INDEX]['base64'] = DATA
+          })
+      },
+      cycleImages(){
+        deck_size = this.current_deck.length;
+        // debugger;
+        //// Cycle image 2
+        if (this.current_image_index === 0){
+          this.result.slider_input_categories[0].slider_inputs[this.current_image_index].value = 0
+          this.time_point_message = "Time Point 2"
+          this.current_image_index = 1
+          this.result.slider_input_categories[0].slider_inputs[this.current_image_index].value = 100
+          //this.showImage1 = "none"
+          //this.showImage2 = ""
+        }else{
+          this.result.slider_input_categories[0].slider_inputs[this.current_image_index].value = 0
+          this.time_point_message = "Time Point 1"
+          this.current_image_index = 0
+          this.result.slider_input_categories[0].slider_inputs[this.current_image_index].value = 100
+          //this.showImage1 = ""
+          //this.showImage2 = "none"
+        }
+
+      },
+      fadeImages(){
+        // fader
+        fade = this.result.slider_input_categories[0].slider_inputs[2].value
+        this.result.slider_input_categories[0].slider_inputs[0].value = 100-fade
+        this.result.slider_input_categories[0].slider_inputs[1].value = fade
+
+      },
+      // For the submit form
+      submit() {
+        //this.$v.$touch() // for uswe with veulidate which you haven't setup for this app
+        // this.$refs.form.$el.submit() // Normal submit but we want to send results in a better organized way
+        this.result['_id'] = `${this.task.id}-result-image1_${this.pair[0].image_id}-image2_${this.pair[1].image_id}`
+        this.result['user'] = this.user
+        this.result['list_name'] = this.task.value.list_name
+        this.result['app'] = "flicker"
+        this.result['type'] = "result"
+        this.result['taskid'] = this.task.id
+        fetch(this.URLS.taskResult, {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(this.result)
+        })
+        .then((response) => response.json())
+        .then((data) => {
+          window.location.replace(this.URLS.flickerApp);
+        })
+
+      },
+      // This might be a relect of a copy and paste...don't think this is used
+      clear() {
+        this.$v.$reset()
+        this.user = ''
+        this.imageListName = ''
+        this.imageListTypeSelect = ''
+        this.taskOrder = ''
+      },
+    },
+
+
+  })
+</script>
+
+
+{% endblock %}

@@ -1,0 +1,17 @@
+{
+    "_id": "_design/images",
+    "language": "javascript",
+    "views": {
+        "images": {
+            "map": "function(doc) {\n  if (doc.type === \"image\")\n    emit([doc.imageSetName, doc.origin], doc);\n}",
+            "reduce": "_count"
+        },
+        "count_image_docs": {
+            "map": "function(doc) {\n  if (doc._attachments && doc._attachments.image)\n    emit (doc.id);\n}",
+            "reduce": "_count(keys, vals, rereduce)"
+        },
+        "imagesBySet": {
+            "map": "function(doc) {\n  if (doc.type === \"image\")\n    emit(doc.imageSetName, doc);\n}"
+        }
+    }
+}

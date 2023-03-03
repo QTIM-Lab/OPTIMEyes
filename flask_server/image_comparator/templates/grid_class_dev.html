@@ -1,0 +1,157 @@
+<!-- TEMPLATE -->
+{% extends "base.html" %}
+
+<!-- TITLE -->
+{% block title %}Grid Images{% endblock %}
+
+<!-- CSS -->
+{% block custom_css %}
+<link href="{{ url_for('static', filename='css/image_grid.css') }}" rel="stylesheet">
+{% endblock %}
+
+<!-- BODY -->
+{% block content %}
+<div class="row">
+    <div id=create_new_user_div>
+        <!-- Button trigger modal -->
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createUserModal">Create
+            User</button>
+        <p>Current User: <span id="current_user" style="color: red">User Not Created</span></p>
+
+
+        <!-- Modal -->
+        <div class="modal fade" id="createUserModal" tabindex="-1" role="dialog" aria-labelledby="createUserModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="createUserModalLabel">Create User Dialog</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+
+                        <!-- Form for User input -->
+                        <!-- request.form['username'] -->
+                        <!-- request.form.get('username') -->
+                        <form action="http://{{ app_config.DNS }}:{{ app_config.HTTP_PORT }}/create_user" method="post">
+
+                            <label for="username">Username:</label><br>
+                            <input name="username" type="text" style="all: revert;"><br>
+                            <!-- Years of Experience -->
+                            <label>How many years of experience do you have working with brain tumor
+                                imaging?</label><br>
+
+                            <input type="radio" id="years-exp-0-2" name="years-exp" style="all: revert;" value="0-2">
+                            <label for="years-exp-0-2">0-2</label><br>
+
+                            <input type="radio" id="years-exp-3-5" name="years-exp" style="all: revert;" value="3-5">
+                            <label for="years-exp-3-5">3-5</label><br>
+
+                            <input type="radio" id="years-exp-6-8" name="years-exp" style="all: revert;" value="6-8">
+                            <label for="years-exp-6-8">6-8</label><br>
+
+                            <input type="radio" id="years-exp-8+" name="years-exp" style="all: revert;" value="8+">
+                            <label for="years-exp-8+">8+</label><br>
+
+                            <!-- Specialty -->
+                            <label>What do you specialize in?</label><br>
+
+                            <input type="radio" id="neuro-oncology" name="specialty" style="all: revert;"
+                                value="neuro-oncology">
+                            <label for="neuro-oncology">neuro-oncology</label><br>
+
+                            <input type="radio" id="neuroradiology" name="specialty" style="all: revert;"
+                                value="neuroradiology">
+                            <label for="neuroradiology">neuroradiology</label><br>
+
+                            <input type="radio" id="radiation oncology" name="specialty" style="all: revert;"
+                                value="radiation oncology">
+                            <label for="radiation oncology">radiation oncology</label><br>
+
+                            <input type="radio" id="other" name="specialty" style="all: revert;" value="other">
+                            <label for="other">other</label><br>
+
+                            <button class="btn btn-primary">Submit</button>
+                            <p style="color:red;">If placeholders come up instead of images after creating a
+                                user, hit
+                                refresh.
+                            </p>
+                        </form>
+
+
+                        <!-- Form for User input -->
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <!-- <button type="button" class="btn btn-primary">Submit</button> -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Page Header -->
+<div class="row">
+    <div class="span1-lg-12">
+        <h1 id="to-do-message" class="page-header">Default Grid App Message</h1>
+        <button type="button" class="btn btn-success" onclick="GridTaskFeeder.gridSubmit()">Submit
+            Classifications</button>
+    </div>
+</div>
+<!-- row -->
+
+<hr>
+
+
+
+<div class="row">
+    <div class="col-lg">
+        <label for="img_columns">How many columns would you like</label>
+        <select name="img_columns" id="img_columns" onchange="GridTaskFeeder.buildUI(GridTaskFeeder.imageList)">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5" selected>5</option>
+        </select>
+    </div>
+</div>
+
+
+<div id="grid_of_images" class="container">
+    <!-- <div class="row">
+              <div class="col-xs-2">
+                <img src="{{ url_for('static', filename='img/TCGA_CS_4944.png') }}" alt=""> 
+                <label for="cars">Choose a class:</label>
+                <select name="class" id="">
+                  <option value="no_motion">no_motion</option>
+                  <option value="mild_motion" selected>mild_motion</option>
+                  <option value="moderate_motion">moderate_motion</option>
+                  <option value="severe_motion">severe_motion</option>
+                </select> 
+              </div>
+            </div> -->
+</div>
+{% endblock %}
+
+
+
+<!-- JS -->
+{% block js_scripts %}
+<!-- jQuery -->
+<script src="{{ url_for('static', filename='js/jquery-2.1.0.min.js') }}"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+
+<!-- document ready behavior and handlers -->
+<script src="{{ url_for('static', filename='js/grid_class.js') }}"></script>
+
+<!-- Feeder reference -->
+<script src="{{ url_for('static', filename='js/default.js') }}"></script>
+
+{% endblock %}

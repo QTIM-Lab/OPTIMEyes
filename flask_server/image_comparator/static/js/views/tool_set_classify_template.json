@@ -1,0 +1,54 @@
+{
+  "_id": "tool_set_classify_template",
+  "type": "toolSet",
+  "app": "classify",
+  "tools": {
+    "radio_button_categories": [
+      {
+        "category_id": "Choose Single Class",
+        "selected": null,
+        "buttons": [
+          {
+            "button_id": "Choice 1"
+          },
+          {
+            "button_id": "Choice 2"
+          },
+          {
+            "button_id": "Choice 3"
+          }
+        ]
+      }
+    ],
+    "checkbox_categories": [
+      {
+        "category_id": "Choose Classes",
+        "checkboxes": [
+          {
+            "checkbox_id": "Choice 1",
+            "checked": false
+          },
+          {
+            "checkbox_id": "Choice 2",
+            "checked": false
+          },
+          {
+            "checkbox_id": "Choice 3",
+            "checked": false
+          }
+        ]
+      }
+    ],
+    "text_input_categories": [
+      {
+        "category_id": "Messages Category",
+        "text_inputs": [
+          {
+            "text_input_id": "Message 1",
+            "message": "Default Message 1"
+          }
+        ]
+      }
+    ]
+  }
+}

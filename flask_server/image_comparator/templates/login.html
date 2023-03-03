@@ -1,0 +1,30 @@
+<!-- TEMPLATE -->
+{% extends "base.html" %}
+
+<!-- TITLE -->
+{% block title %}Sign Up{% endblock %}
+
+<!-- CSS -->
+{% block custom_css %}
+{% endblock %}
+
+<!-- BODY -->
+{% block content %}
+<form action="/login" method="post">
+
+	<div class="container">
+	  <label for="username"><b>Username</b></label>
+	  <input type="text" placeholder="Enter Username" name="username" required>
+  
+	  <label for="psw"><b>Password</b></label>
+	  <input type="password" placeholder="Enter Password" name="psw" required>
+  
+	  <button type="submit">Login</button>
+	</div>
+  
+	<div>
+		<p>{{ message }}</p>
+	</div>
+</form>
+
+{% endblock %}

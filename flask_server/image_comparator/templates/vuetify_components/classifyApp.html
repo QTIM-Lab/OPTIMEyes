@@ -1,0 +1,344 @@
+<!-- TEMPLATE -->
+{% extends "vuetify_components/base.html" %}
+
+<!-- TITLE -->
+{% block title %}Image Classifier{% endblock %}
+
+<!-- CSS -->
+{% block custom_css %}
+{% endblock %}
+
+
+
+<!-- BODY -->
+{% block content %}
+
+<!-- Components -->
+{% include 'vuetify_components/navbar.html' %}
+
+<!-- Index Vue App -->
+<div id="classify_app">
+    <v-app>
+        <navbar-tag></navbar-tag>
+      <v-main>
+          <v-container>
+            <h1>
+              Classify Task for Image List [[ list_name ]] | On Image
+              <span
+                v-if="images.length != 0"
+                >[[ this.task.value.current_idx + 1 ]] of [[ this.images.length ]]
+              </span>
+            </h1>
+            
+            <!-- Alert -->
+            <v-alert
+              title="Info"
+              color="blue"
+              elevation="4"
+              type="info"
+              v-if="alert_info != null"
+            >
+              [[ alert_info ]]
+            </v-alert>
+            <v-alert
+              title="Error"
+              color="red"
+              elevation="4"
+              type="error"
+              v-if="alert_error != null"
+            >
+              [[ alert_error ]]
+            </v-alert>
+
+            <v-row no-gutters>
+              <v-col
+                cols="12"
+                lg="9"
+              >
+                <v-img
+                  style="border: 5px solid #555;"
+                  width="70%"
+                  v-if="image.base64"
+                  :lazy-src="image.base64"
+                  :src="image.base64"
+                  aspect-ratio="1/1"
+                ></v-img>
+              </v-col>
+
+              <v-col
+              cols="12"
+              lg="3"
+              >
+
+                <!-- Tools -->
+                <!--https://codepen.io/zed_at_home/pen/LYpWyEM-->
+                <v-form v-if="tool_set" action="/task_result" method="post" ref="form">
+
+                  <v-row no-gutters>
+                    <v-col
+                    cols="12"
+                    lg="6"
+                    >
+                      <div
+                        v-for="(checkbox_category, index_checkbox_category) in tool_set.checkbox_categories"
+                        :key="checkbox_category['category_id']"
+                      >
+                      <p>[[ checkbox_category['category_id'] ]]</p>
+
+                      <v-checkbox
+                        
+                        v-for="(checkbox, indexCheckbox) in checkbox_category['checkboxes']"
+                        :key="checkbox['checkbox_id']"
+                        v-model="result.checkbox_categories[index_checkbox_category].checkboxes[indexCheckbox].checked"
+                        :label="`${result.checkbox_categories[index_checkbox_category].checkboxes[indexCheckbox].checked.toString()}`"
+                        color="red"
+                        hide-details
+                      ></v-checkbox>
+
+                      </div>
+
+                      <v-radio-group
+                        v-for="(radio_button_category, index_radio_category) in tool_set.radio_button_categories"
+                        :key="radio_button_category['category_id']"
+                        v-model="result.radio_button_categories[index_radio_category].selected"
+                      >
+                        <p>[[ radio_button_category['category_id'] ]]</p>
+                        <v-radio
+                          
+                          v-for="(radio_button, index_radio_button) in radio_button_category['buttons']"
+                          :key="radio_button['button_id']"
+                          :label="`${result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id}`"
+                          :value="`${result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id}`"
+                        ></v-radio>
+
+                      </v-radio-group>
+                    </v-col>
+                    <v-col
+                    cols="12"
+                    lg="6"
+                    >
+  
+                      <div
+                        v-for="(text_input_category, index_text_input_category) in tool_set.text_input_categories"
+                        :key="text_input_category['category_id']"
+                      >
+                        <p>[[ text_input_category.category_id ]]</p>
+                        <v-textarea
+                          v-for="(text_input, index_text_input) in text_input_category['text_inputs']"
+                          :key="text_input['text_input_id']"
+                          v-model="result.text_input_categories[index_text_input_category].text_inputs[index_text_input].message"
+                          :label="`${result.text_input_categories[index_text_input_category].text_inputs[index_text_input].text_input_id}`"
+                        ></v-textarea>
+    
+                      </div>
+
+                    </v-col>
+
+                  </v-row>
+                  <!--  -->
+
+                  <v-btn
+                    class="mr-4"
+                    @click="submit"
+                  >
+                    submit
+                  </v-btn>
+                  <v-btn @click="clear">
+                    clear
+                  </v-btn>
+
+
+                </v-form>
+
+              </v-col>
+
+              </v-row>
+
+            </v-container>
+      </v-main>
+    </v-app>
+</div>
+
+{% endblock %}
+
+
+
+{% block js_scripts %}
+
+<script>
+
+var classify_app =new Vue({
+    el: '#classify_app',
+    vuetify: new Vuetify(),
+
+    data: () => ({
+      app: "classify",
+      user: "{{ task.user }}",
+      list_name: "{{ task.list_name }}",
+      images: [],
+      image: {image_id: null, base64: null},
+      task: null,
+      tool_set: null,
+      result: null,
+      alert_info: null,
+      alert_error: null
+    }),
+
+    delimiters: ['[[',']]'],
+
+    async mounted() {
+        configuration = await this.getConfiguration()
+        this.DNS = configuration.DNS;
+        this.IMAGES_DB = configuration.IMAGES_DB;
+        this.DB_PORT = configuration.DB_PORT;
+        this.HTTP_PORT = configuration.HTTP_PORT;
+        this.ADMIN_PARTY = configuration.ADMIN_PARTY;
+        this.USER_INFO = configuration.USER_INFO;
+        await this.getTask(this.app, this.user, this.list_name);
+        if (this.task.value.completed){
+          this.alert_info = "This task is completed"
+          setTimeout(()=>{this.alert_info = null}, 2000)
+          setTimeout(()=>{window.location.replace(this.URLS.taskList);}, 2000)
+        }else{
+          //debugger
+          await this.getImageList();
+          this.getTools(this.app, this.task.value.tool_set)
+          // Need to get image compare list so we can get pair to display based on current_idx
+          //debugger
+          this.displayImage(current_image=this.task.value.current_idx);
+        }
+    },
+
+    computed: {
+      // General
+      URLS() {
+          return {
+              configuration: "/configuration",
+              classifyApp: `http://${this.DNS}:${this.HTTP_PORT}/classifyApp/${this.user}/${this.list_name}`,
+              getTask: `http://${this.DNS}:${this.HTTP_PORT}/get_task/${this.app}/${this.user}/${this.list_name}`,
+              taskList: `http://${this.DNS}:${this.HTTP_PORT}/tasksList`,
+              getToolSet: `http://${this.DNS}:${this.HTTP_PORT}/get_toolset`,
+              getImageList: `http://${this.DNS}:${this.HTTP_PORT}/get_image_classify_lists`,
+              taskResult: `http://${this.DNS}:${this.HTTP_PORT}/task_result`,
+          }
+      },
+    },
+
+    methods: {
+      async getConfiguration() {
+          // https://dmitripavlutin.com/javascript-fetch-async-await/
+          const response = await fetch('/configuration');
+          if (!response.ok) {
+              const message = `An error has occured: ${response.status}`;
+              throw new Error(message);
+          }
+          const configuration = await response.json();
+          return configuration;
+      },
+      async getTask(app, user, list_name) {
+          console.log("getTask")
+          //debugger
+          await fetch(this.URLS.getTask)
+          .then((response) => response.json())
+          .then((data) => {
+            //debugger
+            if (data.rows.length === 1){
+              this.task = data.rows[0]
+            }else{
+              alert("more than one task or less than 1 task...debug...")
+            }
+          })
+      },
+      async getImageList() {
+        console.log("getImageList")
+        let CA = this; // Classify App Vue Object
+        await fetch(this.URLS.getImageList+`?key=${this.list_name}`)
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.rows.length === 1){
+            this.images = data.rows[0].value.list
+            if (this.images.length === 0){
+              this.alert_error = "Image list has no elements."
+              setTimeout(()=>{this.alert_error = null}, 2000)
+            }
+          }else{
+            alert("more than one task or less than 1 task...debug...")
+          }
+        })
+      },
+      displayImage(current_image) {
+        this.image['image_id'] = this.images[current_image]
+        this.getBase64DataOfImageFromCouch(this.image.image_id)
+      },
+      getTools(app, tool_set) {
+        console.log("getTask")
+        // debugger
+        fetch(this.URLS.getToolSet + `/${app}/${tool_set}`)
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.rows.length === 1){
+            // Store tool_set and make results object to match
+            var tool_set = data.rows[0].value.tools
+            var result = JSON.parse(JSON.stringify(data.rows[0].value.tools));
+            this.result = result; 
+            this.tool_set = tool_set;
+          }else{
+            this.alert_error = "Can't find specified tool set"
+            setTimeout(()=>{this.alert_error = null}, 2000)
+          }
+        })
+      },
+      getBase64DataOfImageFromCouch(image_id) {
+        var url = `http://${this.DNS}:${this.HTTP_PORT}/get_image/${image_id}`
+        let CA = this; // Classify App Vue Object
+        let I_ID = image_id;
+        fetch(url)
+          .then(response => {
+            return response.text();
+          })
+          .then(data => {
+            DATA='data:image/png;base64,' + data
+            //debugger
+            CA.image['base64'] = DATA
+          })
+      },
+      // For the submit form
+      submit() {
+        //this.$v.$touch() // for uswe with veulidate which you haven't setup for this app
+        // this.$refs.form.$el.submit() // Normal submit but we want to send results in a better organized way
+        //debugger
+        this.result['_id'] = `${this.task.id}-result-${this.image.image_id}`
+        this.result['user'] = this.user
+        this.result['list_name'] = this.task.value.list_name
+        this.result['app'] = "classify"
+        this.result['type'] = "result"
+        this.result['taskid'] = this.task.id
+        fetch(this.URLS.taskResult, {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(this.result)
+        })
+        .then((response) => response.json())
+        .then((data) => {
+          window.location.replace(this.URLS.classifyApp);
+        })
+
+      },
+      // This might be a relect of a copy and paste...don't think this is used
+      clear() {
+        this.$v.$reset()
+        this.user = ''
+        this.imageListName = ''
+        this.imageListTypeSelect = ''
+        this.taskOrder = ''
+      },
+    },
+
+
+  })
+</script>
+
+
+{% endblock %}

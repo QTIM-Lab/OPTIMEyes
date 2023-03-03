@@ -1,0 +1,279 @@
+<!-- TEMPLATE -->
+{% extends "vuetify_components/base.html" %}
+
+<!-- TITLE -->
+{% block title %}Image Comparator - Tasks{% endblock %}
+
+<!-- CSS -->
+{% block custom_css %}
+{% endblock %}
+
+
+<!-- BODY -->
+{% block content %}
+
+<!-- Components -->
+{% include 'vuetify_components/navbar.html' %}
+
+<!-- Index Vue App -->
+<div id="tasksList">
+    <v-app>
+        <navbar-tag></navbar-tag>
+      <v-main>
+          <v-container>
+            <v-row>
+
+              <v-col cols=8>
+
+                <h2>Tasks:</h2>
+                <v-alert
+                  type="warning"
+                  v-if="alert_message"
+                >[[ alert_message ]]</v-alert>
+                
+                <h3>Classify Tasks:</h3>
+
+                <v-simple-table>
+                  <template v-slot:default>
+                    <thead>
+                      <tr>
+                        <th class="text-left">
+                          Start/Continue
+                        </th>
+                        <th class="text-left">
+                          Image List
+                        </th>
+                        <th class="text-left">
+                          Task Type
+                        </th>
+                        <th class="text-left">
+                          Completed
+                        </th>
+                        <th class="text-left">
+                          Associated List
+                        </th>
+                        <th class="text-left">
+                          Priority
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        v-for="item in classifyTasks"
+                        :key="item.value.list_name"
+                      >
+                        <td>
+                          <v-btn
+                          elevation="2"
+                          @click="goToApp(item)" 
+                          >Start/Continue</v-btn>
+                        </td> 
+                        <td>
+                          <v-btn
+                          elevation="2"
+                          @click="goToImageSummary(item.value.imageSet)" 
+                          >[[ item.value.imageSet ]]</v-btn>
+                        </td> 
+                        <td>[[ item.value.app ]]</td> 
+                        <td>[[ item.value.completed ]]</td> 
+                        <td>
+                          <v-btn
+                          elevation="2"
+                          @click="goToImageSummary(item.value.linked_with_image_list_name)" 
+                          >[[ item.value.linked_with_image_list_name ? item.value.linked_with_image_list_name : "None" ]]</v-btn>
+                        </td> 
+                        <td>[[ item.value.task_order ]]</td> 
+                      </tr>
+                    </tbody>
+                  </template>
+                </v-simple-table>
+
+
+                <h3>Compare Tasks:</h3>
+                
+                <v-simple-table>
+                  <template v-slot:default>
+                    <thead>
+                      <tr>
+                        <th class="text-left">
+                          Start/Continue
+                        </th>
+                        <th class="text-left">
+                          Image List
+                        </th>
+                        <th class="text-left">
+                          Task Type
+                        </th>
+                        <th class="text-left">
+                          Completed
+                        </th>
+                        <th class="text-left">
+                          Associated List
+                        </th>
+                        <th class="text-left">
+                          Priority
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        v-for="item in compareTasks"
+                        :key="item.value.list_name"
+                      >
+                        <td>
+                          <v-btn
+                          elevation="2"
+                          @click="goToApp(item)" 
+                          >Start/Continue</v-btn>
+                        </td> 
+                        <td>
+                          <v-btn
+                          elevation="2"
+                          @click="goToImageSummary(item.value.imageSet)" 
+                          >[[ item.value.imageSet ]]</v-btn>
+                        </td> 
+                        <td>[[ item.value.app ]]</td> 
+                        <td>[[ item.value.completed ]]</td> 
+                        <td>
+                          <v-btn
+                          elevation="2"
+                          @click="goToImageSummary(item.value.linked_with_image_list_name)" 
+                          >[[ item.value.linked_with_image_list_name ? item.value.linked_with_image_list_name : "None" ]]</v-btn>
+                        </td> 
+                        <td>[[ item.value.task_order ]]</td> 
+                      </tr>
+                    </tbody>
+                  </template>
+                </v-simple-table>
+
+                <h3>Flicker Tasks:</h3>
+                
+                <v-simple-table>
+                  <template v-slot:default>
+                    <thead>
+                      <tr>
+                        <th class="text-left">
+                          Start/Continue
+                        </th>
+                        <th class="text-left">
+                          Image List
+                        </th>
+                        <th class="text-left">
+                          Task Type
+                        </th>
+                        <th class="text-left">
+                          Completed
+                        </th>
+                        <th class="text-left">
+                          Associated List
+                        </th>
+                        <th class="text-left">
+                          Priority
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        v-for="item in flickerTasks"
+                        :key="item.value.list_name"
+                      >
+                        <td>
+                          <v-btn
+                          elevation="2"
+                          @click="goToApp(item)" 
+                          >Start/Continue</v-btn>
+                        </td> 
+                        <td>
+                          <v-btn
+                          elevation="2"
+                          @click="goToImageSummary(item.value.imageSet)" 
+                          >[[ item.value.imageSet ]]</v-btn>
+                        </td> 
+                        <td>[[ item.value.app ]]</td> 
+                        <td>[[ item.value.completed ]]</td> 
+                        <td>
+                          <v-btn
+                          elevation="2"
+                          @click="goToImageSummary(item.value.linked_with_image_list_name)" 
+                          >[[ item.value.linked_with_image_list_name ? item.value.linked_with_image_list_name : "None" ]]</v-btn>
+                        </td> 
+                        <td>[[ item.value.task_order ]]</td> 
+                      </tr>
+                    </tbody>
+                  </template>
+                </v-simple-table>
+
+
+              </v-col>
+
+              <v-col cols=4>
+                <h2>Create Task:</h2>
+                <v-form action="/make_task" method="post" ref="form">
+                  <v-text-field
+                    name="user"
+                    v-model="user"
+                    :error-messages="userErrors"
+                    :counter="10"
+                    label="User"
+                    required
+                    @input="$v.user.$touch()"
+                    @blur="$v.user.$touch()"
+                  ></v-text-field>
+                  <v-text-field
+                    name="imageSetName"
+                    v-model="imageSetName"
+                    :error-messages="imageSetNameErrors"
+                    label="Image Set Name"
+                    required
+                    @input="$v.imageSetName.$touch()"
+                    @blur="$v.imageSetName.$touch()"
+                  ></v-text-field>
+                  <v-select
+                  name="imageListTypeSelect"
+                  v-model="imageListTypeSelect"
+                  :items="imageListTypeSelectItems"
+                  :error-messages="imageListTypeSelectErrors"
+                  label="Image List Type"
+                  required
+                  @change="$v.imageListTypeSelect.$touch()"
+                  @blur="$v.imageListTypeSelect.$touch()"
+                ></v-select>
+                  <v-text-field
+                    name="taskOrder"
+                    v-model="taskOrder"
+                    :error-messages="taskOrderErrors"
+                    label="Task Order"
+                    required
+                    @input="$v.taskOrder.$touch()"
+                    @blur="$v.taskOrder.$touch()"
+                  ></v-text-field>
+
+                  <v-btn
+                    class="mr-4"
+                    @click="submit"
+                  >
+                    submit
+                  </v-btn>
+                  <v-btn @click="clear">
+                    clear
+                  </v-btn>
+                </v-form>
+              </v-col>
+
+           </v-row>
+
+          </v-container>
+      </v-main>
+    </v-app>
+</div>
+
+{% endblock %}
+
+
+
+{% block js_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/vuelidate/dist/vuelidate.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuelidate/dist/validators.min.js"></script>
+
+<script src="{{ url_for('static', filename='js/vuetify_components/tasksList.js') }}"></script>
+{% endblock %}

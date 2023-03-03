@@ -58,7 +58,7 @@
       "map": "function(doc) {\n  if (doc.type === \"task\") {\n    emit (doc.user, doc);\n  }\n}"
     },
     "users": {
-      "map": "function(doc) {\n  if (doc.type===\"user\")\n    emit(doc.id, doc.username);\n}"
+      "map": "function(doc) {\n  if (doc.type===\"user\")\n    emit(doc._id, {username:doc.username, email:doc.email, password:doc.password});\n}"
     }
   }
 }

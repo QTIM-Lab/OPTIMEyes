@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="">
+        <meta name="author" content="">
+
+        <title>{% block title %}{% endblock %}</title>
+
+        <!-- Bootstrap Core CSS -->
+        <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+
+        <!-- Custom CSS -->
+        <link href="{{ url_for('static', filename='css/all.css') }}" rel="stylesheet">
+        {% block custom_css %}{% endblock %}
+        <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='img/favicon-32x32.png') }}">
+
+    </head>
+
+    <body>
+
+        <!-- Navbar -->
+        {% include 'navbar.html' %}
+
+
+        <!-- Page Content -->
+        <div class="container">
+            <div class="row">
+                <div style="display: none;">
+                    <span id="si_user_label" class="label label-primary">User</span>
+                    <span id="si_user">default</span>
+                </div>
+                <div id="si_database" style="display: none;">
+                    <span id="si_db_label" class="label label-primary">Database</span>
+                    <span id="si_db">Localhost</span>
+                </div>
+                <div>
+                    <span id="si_task_label" class="label label-primary">Tasks</span>
+                    <span id="si_tasks">0 unfinished tasks</span>
+                </div>
+                <div>
+                    <span id="si_curtask_label" class="label label-primary">Current Task</span>
+                    <span id="si_curtask">Default Compare App Message</span>
+                </div>
+            </div>
+            <div class="row">
+                <div id="load_messaging"></div>
+            </div>
+
+            <hr>
+
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <ul class=flashes>
+            {% for message in messages %}
+                <li class="flask_flash_messages">{{ message }}</li>
+            {% endfor %}
+            </ul>
+            {% endif %}
+            {% endwith %}
+
+            <!-- Below is for other templates to fill in -->
+            {% block content %}{% endblock %}
+
+        </div>
+
+
+        <script src="{{ url_for('static', filename='js/queryStringParser.js') }}"></script>
+        {% block js_scripts %}{% endblock %}
+
+    </body>
+
+</html>

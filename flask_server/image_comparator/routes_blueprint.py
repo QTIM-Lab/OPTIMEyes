@@ -10,29 +10,31 @@ from flask import (
     current_app,
     Blueprint,
     flash,
-    g,  # not using yet
     redirect,
     render_template,
     request,
-    session,  # not used yet
-    url_for,  # not used yet
     jsonify,
-    send_file
+    send_file,
 )
-# from werkzeug.security import check_password_hash, generate_password_hash
+
+from flask_login import login_required, current_user
 
 # self written utils
-from .utils.makeTask import makeTask  # for use in create_user
+from .utils.makeTask import makeTask
+from .utils.makeClassifyList import makeClassifyList
+from .utils.makeCompareList import makeCompareList
+from .utils.makeFlickerList import makeFlickerList
+from .utils.addImages import addImages
+from .utils.deleteImageSet import deleteImageSet
 
-# from .utils.makeTask import testt # for use in create_user
-# testt()
+# DB
+from image_comparator.db import get_server
 
 bp = Blueprint('routes_blueprint', __name__, url_prefix='/')
 
 # a simple page that says hello
-
-
 @bp.route('/hello')
+@login_required
 def hello():
     print(app)
     print(current_app.config["DNS"])
@@ -75,26 +77,99 @@ def check_if_admin_party_then_make_request(url, method="GET", data="no data"):
 @bp.route('/configuration', methods=['GET'])
 def config():
     # pdb.set_trace()
+    
     """
     For the front end
     """
+    try:
+        USER_INFO = {"username":current_user.username, 
+                     "logged_in":current_user.is_authenticated,
+                     "admin":current_user.admin}
+    except:
+        USER_INFO = {"logged_in":current_user.is_authenticated}
+    # pdb.set_trace()
     config = {
         "DNS": current_app.config['DNS'],
         "IMAGES_DB": current_app.config['IMAGES_DB'],
         "DB_PORT": current_app.config['DB_PORT'],
         "HTTP_PORT": current_app.config['HTTP_PORT'],
         "ADMIN_PARTY": current_app.config['ADMIN_PARTY'],
+        "USER_INFO": USER_INFO
     }
     return jsonify(config)
 
 # Apps
 
+# old and delete soon
+# @bp.route('/', methods=['GET'])
+# def index():
+#     return render_template('index.html')
+
+# @bp.route('/app_list', methods=['GET'])
+# @login_required
+# def app_list():
+#     #return render_template('app_list.html')
+#     return render_template('/vuetify_components/app_list.html')
+
 
 @bp.route('/', methods=['GET'])
-def index():
-    return render_template('index.html')
+def vue_index():
+    return render_template('/vuetify_components/index.html')
 
 
+@bp.route('/main_dashboard', methods=['GET'])
+@login_required
+def main_dashboard():
+    return render_template('/vuetify_components/main_dashboard.html')
+
+
+@bp.route('/tasksList', methods=['GET'])
+@login_required
+def tasksList():
+    return render_template('/vuetify_components/tasksList.html')
+
+@bp.route('/classifyApp/<user>/<list_name>', methods=['GET'])
+def classifyApp(user, list_name):
+    # pdb.set_trace()
+    task_dict = {"user":user, "list_name":list_name}
+    return render_template('/vuetify_components/classifyApp.html', task=task_dict)
+
+
+@bp.route('/compareApp/<user>/<list_name>', methods=['GET'])
+def compareApp(user, list_name):
+    # pdb.set_trace()
+    task_dict = {"user":user, "list_name":list_name}
+    return render_template('/vuetify_components/compareApp.html', task=task_dict)
+
+
+@bp.route('/flickerApp/<user>/<list_name>', methods=['GET'])
+def flickerApp(user, list_name):
+    # pdb.set_trace()
+    task_dict = {"user":user, "list_name":list_name}
+    return render_template('/vuetify_components/flickerApp.html', task=task_dict)
+
+
+@bp.route('/ohif', methods=['GET'])
+@login_required
+def ohif():
+    return render_template('/vuetify_components/ohif.html')
+
+
+@bp.route('/imagesDashboard', methods=['GET'])
+@login_required
+def imagesDashboard():
+    return render_template('/vuetify_components/imagesDashboard.html')
+
+@bp.route('/image_set_summary/<imageSet>', methods=['GET'])
+@login_required
+def image_set_summary(imageSet):
+    return render_template('/vuetify_components/ImageSetSummary.html', imageSet=imageSet)
+    
+
+
+
+
+# OLD apps
 @bp.route('/two_image', methods=['GET'])
 def two_image():
     con = json.loads(config().data)
@@ -115,6 +190,11 @@ def grid_class():
     con['app'] = 'Grid'
     return render_template('grid_class.html', app_config=con)
 
+@bp.route('/grid_class_dev', methods=['GET'])
+def grid_class_dev():
+    con = json.loads(config().data)
+    con['app'] = 'Grid'
+    return render_template('grid_class_dev.html', app_config=con)
 
 @bp.route('/pair_image', methods=['GET'])
 def pair_image():
@@ -140,6 +220,52 @@ def contact():
 
 
 # Action APIs
+@bp.route('/add_images', methods=['POST'])
+def add_images():
+    print("in /add_images")
+    # pdb.set_trace()
+    folder=request.form['folder']
+    imageSetName=request.form['imageSetName']
+    imageSetTypeSelect=request.form['imageSetTypeSelect']
+    addImages(folder, imageSetName, imageSetTypeSelect)
+    return redirect('/imagesDashboard')
+   
+@bp.route('/delete_image_set/<imageSet>', methods=['DELETE'])
+def delete_image_set(imageSet):
+    print("in /delete_image_set")
+    deleted_images = deleteImageSet(imageSet)
+    # pdb.set_trace()
+    return deleted_images
+   
+    
+    
+@bp.route('/make_task', methods=['POST'])
+def make_task():
+    # pdb.set_trace()
+    print("in /make_task")
+    user=request.form['user']
+    imageSetName=request.form['imageSetName'] # pre-existing; imageSet
+    imageListTypeSelect=request.form['imageListTypeSelect']
+    pctRepeat = 0
+    taskOrder=request.form['taskOrder']
+    #pdb.set_trace()
+    if imageListTypeSelect == "classify":
+        listName=f"{imageSetName}-{imageListTypeSelect}-{pctRepeat}" # Placeholder and won't allow duplicates; add form entry to truly customze and add duplicates
+        makeClassifyList(imageSet=imageSetName, classifyListName=listName, pctRepeat=pctRepeat)
+    elif imageListTypeSelect == "compare":
+        listName=f"{imageSetName}-{imageListTypeSelect}-{pctRepeat}" # Placeholder and won't allow duplicates; add form entry to truly customze and add duplicates
+        makeCompareList(imageSet=imageSetName, compareListName=listName, pctRepeat=pctRepeat)
+    elif imageListTypeSelect == "flicker":
+        listName=f"{imageSetName}-{imageListTypeSelect}-{pctRepeat}" # Placeholder and won't allow duplicates; add form entry to truly customze and add duplicates
+        makeFlickerList(imageSet=imageSetName, flickerListName=listName, pctRepeat=pctRepeat)
+    elif imageListTypeSelect == "grid":
+        pass
+    elif imageListTypeSelect == "pair":
+        pass
+    makeTask(user=user, imageListName=listName, imageSet=imageSetName, imageListType=imageListTypeSelect, taskOrder=taskOrder)
+    return redirect(f'/tasksList')
+    
+
 @bp.route('/get_users', methods=['GET'])
 def get_users():
     print("in /get_users")
@@ -151,15 +277,68 @@ def get_users():
     return json.loads(response.content.decode('utf-8'))
 
 
+@bp.route('/get_image_sets', methods=['GET'])
+def get_image_sets():
+    print("in /get_image_sets")
+    base = "http://{}:{}/{}".format(
+        current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
+    view = f"_design/images/_view/images?group_level=1"
+    url = f"{base}/{view}"
+    response = check_if_admin_party_then_make_request(url)
+    return json.loads(response.content.decode('utf-8'))
+
+
+@bp.route('/get_images_by_set/<imageSet>', methods=['GET'])
+def get_images_by_set(imageSet):
+    """_summary_
+
+    Args:
+        imageSet (_type_): image set or raw images set name
+
+    Returns:
+        _type_: set of image ids from the database
+    """
+    print("in /get_images_by_set")
+    base = "http://{}:{}/{}".format(
+        current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
+    view = f'_design/images/_view/imagesBySet?key="{imageSet}"'
+    url = f"{base}/{view}"
+    response = check_if_admin_party_then_make_request(url)
+    return json.loads(response.content.decode('utf-8'))
+
+
 @bp.route('/get_tasks/<app>', methods=['GET'])
 def get_tasks(app):
     username = request.args['username']
     base = "http://{}:{}/{}".format(
         current_app.config['DNS'], current_app.config['DB_PORT'], current_app.config["IMAGES_DB"])
-    view = f"_design/basic_views/_view/incomplete_{app}_tasks?key=\"{username}\""
+    # view = f"_design/basic_views/_view/incomplete_{app}_tasks?key=\"{username}\""
+    # view = f"_design/{app}App/_view/incomplete_{app}_tasks?key=\"{username}\""
+    view = f"_design/{app}App/_view/tasks?key=\"{username}\""
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
+    # pdb.set_trace()
+    return json.loads(response.content.decode('utf-8'))
 
+@bp.route('/get_task/<app>/<user>/<list_name>', methods=['GET'])
+def get_task(app, user, list_name):
+    base = "http://{}:{}/{}".format(
+        current_app.config['DNS'], current_app.config['DB_PORT'], current_app.config["IMAGES_DB"])
+    view = f"_design/{app}App/_view/tasksByUserAndListName?key=[\"{user}\", \"{list_name}\"]"
+    url = f"{base}/{view}"
+    response = check_if_admin_party_then_make_request(url)
+    # pdb.set_trace()
+    return json.loads(response.content.decode('utf-8'))
+
+@bp.route('/get_toolset/<app>/<tool_set>', methods=['GET'])
+def get_toolset(app,tool_set):
+    # pdb.set_trace()
+    base = "http://{}:{}/{}".format(
+        current_app.config['DNS'], current_app.config['DB_PORT'], current_app.config["IMAGES_DB"])
+    view = f"_design/{app}App/_view/toolSets?key=\"{tool_set}\""
+    url = f"{base}/{view}"
+    response = check_if_admin_party_then_make_request(url)
+    # pdb.set_trace()
     return json.loads(response.content.decode('utf-8'))
 
 
@@ -172,13 +351,15 @@ def get_image_compare_lists():
     except:
         print("in except")
         # pdb.set_trace()
-        view = f"_design/basic_views/_view/image_compare_lists"
+        # view = f"_design/basic_views/_view/image_compare_lists"
+        view = f"_design/compareApp/_view/imageLists"
         url = f"{base}/{view}"
         response = check_if_admin_party_then_make_request(url)
         return json.loads(response.content.decode('utf-8'))
     # pdb.set_trace()
     print("past except")
-    view = f"_design/basic_views/_view/image_compare_lists?key=\"{key}\""
+    # view = f"_design/basic_views/_view/image_compare_lists?key=\"{key}\""
+    view = f"_design/compareApp/_view/imageLists?key=\"{key}\""
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
     return json.loads(response.content.decode('utf-8'))
@@ -188,21 +369,48 @@ def get_image_compare_lists():
 def get_image_classify_lists():
     base = "http://{}:{}/{}".format(
         current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
-    # pdb.set_trace()
     try:
         key = request.args['key']
     except:
         print("in except")
         # pdb.set_trace()
-        view = f"_design/basic_views/_view/image_classify_lists"
+        # view = f"_design/basic_views/_view/image_classify_lists"
+        view = f"_design/classifyApp/_view/imageLists"
         url = f"{base}/{view}"
         response = check_if_admin_party_then_make_request(url)
         return json.loads(response.content.decode('utf-8'))
-    print("past except")
-    view = f"_design/basic_views/_view/image_classify_lists?key=\"{key}\""
+    # pdb.set_trace()
+    # view = f"_design/basic_views/_view/image_classify_lists?key=\"{key}\""
+    view = f"_design/classifyApp/_view/imageLists?key=\"{key}\""
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
+    # pdb.set_trace()
     return json.loads(response.content.decode('utf-8'))
+
+
+@bp.route('/get_image_flicker_lists', methods=['GET'])
+def get_image_flicker_lists():
+    base = "http://{}:{}/{}".format(
+        current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
+    try:
+        key = request.args['key']
+    except:
+        print("in except")
+        # pdb.set_trace()
+        # view = f"_design/basic_views/_view/image_flicker_lists"
+        view = f"_design/flickerApp/_view/imageLists"
+        url = f"{base}/{view}"
+        response = check_if_admin_party_then_make_request(url)
+        return json.loads(response.content.decode('utf-8'))
+    # pdb.set_trace()
+    # view = f"_design/basic_views/_view/image_flicker_lists?key=\"{key}\""
+    view = f"_design/flickerApp/_view/imageLists?key=\"{key}\""
+    url = f"{base}/{view}"
+    response = check_if_admin_party_then_make_request(url)
+    # pdb.set_trace()
+    return json.loads(response.content.decode('utf-8'))
+
+
 
 
 @bp.route('/get_image_grid_lists', methods=['GET'])
@@ -272,26 +480,34 @@ def update_tasks(task_id):
 
 @bp.route('/get_image/<image_id>', methods=['GET'])
 def get_image(image_id):
-    # pdb.set_trace()
-    # Get Image ID
+    # Get Image ID to fetch image data
     IMAGE_ID = image_id
     url_for_couchdb_image_fetch = f'http://{current_app.config["DNS"]}:{current_app.config["DB_PORT"]}/{current_app.config["IMAGES_DB"]}/{IMAGE_ID}/image'
-    response = check_if_admin_party_then_make_request(
-        url_for_couchdb_image_fetch)
-    response.raw.decode_content = True
-    # type(response.content) # bytes
+    response = check_if_admin_party_then_make_request(url_for_couchdb_image_fetch)
+    response.raw.decode_content = True # You can inspect with: type(response.content) # bytes
     image_response = base64.b64encode(response.content)
-    return send_file(
-        # io.BytesIO(response.content),
-        io.BytesIO(image_response),
-        mimetype='image/png',
+    # Fetch image name
+    url_for_couchdb_image_name_fetch = f'http://{current_app.config["DNS"]}:{current_app.config["DB_PORT"]}/{current_app.config["IMAGES_DB"]}/{IMAGE_ID}/'
+    # pdb.set_trace()
+    response = check_if_admin_party_then_make_request(url_for_couchdb_image_name_fetch)
+    image_meta_data = json.loads(response.content)
+    #pdb.set_trace()
+    attachment_filename = image_meta_data['origin']
+    attachment_extension = attachment_filename[-3:]
+    response = send_file(
+        path_or_file=io.BytesIO(image_response),
+        mimetype=f'image/{attachment_extension}',
         as_attachment=True,
-        attachment_filename='test.png')
+        download_name=attachment_filename)
+    return response
 
+# OLD
+# @bp.route('/task_results', methods=['POST'])
 
-@bp.route('/task_results', methods=['POST'])
-def task_results():
-    print("in /task_results")
+@bp.route('/task_result', methods=['POST'])
+def task_result():
+    print("in /task_result")
+    couch_server = get_server(); db = couch_server['image_comparator'];
     if current_app.config["ADMIN_PARTY"]:
         couch = couchdb.Server(
             f'http://{current_app.config["DNS"]}:{current_app.config["DB_PORT"]}')
@@ -306,7 +522,7 @@ def task_results():
     doc = db.get(doc_id)  # the doc we saved if we need it
 
     # Determine task type
-    if results['type'] == "gridResult":  # fix to be grid specific
+    if results['app'] == "grid": # I've modified without back testing
         # pdb.set_trace()
         # 2 needs to mark grid task being referenced as "completed"
         x = db.find({'selector': {
@@ -316,48 +532,26 @@ def task_results():
         grid_list = db[_id]
         grid_list['completed'] = True
         db[_id] = grid_list
-    elif results['type'] == "compareResult":
-        # pdb.set_trace()
+    elif results['app'] == "classify": # I've modified without back testing
         # 2 needs to mark compare task being referenced as "completed" if this was the last task
         #   or we need to increment the current_idx on the task
         # Get Task
         task_map = db.find({'selector': {
-            "_id": results['task'],
-            'list_name': results['task_list_name'],
+            "_id": results['taskid'],
+            'list_name': results['list_name'],
+            'app': results['app'],
             'type': 'task',
             'user': results['user']}})
-        # Get Compare List
-        compare_list_map = db.find(
-            {'selector': {"list_name": results['task_list_name'],
-                          "type": "image_compare_list"}})
-        task = task_map.__next__()
-        compare_list = compare_list_map.__next__()
-        if task['current_idx'] == compare_list['count'] - 1:
-            # That was the last task so mark task as complete
-            # pdb.set_trace()
-            task['completed'] = True
-            db[task['_id']] = task
-        else:
-            task['current_idx'] += 1
-            db[task['_id']] = task
-        return jsonify('asdf')  # ! What is this
-    elif results['type'] == "classifyResult":
-        # 2 needs to mark compare task being referenced as "completed" if this was the last task
-        #   or we need to increment the current_idx on the task
-        # Get Task
-        task_map = db.find({'selector': {
-            "_id": results['task'],
-            'list_name': results['task_list_name'],
-            'type': 'task',
-            'user': results['user']}})
+        
         # Get Classify List
         classify_list_map = db.find(
             {'selector': {
-                "list_name": results['task_list_name'],
-                "type": "image_classify_list"}})
+                "_id": results['list_name'],
+                "type": "imageList"}
+            })
         task = task_map.__next__()
-        # pdb.set_trace()
         classify_list = classify_list_map.__next__()
+        # pdb.set_trace()
         if task['current_idx'] == classify_list['count'] - 1:
             # That was the last task so mark task as complete
             # pdb.set_trace()
@@ -368,8 +562,64 @@ def task_results():
             task['current_idx'] += 1
             db[task['_id']] = task
 
+        return jsonify('success')  # ! What is this
+    elif results['app'] == "compare": # I've modified without back testing
+        # 2 needs to mark compare task being referenced as "completed" if this was the last task
+        #   or we need to increment the current_idx on the task
+        # Get Task
+        task_map = db.find({'selector': {
+            "_id": results['taskid'],
+            'list_name': results['list_name'],
+            'app': results['app'],
+            'type': 'task',
+            'user': results['user']}})
+        # Get Compare List
+        compare_list_map = db.find(
+            {'selector': {
+                "_id": results['list_name'],
+                "type": "imageList"}
+            })
+        task = task_map.__next__()
+        compare_list = compare_list_map.__next__()
+        # pdb.set_trace()
+        if task['current_idx'] == compare_list['count'] - 1:
+            # That was the last task so mark task as complete
+            # pdb.set_trace()
+            task['completed'] = True
+            db[task['_id']] = task
+        else:
+            task['current_idx'] += 1
+            db[task['_id']] = task
         return jsonify('asdf')  # ! What is this
-    elif results['type'] == "pairResult":
+    elif results['app'] == "flicker": # I've modified without back testing
+        # 2 needs to mark flicker task being referenced as "completed" if this was the last task
+        #   or we need to increment the current_idx on the task
+        # Get Task
+        task_map = db.find({'selector': {
+            "_id": results['taskid'],
+            'list_name': results['list_name'],
+            'app': results['app'],
+            'type': 'task',
+            'user': results['user']}})
+        # Get Flicker List
+        flicker_list_map = db.find(
+            {'selector': {
+                "_id": results['list_name'],
+                "type": "imageList"}
+            })
+        task = task_map.__next__()
+        flicker_list = flicker_list_map.__next__()
+        # pdb.set_trace()
+        if task['current_idx'] == flicker_list['count'] - 1:
+            # That was the last task so mark task as complete
+            # pdb.set_trace()
+            task['completed'] = True
+            db[task['_id']] = task
+        else:
+            task['current_idx'] += 1
+            db[task['_id']] = task
+        return jsonify('asdf')  # ! What is this
+    elif results['app'] == "pair": # I've modified without back testing
         # 2 needs to mark compare task being referenced as "completed" if this was the last task
         #   or we need to increment the current_idx on the task
         task_list_name = results['task_list_name']
@@ -465,9 +715,12 @@ def reset_to_previous_result(app):
     currentTask = json.loads(request.data)
     base = "http://{}:{}/{}".format(
         current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
-
+    # pdb.set_trace()
     # get old result
-    view = f"_design/basic_views/_view/{app}Results?key=\"{currentTask['user']}\""
+    if app.capitalize() == "Compare":
+        view = f"_design/basic_views/_view/results{app.capitalize()}?key=[\"{currentTask['user']}\",\"{currentTask['list_name']}\"]"
+    else:
+        view = f"_design/basic_views/_view/results{app.capitalize()}_userList?key=[\"{currentTask['user']}\",\"{currentTask['list_name']}\"]"
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
     all_results = json.loads(response.content.decode('utf-8'))
@@ -477,6 +730,8 @@ def reset_to_previous_result(app):
         if row['value']['task_idx'] + 1 == currentTask['current_idx']:
             # pdb.set_trace()
             old_result_id, old_result_rev = row['value']['_id'], row['value']['_rev']
+    # pdb.set_trace()
+
     if len(old_result_id) == 0 or len(old_result_rev) == 0:
         pdb.set_trace()  # quick error handling till I properly implement
 
@@ -503,12 +758,13 @@ def reset_to_previous_result(app):
 @bp.route('/get_classification_results/', methods=['GET'])
 def get_classification_results():
     username = request.args['username']
+    list_name = request.args['list_name']
     base = "http://{}:{}/{}".format(
         current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
-    view = f"_design/basic_views/_view/resultsClassify?key=\"{username}\""
+    view = f"_design/basic_views/_view/resultsClassify?key=[\"{username}\",\"{list_name}\"]"
     url = f"{base}/{view}"
-    # pdb.set_trace()
     response = check_if_admin_party_then_make_request(url)
+    # pdb.set_trace()
 
     return json.loads(response.content.decode('utf-8'))
 

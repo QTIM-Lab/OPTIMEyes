@@ -1,0 +1,168 @@
+
+<script type="text/template" id="navbar">
+    <div>
+        <v-app-bar
+        color="black accent-4"
+        dense
+        dark
+        app
+        collapse-on-scroll
+        >
+        <v-app-bar-nav-icon @click="drawer = true"> </v-app-bar-nav-icon>
+
+            <v-toolbar-title
+            color="blue"
+            v-if=config.USER_INFO.logged_in
+            >
+            Welcome [[ config.USER_INFO.username ]]</v-toolbar-title>
+        
+            <v-spacer></v-spacer>
+            <v-btn elevation="2" 
+            v-if=!config.USER_INFO.logged_in 
+            href="/signup"
+            >Sign Up</v-btn>
+
+            <div v-if=!config.USER_INFO.logged_in>|</div>
+
+            <v-btn elevation="2" 
+            v-if=!config.USER_INFO.logged_in
+            href="/login"
+            >Login</v-btn>
+
+            <!-- <v-toolbar-title v-if="logged_in">Logout</v-toolbar-title> -->
+
+            <v-menu
+            right
+            bottom
+            v-if=config.USER_INFO.logged_in
+            >
+                <template v-slot:activator="{ on, attrs }">
+                    <v-btn
+                    icon
+                    v-bind="attrs"
+                    v-on="on"
+                    >
+                    <v-icon>mdi-account</v-icon>
+                    </v-btn>
+                </template>
+        
+                <v-list>
+                    <v-list-item
+                    v-for="(menu_item, i) in menu_items"
+                    :key="i"
+                    @click="() => {}"
+                    >
+                    <v-list-item-title>
+                        <v-btn
+                        block
+                        v-on:click="test(menu_item)"
+                        >[[ menu_item ]]</v-btn>
+                    </v-list-item-title>
+                    </v-list-item>
+                </v-list>
+            </v-menu>
+        </v-app-bar>
+
+       <!-- Links to <v-app-bar-nav-icon></v-app-bar-nav-icon> -->
+        <v-navigation-drawer v-model="drawer" absolute temporary>
+            <v-list nav dense>
+              <v-list-item-group
+                v-model="group"
+                active-class="deep-purple--text text--accent-4"
+              >
+                <v-list-item>
+                  <v-list-item-icon>
+                    <v-icon>mdi-home</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-title>
+                    <a href="{{url_for('routes_blueprint.vue_index')}}">Home</a>
+                  </v-list-item-title>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-icon>
+                    <v-icon>mdi-view-dashboard</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-title>
+                    <a href="{{url_for('routes_blueprint.main_dashboard')}}">Main Personal Dashboard</a>
+                  </v-list-item-title>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-icon>
+                    <v-icon>mdi-image-multiple-outline</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-title>
+                    <a href="{{url_for('routes_blueprint.imagesDashboard')}}">Images Dashboard</a>
+                  </v-list-item-title>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-icon>
+                    <v-icon>mdi-file-tree</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-title>
+                    <a href="{{url_for('routes_blueprint.tasksList')}}">Tasks</a>
+                  </v-list-item-title>
+                </v-list-item>
+
+                <!--
+                <v-list-item>
+                  <v-list-item-icon>
+                    <v-icon>mdi-application-braces</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-title>
+                    <a href="{{url_for('routes_blueprint.ohif')}}">OHIF</a>
+                  </v-list-item-title>
+                </v-list-item>-->
+
+              </v-list-item-group>
+            </v-list>
+        </v-navigation-drawer>
+
+    </div>
+
+</script>
+
+<script>
+    Vue.component('navbar-tag', {
+        template: '#navbar',
+        data: function() {
+            return { 
+                URLS: {
+                    "Sign Up": "/signup",
+                    "Login": "/login",
+                    "Logout": "/logout",
+                },
+                drawer:false,
+                group:null,
+                menu_items: ['Logout'], // ['Sign Up', 'Login', 'Logout']
+                config: {USER_INFO: {"logged_in":false} },
+            }
+        },
+        delimiters: ['[[',']]'],
+        beforeCreate() {},
+        created() {},
+        beforeMount() {
+            
+        },
+        mounted() {
+            this.get_config()
+        },
+        methods: {
+            get_config: function (){
+                fetch('/configuration')
+                .then((response) => response.json())
+                .then((data) => {
+                    this.config = data
+                });
+            },
+            test: function (nav_button){
+                console.log(nav_button)
+                console.log(this.URLS[nav_button])
+                window.location.href = this.URLS[nav_button];
+                // window.open(this.URLS[nav_button])
+            }
+        },
+    });
+</script>

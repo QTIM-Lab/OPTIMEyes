@@ -1,0 +1,178 @@
+<!-- TEMPLATE -->
+{% extends "vuetify_components/base.html" %}
+
+<!-- TITLE -->
+{% block title %}Image Set Summary{% endblock %}
+
+<!-- CSS -->
+{% block custom_css %}
+{% endblock %}
+
+
+
+<!-- BODY -->
+{% block content %}
+
+<!-- Components -->
+{% include 'vuetify_components/navbar.html' %}
+
+<!-- Index Vue App -->
+<div id="imageSetSummary">
+    <v-app>
+        <navbar-tag></navbar-tag>
+      <v-main>
+          <v-container>
+            <div>
+              <h1>[[ message ]]</h1>
+  
+              <v-select
+                v-model="cols_selected"
+                :items="columns"
+                label="Columns"
+                outlined
+              ></v-select>
+            </div>
+
+            <v-row>
+              <v-col
+                v-for="image in images"
+                :key="image.value._id"
+                class="d-flex child-flex"
+                :cols="grid_cols"
+              >
+                <v-card>
+                
+                  <v-img
+                    :src="image.value.base64"
+                    :lazy-src="image.value.base64"
+                    aspect-ratio="1"
+                    class="grey lighten-2"
+                  >
+                    <template v-slot:placeholder>
+                      <v-row
+                        class="fill-height ma-0"
+                        align="center"
+                        justify="center"
+                      >
+                        <v-progress-circular
+                          indeterminate
+                          color="grey lighten-5"
+                        ></v-progress-circular>
+                      </v-row>
+                    </template>
+                  </v-img>
+
+                  <v-card-text>
+                    [[ image.value._id ]]
+                  </v-card-text>
+
+                </v-card>
+
+              </v-col>
+            </v-row>
+
+          </v-container>
+      </v-main>
+    </v-app>
+</div>
+
+{% endblock %}
+
+
+
+{% block js_scripts %}
+
+<script>
+
+var imageSetSummary =new Vue({
+    el: '#imageSetSummary',
+    vuetify: new Vuetify(),
+
+    data: () => ({
+        message: `Image Set: {{ imageSet }} `,
+        imageSet: "{{ imageSet }}",
+        images: [],
+        // select
+        columns: [1,2,3,4,6,12],
+        cols_selected: 12,
+
+    }),
+    async mounted() {
+      configuration = await this.getConfiguration()
+      this.DNS = configuration.DNS;
+      this.IMAGES_DB = configuration.IMAGES_DB;
+      this.DB_PORT = configuration.DB_PORT;
+      this.HTTP_PORT = configuration.HTTP_PORT;
+      this.ADMIN_PARTY = configuration.ADMIN_PARTY;
+      this.USER_INFO = configuration.USER_INFO;
+      this.buildGrid();    
+    },
+
+    computed: {
+      // General
+      URLS() {
+          return {
+              configuration: "/configuration",
+              getImagesBySet: `http://${this.DNS}:${this.HTTP_PORT}/get_images_by_set`
+          }
+      },
+      grid_cols() {
+        grid_col_key = {1:12, 2:6, 3:4, 4:3, 6:2, 12:1 }
+        return grid_col_key[this.cols_selected]
+      }
+
+    },
+    methods: {
+      async getConfiguration() {
+          // https://dmitripavlutin.com/javascript-fetch-async-await/
+          const response = await fetch('/configuration');
+          if (!response.ok) {
+              const message = `An error has occured: ${response.status}`;
+              throw new Error(message);
+          }
+          const configuration = await response.json();
+          return configuration;
+      },
+      buildGrid() {
+        console.log("buildGrid")
+        getImagesBySetURL = this.URLS.getImagesBySet + `/${this.imageSet}`
+        //debugger
+        fetch(getImagesBySetURL)
+            .then((response) => response.json())
+            .then((data) => {
+              data.rows.forEach((v, i, a) => {
+                //debugger
+                v['value']['base64'] = ''
+                this.images.push(v)
+                this.getBase64DataOfImageFromCouch(v['id'])
+
+              })
+              
+            })
+      },
+      getBase64DataOfImageFromCouch(image_id) {
+        var url = `http://${this.DNS}:${this.HTTP_PORT}/get_image/${image_id}`
+        let ILS = this; // Image Set Summary Vue Object
+        let I_ID = image_id;
+        fetch(url)
+          .then(response => {
+            return response.text();
+          })
+          .then(data => {
+            DATA='data:image/png;base64,' + data
+            ILS.images.forEach((v,i,a)=>{
+              if (v['value']['_id'] === I_ID){
+                //debugger
+                ILS.images[i]['value']['base64'] = DATA
+              }
+            })
+          })
+      },
+    },
+
+    delimiters: ['[[',']]'],
+})
+</script>
+
+
+{% endblock %}

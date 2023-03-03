@@ -1,0 +1,290 @@
+<!-- TEMPLATE -->
+{% extends "vuetify_components/base.html" %}
+
+<!-- TITLE -->
+{% block title %}Images Dashboard{% endblock %}
+
+<!-- CSS -->
+{% block custom_css %}
+{% endblock %}
+
+
+
+<!-- BODY -->
+{% block content %}
+
+<!-- Components -->
+{% include 'vuetify_components/navbar.html' %}
+
+<!-- Index Vue App -->
+<div id="imagesDashboard">
+    <v-app>
+        <navbar-tag></navbar-tag>
+      <v-main>
+          <v-container>
+            <v-row>
+              <v-col cols=6>
+                <h2>Image Sets:</h2>
+                
+                <v-alert
+                  color="red"
+                  elevation="4"
+                  type="success"
+                  v-if="deleted_images != null"
+                >
+                  <p>Deleted [[ deleted_images.count ]] images.</p>
+                  <ul v-for="image in deleted_images.image_ids">
+                    <li>[[ image ]]</li>
+                  </ul>
+                </v-alert>
+
+                <v-simple-table>
+                  <template v-slot:default>
+                    <thead>
+                      <tr>
+                        <th class="text-left">
+                          Image Set
+                        </th>
+                        <th class="text-left">
+                          Images
+                        </th>
+                        <th class="text-left">
+                          Action
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        v-for="item in imageSets"
+                        :key="item.imageSet"
+                      >
+                        <td>
+                          <v-btn
+                          elevation="2"
+                          @click="goToImageSummary([[ item.imageSet ]])" 
+                          >[[ item.imageSet ]]</v-btn>
+                        </td>
+                        <td>[[ item.images ]]</td>
+                        <td>
+                          <v-btn
+                          elevation="2"
+                          @click="deleteImageSet([[ item.imageSet ]])" 
+                          >Delete</v-btn>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </template>
+                </v-simple-table>
+
+              </v-col>
+
+              <v-col cols=6>
+                <v-alert
+                  color="blue"
+                  elevation="4"
+                  type="success"
+                >Make sure you've moved the data you want to upload to the Image-Comparator-Data directory within a folder. Enter the folder name into the form so the app knows where to get the data.
+                </v-alert>
+                <h2>Create Image Set:</h2>
+                <v-form action="/add_images" method="post" ref="form">
+                  <v-text-field
+                    name="folder"
+                    v-model="folder"
+                    :error-messages="folderErrors"
+                    :counter="20"
+                    label='Folder within "Image-Comparator-Data" Folder'
+                    required
+                    @input="$v.folder.$touch()"
+                    @blur="$v.folder.$touch()"
+                  ></v-text-field>
+                  <v-text-field
+                    name="imageSetName"
+                    v-model="imageSetName"
+                    :error-messages="imageSetNameErrors"
+                    label="Image Set Name"
+                    required
+                    @input="$v.imageSetName.$touch()"
+                    @blur="$v.imageSetName.$touch()"
+                  ></v-text-field>
+                  <v-select
+                  name="imageSetTypeSelect"
+                  v-model="imageSetTypeSelect"
+                  :items="imageSetTypeSelectItems"
+                  :error-messages="imageSetTypeSelectErrors"
+                  label="Image Set Type"
+                  required
+                  @change="$v.imageSetTypeSelect.$touch()"
+                  @blur="$v.imageSetTypeSelect.$touch()"
+                ></v-select>
+
+                  <v-btn
+                    class="mr-4"
+                    @click="submit"
+                  >
+                    submit
+                  </v-btn>
+                  <v-btn @click="clear">
+                    clear
+                  </v-btn>
+                </v-form>
+              </v-col>
+
+
+            </v-row>
+
+          </v-container>
+      </v-main>
+    </v-app>
+</div>
+
+{% endblock %}
+
+
+
+{% block js_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/vuelidate/dist/vuelidate.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuelidate/dist/validators.min.js"></script>
+
+
+<script>
+const { required, maxLength } = validators
+const validationMixin = vuelidate.validationMixin
+
+Vue.use(vuelidate.default)
+
+var template_app =new Vue({
+    el: '#imagesDashboard',
+    vuetify: new Vuetify(),
+    mixins: [validationMixin],
+
+    validations: {
+      folder: { required, maxLength: maxLength(20) },
+      imageSetName: { required },
+      imageSetTypeSelect: { required },
+    },
+
+    data: () => ({
+        message: 'This is the images dashboard',
+        imageSets: [],
+        // form data
+        folder: '',
+        imageSetName: '',
+        imageSetTypeSelect: null,
+        imageSetTypeSelectItems: ['non-DICOM', 'DICOM'],
+        // delete variables
+        deleted_images: null
+
+    }),
+    
+    async mounted() {
+      configuration = await this.getConfiguration()
+      this.DNS = configuration.DNS;
+      this.IMAGES_DB = configuration.IMAGES_DB;
+      this.DB_PORT = configuration.DB_PORT;
+      this.HTTP_PORT = configuration.HTTP_PORT;
+      this.ADMIN_PARTY = configuration.ADMIN_PARTY;
+      this.USER_INFO = configuration.USER_INFO;
+      this.getImageSets();
+  },
+
+  computed: {
+    // General
+    URLS() {
+        return {
+            configuration: "/configuration",
+            getImageSets: `http://${this.DNS}:${this.HTTP_PORT}/get_image_sets`,
+            goToImageSummary: `http://${this.DNS}:${this.HTTP_PORT}/image_set_summary`,
+            deleteImageSet: `http://${this.DNS}:${this.HTTP_PORT}/delete_image_set`,
+        }
+    },
+    // Right Column
+    folderErrors() {
+        const errors = []
+        if (!this.$v.folder.$dirty) return errors
+        !this.$v.folder.maxLength && errors.push('Folder must be at most 20 characters long')
+        !this.$v.folder.required && errors.push('Folder is required.')
+        return errors
+    },
+    imageSetNameErrors() {
+        const errors = []
+        if (!this.$v.imageSetName.$dirty) return errors
+        !this.$v.imageSetName.required && errors.push('User is required.')
+        return errors
+    },
+    imageSetTypeSelectErrors() {
+        const errors = []
+        if (!this.$v.imageSetTypeSelect.$dirty) return errors
+        !this.$v.imageSetTypeSelect.required && errors.push('Set Type is required.')
+        return errors
+    },
+  },
+
+  methods: {
+    async getConfiguration() {
+      // https://dmitripavlutin.com/javascript-fetch-async-await/
+      const response = await fetch('/configuration');
+      if (!response.ok) {
+          const message = `An error has occured: ${response.status}`;
+          throw new Error(message);
+      }
+      const configuration = await response.json();
+      return configuration;
+    },
+    getImageSets() {
+      console.log("getImageSets")
+      fetch(this.URLS.getImageSets)
+          .then((response) => response.json())
+          .then((data) => {
+              data.rows.forEach((v, i, a) => {
+                //debugger
+                cleaned_data = {imageSet:v.key[0], images: v.value}
+                this.imageSets.push(cleaned_data)
+              })
+          })
+    },
+    deleteImageSet(imageSet) {
+      console.log("deleteImageSet")
+      IL = imageSet[0][0];
+      fetch(this.URLS.deleteImageSet+`/${imageSet}`, {
+        method: 'DELETE',
+      })
+      .then((response) => response.json())
+      .then((data) => {
+        this.deleted_images = data
+        setTimeout(()=>{
+          this.deleted_images = null;
+          this.imageSets.forEach((v,i,a)=>{
+            if (v['imageSet'] === IL){
+              //debugger
+              this.imageSets.splice(i, 1)
+            }
+          })
+        }, 2000)
+      })
+    },
+    goToImageSummary(imageSet) {
+      console.log("goToImageSummary")
+      window.location.replace(this.URLS.goToImageSummary + `/${imageSet}`)
+    },
+    // Right Column
+    submit() {
+      this.$v.$touch()
+      //debugger
+      this.$refs.form.$el.submit()
+    },
+    clear() {
+      this.$v.$reset()
+      this.folder = ''
+      this.imageSetName = ''
+      this.imageSetTypeSelect = ''
+    },
+
+
+  },
+
+    delimiters: ['[[',']]'],
+  })
+</script>
+
+
+{% endblock %}

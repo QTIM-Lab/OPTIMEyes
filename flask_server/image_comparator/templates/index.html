@@ -1,51 +1,17 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
+<!-- TEMPLATE -->
+{% extends "base.html" %}
 
-    <title>Image Comparator</title>
+<!-- TITLE -->
+{% block title %}Image Comparator{% endblock %}
 
-    <style>
-        body {
-            margin:4%;
-        }
-    </style>
+<!-- CSS -->
+{% block custom_css %}
+{% endblock %}
 
-<link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='img/favicon-32x32.png') }}">
 
-</head>
+<!-- BODY -->
+{% block content %}
 
-<body>
+<h2>Welcome to QTIM's Image Comparator and Classifier</h2>
 
-    <h2>Image Comparator</h2>
-
-    <br>
-
-    <label>To see the image comparison user interface go </label>
-    <a href = "/two_image"> here</a>
-
-    <br>
-
-    <label>To see the image classification go</label>
-    <a href = "/image_class"> here</a>
-
-    <br>
-
-    <label>To see the grid classifier</label>
-    <a href = "/grid_class"> here</a>
-
-    <br>
-
-    <label>To see the pair classifier</label>
-    <a href = "/pair_image"> here</a>
-
-    <p></p>
-
-    <!--
-    <label> To see the image comparison user interface to compare two OCT scans go </label>
-    <a href = "ui/oct_two_image.html"> here</a>
-    -->
-
-</body>
-
-</html>
+{% endblock %}

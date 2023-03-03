@@ -1,0 +1,68 @@
+<!-- TEMPLATE -->
+{% extends "vuetify_components/base.html" %}
+
+<!-- TITLE -->
+{% block title %}Image Comparator - Dashboard{% endblock %}
+
+<!-- CSS -->
+{% block custom_css %}
+{% endblock %}
+
+
+
+<!-- BODY -->
+{% block content %}
+
+<!-- Components -->
+{% include 'vuetify_components/navbar.html' %}
+
+<!-- Index Vue App -->
+<div id="main_dashboard">
+    <v-app>
+        <navbar-tag></navbar-tag>
+      <v-main>
+          <v-container>
+
+
+              <h1>Main Dashboard [[ message ]]</h1>
+              
+              <div v-if=USER_INFO.admin>
+                <h2>Image Lists (I think only admins should see lists):</h2>
+                <h3>Classify Image Lists:</h3>
+                <ul>
+                  <li v-for="item in classifyImageLists">
+                    List Name: [[ item.value.list_name ]]; Count: [[ item.value.count ]]; Added: [[ item.value.time_added ]]
+                  </li>
+                </ul>
+                <h3>Compare Image Lists:</h3>
+                <ul>
+                  <li v-for="item in compareImageLists">
+                    List Name: [[ item.value.list_name ]]; Count: [[ item.value.count ]]; Added: [[ item.value.time_added ]]
+                  </li>
+                </ul>
+              </div>
+  
+              <h2>Tasks:</h2>
+              <h3>Classify Tasks:</h3>
+              <ul>
+                <li v-for="item in classifyTasks">
+                  Task Type: [[ item.value.app ]]; Completed: [[ item.value.completed ]]; Associated List: [[ item.value.list_name ]]; Priority: [[ item.value.task_order ]]
+                </li>
+              </ul>
+              <h3>Compare Tasks:</h3>
+              <ul>
+                <li v-for="item in compareTasks">
+                  Task Type: [[ item.value.app ]]; Completed: [[ item.value.completed ]]; Associated List: [[ item.value.list_name ]]; Priority: [[ item.value.task_order ]]
+                </li>
+              </ul>
+
+          </v-container>
+      </v-main>
+    </v-app>
+</div>
+
+{% endblock %}
+
+{% block js_scripts %}
+<script src="{{ url_for('static', filename='js/vuetify_components/main_dashboard.js') }}"></script>
+{% endblock %}

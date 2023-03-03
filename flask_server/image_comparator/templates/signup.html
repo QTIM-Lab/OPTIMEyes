@@ -1,0 +1,55 @@
+<!-- TEMPLATE -->
+{% extends "base.html" %}
+
+<!-- TITLE -->
+{% block title %}Sign Up{% endblock %}
+
+<!-- CSS -->
+{% block custom_css %}
+{% endblock %}
+
+<!-- BODY -->
+{% block content %}
+
+
+<form action="/signup" method="post">
+
+    <div class="container">
+      <div class="row">
+        <div class="col-md-1">
+            <label for="username">Username</label>    
+        </div>
+        <div class="col-md-1">
+            <input type="text" placeholder="Enter Username" name="username" required>    
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-1">
+            <label for="email">Email</label>
+        </div>
+        <div class="col-md-1">
+            <input type="text" placeholder="Enter Email" name="email" required>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-1">
+            <label for="psw">Password</label>
+        </div>
+        <div class="col-md-1">
+            <input type="password" placeholder="Enter Password" name="psw" required>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-2">
+            <button type="submit">Sign Up</button>
+        </div>
+      </div>
+
+    </div>
+  
+</form>
+
+  {% endblock %}

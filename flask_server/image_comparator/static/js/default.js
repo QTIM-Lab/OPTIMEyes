@@ -36,12 +36,14 @@ function TaskFeeder(config_obj) {
   // Meant to be updated and represent app state
   this.app = config_obj['app'];
   this.user = "default";
+  // debugger
   this.message = config_obj['message'];
   this.incompleteTasks = [];
   this.currentTask = {};
   this.imageList = [];
+  this.cachedClassifyResults = {};
   // Experimental option
-  this.gridAppRedirect = false;
+  this.gridAppRedirect = true;
   this.fromApp = null; // Don't touch, this is set in this.handleUrlFilter()
 
   // Flask URLs
@@ -85,6 +87,7 @@ function TaskFeeder(config_obj) {
       elem = document.getElementById("si_database");
       elem.style.display = 'none';
     }
+
   };
 
   /* This (OnSetUser) kicks off most tasks.
@@ -99,6 +102,7 @@ function TaskFeeder(config_obj) {
   this.OnSetUser = function (user) {
     console.log('In OnSetUser:\n')
     console.log("User changed to: " + user);
+    TF = this;
     this.user = user;
     this.updateUserAndDB();
     var promiseChain = this.getIncompleteTasks()
@@ -115,10 +119,19 @@ function TaskFeeder(config_obj) {
           .then((response) => { return this.getPairResults(response) }) // Custom for MIDRC...need pair results
       }
 
+    } else if (this.app === "classify") {
+      // Remove old magnifier glass based on previous image
+      if (document.getElementsByClassName("img-magnifier-glass")[0]){
+        document.getElementsByClassName("img-magnifier-glass")[0].remove()
+      }
     }
     promiseChain = promiseChain
       .then((response) => { this.buildUI(response) }) // response is imageList from 
-      .then(() => { $("#home")[0].focus() })
+      .then(
+        () => { 
+          // $("#home")[0].focus() 
+        }
+      )
   };
 
   this.updateUserAndDB = function () {
@@ -227,13 +240,14 @@ function TaskFeeder(config_obj) {
       return "no tasks left"
     } else {
       return new Promise((resolve, reject) => {
+        // debugger;
         $.ajax({
           url: this.url_image_list_base + `?key=${task.list_name}`,
           type: 'GET',
           success: function (response) {
             if (TF.app === 'compare' | TF.app === 'classify' | TF.app === 'pair') {
               var curTaskElem = document.getElementById("si_curtask");
-              curTaskElem.textContent = "You are on comparison " + (task.current_idx + 1) + " of " + response.rows[0].value.count;
+              curTaskElem.textContent = `You are on ${TF.app} task ` + (task.current_idx + 1) + " of " + response.rows[0].value.count;
             }
             TF.imageList = response.rows[0].value.list;
             resolve(TF.imageList);
@@ -254,21 +268,69 @@ function TaskFeeder(config_obj) {
 
   this.getBase64DataOfImageFromCouch = (image_id = 1, htmlID = "image0") => { // For later, not being used yet
     var url1 = `http://${DNS}:${HTTP_PORT}/get_image/${image_id}`
+    debugger
     return new Promise((resolve, reject) => {
       fetch(url1)
         .then(response => {
-          // debugger
+          response_headers = [...response.headers]
+          // foreach this response_headers and find file name...also set filename from server
+          debugger
+          response_headers.forEach((v,i,a)=>{
+            if(v[0] === 'content-disposition'){
+              filename = v[1].substring(v[1].search("filename=")+"filename=".length, v[1].length)
+              if (TF.app === 'classify'){
+                TF.nextImg = filename
+              }else if (TF.app === 'grid'){
+                TF.cachedClassifyResults[image_id]['image_name'] = filename
+                // debugger;
+                document.getElementById(`${htmlID}_filename`).innerHTML=`filename: ${filename}`
+              }
+            }
+          })
+          load_messaging_div = document.getElementById("load_messaging")
+          var image_load_message = document.createElement("p");
+          image_load_message.innerHTML = `Loading image: ${image_id} ...`
+          image_load_message.id = image_id
+          load_messaging_div.appendChild(image_load_message)
           return response.text();
         })
         .then(data => {
-          // debugger
           $(`#${htmlID}`).attr("src", 'data:image/png;base64,' + data)
+          // debugger
+          if (htmlID === 'image0'){
+            document.getElementById('load_messaging').innerHTML=''
+          }else {
+            img_message_to_remove = htmlID.replace('image','')
+            img_message_to_remove = img_message_to_remove.slice(0,img_message_to_remove.search('_'))
+            document.getElementById(img_message_to_remove).remove()  
+          }
           // $("#image-from-flask").attr("src", 'data:image/png;base64,' + data)
           // vanilla js
           // document.getElementById('image-from-flask').src = 'data:image/png;base64,' + data;
           resolve(data)
         })
     })
+  };
+
+  this.resetToPreviousTaskId = function () {
+    TF = this;
+    if (TF.currentTask.current_idx === 0) {
+        alert('You are on the first task, cannot go back.')
+    } else {
+        TF.disableButtons();
+        $.ajax({
+            url: this.url_reset_to_previous_result,
+            type: 'POST',
+            data: JSON.stringify(this.currentTask),
+            headers: { 'Content-Type': 'application/json' },
+            success: (response) => {
+                TF.OnSetUser(TF.user)
+            },
+            error: (response) => {
+                console.log('resetToPreviousClassification error!')
+            },
+        });
+    }
   };
 
 }

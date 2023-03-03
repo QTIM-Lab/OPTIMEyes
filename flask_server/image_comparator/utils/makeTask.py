@@ -29,38 +29,41 @@ else:
 #     URL = url + view
 #     return URL
 
-def testt(): # Delete soon 12.7.2021
-    print("testt")
-
-def makeTask(user: str, imageListName: str, imageListType: str, taskOrder: int, description: str) -> None:
+def makeTask(user: str, imageListName: str, imageSet: str, imageListType: str, taskOrder: int, linkedWithImageListName: str = None) -> None:
     t = datetime.now() - timedelta(hours=4)
-    obj = {"type": "task",
-           "task_type": imageListType,
-           "list_name": imageListName,
-           "description":description,
+    obj = {"_id":f"{user}-{imageListName}",
+           "type": "task",
+           "app": imageListType,
+           "list_name": f"{imageListName}",
+           "imageSet": f"{imageSet}",
            "task_order": taskOrder,
            "user": user,
            "time_added": t.strftime('%Y-%m-%d %H:%M:%S'),
            "current_idx": 0,
-           "completed": False}
+           "completed": False,
+           "tool_set": f"tool_set_{imageListType}_template",
+    }
+    if linkedWithImageListName is not None:
+        obj['linked_with_image_list_name'] = linkedWithImageListName
+
     db = couch[IMAGES_DB]
     doc_id, doc_rev = db.save(obj) # currently doc_id, doc_rev unused
     print(pp.pprint(f"created object {obj}"))
 
-def main(user: str, imageListName: str, imageListType: str, taskOrder: int, description: str = "none"):
+def main(user: str, imageListName: str, imageSet: str, imageListType: str, taskOrder: int, linkedWithImageListName: str = "none"):
     # pdb.set_trace()
-    makeTask(user, imageListName, imageListType, taskOrder, description)
+    makeTask(user, imageListName, imageSet, imageListType, taskOrder, linkedWithImageListName)
 
 if __name__ == "__main__":
     try:
         try:
+            print(f"* Creating Linked {sys.argv[3]} task linking {sys.argv[2]} with {sys.argv[5]} *")
             main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
-            print(f"* Creating {sys.argv[3]} task with description {sys.argv[5]}. *")
         except:
-            main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
             print(f"* Creating {sys.argv[3]} task. *")
+            main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
     except IndexError as err:
         print(f"""
         Error: {err}, and probably means you 
-        didn't provide <user>, <imageListName>, <imageListType>, <taskOrder>, with optional [<description>]
+        didn't provide <user>, <imageListName>, <imageListType>, <taskOrder>, with optional [<linkedWithImageListName>]
         """)
