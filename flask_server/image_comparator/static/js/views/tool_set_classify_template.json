@@ -1,68 +1,54 @@
 {
-    "_id": "tool_set_template",
-    "type": "toolSet",
-    "app": "",
-    "tools": {
-      "radio_button_categories": [
-        {
-          "category_id": "rb_category_1",
-          "selected": null,
-          "buttons": [
-            {
-              "button_id": "rb_a"
-            },
-            {
-              "button_id": "rb_b"
-            },
-            {
-              "button_id": "rb_c"
-            }
-          ]
-        }
-      ],
-      "checkbox_categories": [
-        {
-          "category_id": "cb_category_1",
-          "checkboxes": [
-            {
-              "checkbox_id": "cb_a",
-              "checked": false
-            },
-            {
-              "checkbox_id": "cb_b",
-              "checked": false
-            },
-            {
-              "checkbox_id": "cb_c",
-              "checked": false
-            }
-          ]
-        }
-      ],
-      "text_input_categories": [
-        {
-          "category_id": "tb_category_1",
-          "text_inputs": [
-            {
-              "text_input_id": "ti_a",
-              "message": "default message1"
-            }
-          ]
-        }
-      ],
-      "slider_input_categories": [
-        {
-          "category_id": "sl_category_1",
-          "slider_inputs": [
-            {
-              "slider_input_id": "sl_a",
-              "label": "default message1",
-              "min": 0,
-              "max": 100,
-              "value": 10
-            }
-          ]
-        }
-      ]
-    }
+  "_id": "tool_set_classify_template",
+  "type": "toolSet",
+  "app": "classify",
+  "tools": {
+    "radio_button_categories": [
+      {
+        "category_id": "Choose Single Class",
+        "selected": null,
+        "buttons": [
+          {
+            "button_id": "Choice 1"
+          },
+          {
+            "button_id": "Choice 2"
+          },
+          {
+            "button_id": "Choice 3"
+          }
+        ]
+      }
+    ],
+    "checkbox_categories": [
+      {
+        "category_id": "Choose Classes",
+        "checkboxes": [
+          {
+            "checkbox_id": "Choice 1",
+            "checked": false
+          },
+          {
+            "checkbox_id": "Choice 2",
+            "checked": false
+          },
+          {
+            "checkbox_id": "Choice 3",
+            "checked": false
+          }
+        ]
+      }
+    ],
+    "text_input_categories": [
+      {
+        "category_id": "Messages Category",
+        "text_inputs": [
+          {
+            "text_input_id": "Message 1",
+            "message": "Default Message 1"
+          }
+        ]
+      }
+    ]
   }
+}

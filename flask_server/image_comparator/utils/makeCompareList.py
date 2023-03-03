@@ -67,7 +67,7 @@ def makeCompareList(imageSet: str, compareListName: str, pctRepeat: int, combos:
         repeats = random.sample(unique_pairs, amountRepeat)
         pairs = unique_pairs + repeats
     else:
-        pdb.set_trace()
+        # pdb.set_trace()
         group_size = 2
         pairs = list(zip(*(iter(imageIDs),) * group_size))
         pairs = [[i,j] for i,j in pairs]
@@ -89,7 +89,7 @@ def makeCompareList(imageSet: str, compareListName: str, pctRepeat: int, combos:
 
 
 def main(imageSet: str, compareListName: str, pctRepeat: int = 0):
-    pdb.set_trace()
+    # pdb.set_trace()
     makeCompareList(imageSet, compareListName, pctRepeat)
 
 

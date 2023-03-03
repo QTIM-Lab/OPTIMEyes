@@ -130,7 +130,6 @@
                       <p>[[ checkbox_category['category_id'] ]]</p>
 
                       <v-checkbox
-                        @click="test"
                         v-for="(checkbox, indexCheckbox) in checkbox_category['checkboxes']"
                         :key="checkbox['checkbox_id']"
                         v-model="result.checkbox_categories[index_checkbox_category].checkboxes[indexCheckbox].checked"
@@ -148,7 +147,6 @@
                       >
                         <p>[[ radio_button_category['category_id'] ]]</p>
                         <v-radio
-                          @click="test"
                           v-for="(radio_button, index_radio_button) in radio_button_category['buttons']"
                           :key="radio_button['button_id']"
                           :label="`${result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id}`"
@@ -359,7 +357,6 @@ var flicker_app =new Vue({
         this.getBase64DataOfImageFromCouch(this.pair[0].image_id, pair_index=0)
         this.getBase64DataOfImageFromCouch(this.pair[1].image_id, pair_index=1)
       },
-      test() {debugger}, ///////////delete meeeeeeeeeeeeeeeeeeeeeeeeeee
       getTools(app, tool_set) {
         console.log("getTools")
         fetch(this.URLS.getToolSet + `/${app}/${tool_set}`)

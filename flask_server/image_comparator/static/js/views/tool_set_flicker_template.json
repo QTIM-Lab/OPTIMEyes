@@ -1,11 +1,11 @@
 {
-    "_id": "tool_set_template",
+    "_id": "tool_set_flicker_template",
     "type": "toolSet",
-    "app": "",
+    "app": "flicker",
     "tools": {
       "radio_button_categories": [
         {
-          "category_id": "Choose Class",
+          "category_id": "Choose Single Class",
           "selected": null,
           "buttons": [
             {
