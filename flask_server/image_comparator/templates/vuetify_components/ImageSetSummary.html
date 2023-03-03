@@ -136,6 +136,7 @@ var imageSetSummary =new Vue({
       buildGrid() {
         console.log("buildGrid")
         getImagesBySetURL = this.URLS.getImagesBySet + `/${this.imageSet}`
+        debugger
         fetch(getImagesBySetURL)
             .then((response) => response.json())
             .then((data) => {

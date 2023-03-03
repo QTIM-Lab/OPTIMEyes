@@ -2,10 +2,31 @@
 {% extends "vuetify_components/base.html" %}
 
 <!-- TITLE -->
-{% block title %}Image Comparator{% endblock %}
+{% block title %}Image Flicker{% endblock %}
 
 <!-- CSS -->
 {% block custom_css %}
+<style>
+  .parent {
+    position: relative;
+    top: 0;
+    left: 0;
+  }
+  
+  .image1 {
+    position: relative;
+    top: 0;
+    left: 0;
+    border: 1px red solid;
+  }
+  
+  .image2 {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    border: 1px green solid;
+  }
+</style>
 {% endblock %}
 
 
@@ -17,18 +38,19 @@
 {% include 'vuetify_components/navbar.html' %}
 
 <!-- Index Vue App -->
-<div id="compare_app">
+<div id="flicker_app">
     <v-app>
         <navbar-tag></navbar-tag>
       <v-main>
           <v-container class="ma-0">
             <h2>
-              Compare Task for Image List [[ list_name ]] | On Pair
+              flicker Task for Image List [[ list_name ]] | On Pair
               <span
-                v-if="pairs.length != 0"
-                >[[ this.task.value.current_idx + 1 ]] of [[ this.pairs.length ]]
+                v-if="current_deck.length != 0"
+                >[[ this.task.value.current_idx + 1 ]] of [[ this.current_deck.length ]]
               </span>
             </h2>
+            <p>[[ time_point_message ]]</p>
 
             <!-- Alert -->
             <v-alert
@@ -57,38 +79,32 @@
                 cols="12"
                 md="9"
               >
-                <!-- Row for two images -->
-                <v-row>
-
-                  <v-col
-                  cols="12"
-                  md="6"
-                  >   
+                <!-- Div parent for two images -->
+                <v-container class="ma-0 parent">
+ 
                     <v-img
-                      style="border: 5px solid #555;"
+                      class="image1"
+                      :style="{ border: borderImage1, opacity: result.slider_input_categories[0].slider_inputs[0].value/100 }"
                       width="100%"
                       v-if="pair[0].base64"
                       :lazy-src="pair[0].base64"
                       :src="pair[0].base64"
                       aspect-ratio="1/1"
+                      @click="cycleImages"
                     ></v-img>
-                  </v-col>
 
-                  <v-col
-                  cols="12"
-                  md="6"
-                  >   
                     <v-img
-                      style="border: 5px solid #555;"
+                      class="image2"
+                      :style="{ border: borderImage2, opacity: result.slider_input_categories[0].slider_inputs[1].value/100 }"
                       width="100%"
                       v-if="pair[1].base64"
                       :lazy-src="pair[1].base64"
                       :src="pair[1].base64"
                       aspect-ratio="1/1"
+                      @click="cycleImages"
                     ></v-img>
-                  </v-col>
 
-                </v-row>
+                </v-container>
 
               </v-col>
 
@@ -160,10 +176,43 @@
     
                       </div>
 
+
+
                     </v-col>
 
                   </v-row>
-                  <!--  -->
+                  
+                  <!-- Slider -->
+                  <div
+                    v-for="(slider_input_category, index_slider_input_category) in tool_set.slider_input_categories"
+                    :key="slider_input_category['category_id']"
+                  >
+                    <p>[[ slider_input_category.category_id ]]</p>
+                    <v-row
+                      v-for="(slider_input, index_slider_input) in slider_input_category['slider_inputs']"
+                    >
+                    <v-slider
+                      v-if="result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].label.search('Image') != -1"
+                      v-model="result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].value"
+                      prepend-icon="mdi-opacity"
+                      direction=""
+                      :min="`${result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].min}`"
+                      :max="`${result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].max}`"
+                      :label="`${result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].label}`"
+                    ></v-slider>
+                    <v-slider
+                    v-if="result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].label.search('Fade') != -1"
+                      v-model="result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].value"
+                      prepend-icon="mdi-opacity"
+                      direction=""
+                      :min="`${result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].min}`"
+                      :max="`${result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].max}`"
+                      :label="`${result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].label}`"
+                      @input="fadeImages"
+                    ></v-slider>
+                    </v-row>
+                  </div>              
+                    
 
                   <v-btn
                     class="mr-4"
@@ -200,15 +249,21 @@
 
 <script>
 
-var compare_app =new Vue({
-    el: '#compare_app',
+var flicker_app =new Vue({
+    el: '#flicker_app',
     vuetify: new Vuetify(),
 
     data: () => ({
-      app: "compare",
+      app: "flicker",
       user: "{{ task.user }}",
       list_name: "{{ task.list_name }}",
-      pairs: [],
+      current_deck: [],
+      current_image_index: 0,
+      time_point_message: "Time Point 1",
+      //showImage1: "", 
+      borderImage1: "5px solid green",
+      //showImage2: "none", 
+      borderImage2: "5px solid red",
       pair: [{image_id: null, base64: null}, {image_id: null, base64: null}],
       task: null,
       tool_set: null,
@@ -236,9 +291,9 @@ var compare_app =new Vue({
           await this.getImageList();
           this.getTools(this.app, this.task.value.tool_set)
           //debugger
-          // Need to get image compare list so we can get pair to display based on current_idx
+          // Need to get image flicker list so we can get pair to display based on current_idx
           //debugger
-          this.displayImages(current_image=this.task.value.current_idx);
+          this.displayImages(current_idx=this.task.value.current_idx);
         }
     },
 
@@ -247,11 +302,11 @@ var compare_app =new Vue({
       URLS() {
           return {
               configuration: "/configuration",
-              compareApp: `http://${this.DNS}:${this.HTTP_PORT}/compareApp/${this.user}/${this.list_name}`,
+              flickerApp: `http://${this.DNS}:${this.HTTP_PORT}/flickerApp/${this.user}/${this.list_name}`,
               getTask: `http://${this.DNS}:${this.HTTP_PORT}/get_task/${this.app}/${this.user}/${this.list_name}`,
               taskList: `http://${this.DNS}:${this.HTTP_PORT}/tasksList`,
               getToolSet: `http://${this.DNS}:${this.HTTP_PORT}/get_toolset`,
-              getImageList: `http://${this.DNS}:${this.HTTP_PORT}/get_image_compare_lists`,
+              getImageList: `http://${this.DNS}:${this.HTTP_PORT}/get_image_flicker_lists`,
               taskResult: `http://${this.DNS}:${this.HTTP_PORT}/task_result`,
           }
       },
@@ -282,13 +337,13 @@ var compare_app =new Vue({
       },
       async getImageList() {
         console.log("getImageList")
-        let CA = this; // Compare App Vue Object
+        let CA = this; // flicker App Vue Object
         await fetch(this.URLS.getImageList+`?key=${this.list_name}`)
         .then((response) => response.json())
         .then((data) => {
           if (data.rows.length === 1){
-            this.pairs = data.rows[0].value.list
-            if (this.pairs.length === 0){
+            this.current_deck = data.rows[0].value.list
+            if (this.current_deck.length === 0){
               this.alert_error = "Image list has no elements."
               setTimeout(()=>{this.alert_error = null}, 2000)
             }
@@ -297,10 +352,10 @@ var compare_app =new Vue({
           }
         })
       },
-      displayImages(current_image) {
+      displayImages(current_idx) {
         //debugger
-        this.pair[0]['image_id'] = this.pairs[current_image][0]
-        this.pair[1]['image_id'] = this.pairs[current_image][1]
+        this.pair[0]['image_id'] = this.current_deck[current_idx][0]
+        this.pair[1]['image_id'] = this.current_deck[current_idx][1]
         this.getBase64DataOfImageFromCouch(this.pair[0].image_id, pair_index=0)
         this.getBase64DataOfImageFromCouch(this.pair[1].image_id, pair_index=1)
       },
@@ -325,7 +380,7 @@ var compare_app =new Vue({
       },
       getBase64DataOfImageFromCouch(image_id, pair_index) {
         var url = `http://${this.DNS}:${this.HTTP_PORT}/get_image/${image_id}`
-        let CA = this; // Compare App Vue Object
+        let CA = this; // flicker App Vue Object
         let I_ID = image_id;
         let P_INDEX = pair_index;
         //debugger
@@ -339,6 +394,34 @@ var compare_app =new Vue({
             CA.pair[P_INDEX]['base64'] = DATA
           })
       },
+      cycleImages(){
+        deck_size = this.current_deck.length;
+        // debugger;
+        //// Cycle image 2
+        if (this.current_image_index === 0){
+          this.result.slider_input_categories[0].slider_inputs[this.current_image_index].value = 0
+          this.time_point_message = "Time Point 2"
+          this.current_image_index = 1
+          this.result.slider_input_categories[0].slider_inputs[this.current_image_index].value = 100
+          //this.showImage1 = "none"
+          //this.showImage2 = ""
+        }else{
+          this.result.slider_input_categories[0].slider_inputs[this.current_image_index].value = 0
+          this.time_point_message = "Time Point 1"
+          this.current_image_index = 0
+          this.result.slider_input_categories[0].slider_inputs[this.current_image_index].value = 100
+          //this.showImage1 = ""
+          //this.showImage2 = "none"
+        }
+
+      },
+      fadeImages(){
+        // fader
+        fade = this.result.slider_input_categories[0].slider_inputs[2].value
+        this.result.slider_input_categories[0].slider_inputs[0].value = 100-fade
+        this.result.slider_input_categories[0].slider_inputs[1].value = fade
+
+      },
       // For the submit form
       submit() {
         //this.$v.$touch() // for uswe with veulidate which you haven't setup for this app
@@ -346,7 +429,7 @@ var compare_app =new Vue({
         this.result['_id'] = `${this.task.id}-result-image1_${this.pair[0].image_id}-image2_${this.pair[1].image_id}`
         this.result['user'] = this.user
         this.result['list_name'] = this.task.value.list_name
-        this.result['app'] = "compare"
+        this.result['app'] = "flicker"
         this.result['type'] = "result"
         this.result['taskid'] = this.task.id
         fetch(this.URLS.taskResult, {
@@ -358,7 +441,7 @@ var compare_app =new Vue({
         })
         .then((response) => response.json())
         .then((data) => {
-          window.location.replace(this.URLS.compareApp);
+          window.location.replace(this.URLS.flickerApp);
         })
 
       },

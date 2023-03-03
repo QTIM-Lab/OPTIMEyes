@@ -20,10 +20,12 @@ from flask import (
 from flask_login import login_required, current_user
 
 # self written utils
-from .utils.makeTask import makeTask  # for use in create_user
-from .utils.makeClassifyList import makeClassifyList  # for use in create_user
-from .utils.addImages import addImages  # for use in addImages
-from .utils.deleteImageSet import deleteImageSet  # for use in deleteImageSet
+from .utils.makeTask import makeTask
+from .utils.makeClassifyList import makeClassifyList
+from .utils.makeCompareList import makeCompareList
+from .utils.makeFlickerList import makeFlickerList
+from .utils.addImages import addImages
+from .utils.deleteImageSet import deleteImageSet
 
 # DB
 from image_comparator.db import get_server
@@ -133,9 +135,19 @@ def classifyApp(user, list_name):
     return render_template('/vuetify_components/classifyApp.html', task=task_dict)
 
 
-@bp.route('/compareApp', methods=['GET'])
-def compareApp():
-    return render_template('/vuetify_components/compareApp.html')
+@bp.route('/compareApp/<user>/<list_name>', methods=['GET'])
+def compareApp(user, list_name):
+    # pdb.set_trace()
+    task_dict = {"user":user, "list_name":list_name}
+    return render_template('/vuetify_components/compareApp.html', task=task_dict)
+
+
+@bp.route('/flickerApp/<user>/<list_name>', methods=['GET'])
+def flickerApp(user, list_name):
+    # pdb.set_trace()
+    task_dict = {"user":user, "list_name":list_name}
+    return render_template('/vuetify_components/flickerApp.html', task=task_dict)
+
 
 @bp.route('/ohif', methods=['GET'])
 @login_required
@@ -229,25 +241,28 @@ def delete_image_set(imageSet):
     
 @bp.route('/make_task', methods=['POST'])
 def make_task():
+    # pdb.set_trace()
     print("in /make_task")
     user=request.form['user']
-    imageListName=request.form['imageListName'] # pre-existing; imageSet
+    imageSetName=request.form['imageSetName'] # pre-existing; imageSet
     imageListTypeSelect=request.form['imageListTypeSelect']
     pctRepeat = 0
     taskOrder=request.form['taskOrder']
     #pdb.set_trace()
     if imageListTypeSelect == "classify":
-        listName=f"{imageListName}-{imageListTypeSelect}-{pctRepeat}" # Placeholder and won't allow duplicates; add form entry to truly customze and add duplicates
-        makeClassifyList(imageSet=imageListName, classifyListName=listName, pctRepeat=pctRepeat)
+        listName=f"{imageSetName}-{imageListTypeSelect}-{pctRepeat}" # Placeholder and won't allow duplicates; add form entry to truly customze and add duplicates
+        makeClassifyList(imageSet=imageSetName, classifyListName=listName, pctRepeat=pctRepeat)
     elif imageListTypeSelect == "compare":
-        pass
+        listName=f"{imageSetName}-{imageListTypeSelect}-{pctRepeat}" # Placeholder and won't allow duplicates; add form entry to truly customze and add duplicates
+        makeCompareList(imageSet=imageSetName, compareListName=listName, pctRepeat=pctRepeat)
+    elif imageListTypeSelect == "flicker":
+        listName=f"{imageSetName}-{imageListTypeSelect}-{pctRepeat}" # Placeholder and won't allow duplicates; add form entry to truly customze and add duplicates
+        makeFlickerList(imageSet=imageSetName, flickerListName=listName, pctRepeat=pctRepeat)
     elif imageListTypeSelect == "grid":
         pass
     elif imageListTypeSelect == "pair":
         pass
-    elif imageListTypeSelect == "flicker":
-        pass
-    makeTask(user=user, imageListName=listName, imageSet=imageListName, imageListType=imageListTypeSelect, taskOrder=taskOrder)
+    makeTask(user=user, imageListName=listName, imageSet=imageSetName, imageListType=imageListTypeSelect, taskOrder=taskOrder)
     return redirect(f'/tasksList')
     
 
@@ -317,6 +332,7 @@ def get_task(app, user, list_name):
 
 @bp.route('/get_toolset/<app>/<tool_set>', methods=['GET'])
 def get_toolset(app,tool_set):
+    # pdb.set_trace()
     base = "http://{}:{}/{}".format(
         current_app.config['DNS'], current_app.config['DB_PORT'], current_app.config["IMAGES_DB"])
     view = f"_design/{app}App/_view/toolSets?key=\"{tool_set}\""
@@ -370,6 +386,31 @@ def get_image_classify_lists():
     response = check_if_admin_party_then_make_request(url)
     # pdb.set_trace()
     return json.loads(response.content.decode('utf-8'))
+
+
+@bp.route('/get_image_flicker_lists', methods=['GET'])
+def get_image_flicker_lists():
+    base = "http://{}:{}/{}".format(
+        current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
+    try:
+        key = request.args['key']
+    except:
+        print("in except")
+        # pdb.set_trace()
+        # view = f"_design/basic_views/_view/image_flicker_lists"
+        view = f"_design/flickerApp/_view/imageLists"
+        url = f"{base}/{view}"
+        response = check_if_admin_party_then_make_request(url)
+        return json.loads(response.content.decode('utf-8'))
+    # pdb.set_trace()
+    # view = f"_design/basic_views/_view/image_flicker_lists?key=\"{key}\""
+    view = f"_design/flickerApp/_view/imageLists?key=\"{key}\""
+    url = f"{base}/{view}"
+    response = check_if_admin_party_then_make_request(url)
+    # pdb.set_trace()
+    return json.loads(response.content.decode('utf-8'))
+
+
 
 
 @bp.route('/get_image_grid_lists', methods=['GET'])
@@ -491,31 +532,6 @@ def task_result():
         grid_list = db[_id]
         grid_list['completed'] = True
         db[_id] = grid_list
-    elif results['app'] == "compare": # I've modified without back testing
-        # pdb.set_trace()
-        # 2 needs to mark compare task being referenced as "completed" if this was the last task
-        #   or we need to increment the current_idx on the task
-        # Get Task
-        task_map = db.find({'selector': {
-            "_id": results['task'],
-            'list_name': results['task_list_name'],
-            'type': 'task',
-            'user': results['user']}})
-        # Get Compare List
-        compare_list_map = db.find(
-            {'selector': {"list_name": results['task_list_name'],
-                          "type": "image_compare_list"}})
-        task = task_map.__next__()
-        compare_list = compare_list_map.__next__()
-        if task['current_idx'] == compare_list['count'] - 1:
-            # That was the last task so mark task as complete
-            # pdb.set_trace()
-            task['completed'] = True
-            db[task['_id']] = task
-        else:
-            task['current_idx'] += 1
-            db[task['_id']] = task
-        return jsonify('asdf')  # ! What is this
     elif results['app'] == "classify": # I've modified without back testing
         # 2 needs to mark compare task being referenced as "completed" if this was the last task
         #   or we need to increment the current_idx on the task
@@ -531,7 +547,8 @@ def task_result():
         classify_list_map = db.find(
             {'selector': {
                 "_id": results['list_name'],
-                "type": "imageList"}})
+                "type": "imageList"}
+            })
         task = task_map.__next__()
         classify_list = classify_list_map.__next__()
         # pdb.set_trace()
@@ -546,6 +563,62 @@ def task_result():
             db[task['_id']] = task
 
         return jsonify('success')  # ! What is this
+    elif results['app'] == "compare": # I've modified without back testing
+        # 2 needs to mark compare task being referenced as "completed" if this was the last task
+        #   or we need to increment the current_idx on the task
+        # Get Task
+        task_map = db.find({'selector': {
+            "_id": results['taskid'],
+            'list_name': results['list_name'],
+            'app': results['app'],
+            'type': 'task',
+            'user': results['user']}})
+        # Get Compare List
+        compare_list_map = db.find(
+            {'selector': {
+                "_id": results['list_name'],
+                "type": "imageList"}
+            })
+        task = task_map.__next__()
+        compare_list = compare_list_map.__next__()
+        # pdb.set_trace()
+        if task['current_idx'] == compare_list['count'] - 1:
+            # That was the last task so mark task as complete
+            # pdb.set_trace()
+            task['completed'] = True
+            db[task['_id']] = task
+        else:
+            task['current_idx'] += 1
+            db[task['_id']] = task
+        return jsonify('asdf')  # ! What is this
+    elif results['app'] == "flicker": # I've modified without back testing
+        # 2 needs to mark flicker task being referenced as "completed" if this was the last task
+        #   or we need to increment the current_idx on the task
+        # Get Task
+        task_map = db.find({'selector': {
+            "_id": results['taskid'],
+            'list_name': results['list_name'],
+            'app': results['app'],
+            'type': 'task',
+            'user': results['user']}})
+        # Get Flicker List
+        flicker_list_map = db.find(
+            {'selector': {
+                "_id": results['list_name'],
+                "type": "imageList"}
+            })
+        task = task_map.__next__()
+        flicker_list = flicker_list_map.__next__()
+        # pdb.set_trace()
+        if task['current_idx'] == flicker_list['count'] - 1:
+            # That was the last task so mark task as complete
+            # pdb.set_trace()
+            task['completed'] = True
+            db[task['_id']] = task
+        else:
+            task['current_idx'] += 1
+            db[task['_id']] = task
+        return jsonify('asdf')  # ! What is this
     elif results['app'] == "pair": # I've modified without back testing
         # 2 needs to mark compare task being referenced as "completed" if this was the last task
         #   or we need to increment the current_idx on the task

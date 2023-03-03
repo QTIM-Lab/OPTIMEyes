@@ -20,12 +20,13 @@ var tasksList = new Vue({
         message: 'This is a template app',
         classifyTasks: [],
         compareTasks: [],
+        flickerTasks: [],
         alert_message: null,
         // Right Column - Create Task
         user: '',
         imageSetName: '',
         imageListTypeSelect: null,
-        imageListTypeSelectItems: ['compare', 'classify', 'grid'],
+        imageListTypeSelectItems: ['classify', 'compare', 'flicker'],
         taskOrder: '',
     }),
 
@@ -46,16 +47,13 @@ var tasksList = new Vue({
             return {
                 configuration: "/configuration",
                 getBase: `http://${this.DNS}:${this.HTTP_PORT}`,
-                getCompareTasks: `http://${this.DNS}:${this.HTTP_PORT}/get_tasks/compare?username=${this.USER_INFO.username}`,
                 getClassifyTasks: `http://${this.DNS}:${this.HTTP_PORT}/get_tasks/classify?username=${this.USER_INFO.username}`,
+                getCompareTasks: `http://${this.DNS}:${this.HTTP_PORT}/get_tasks/compare?username=${this.USER_INFO.username}`,
+                getFlickerTasks: `http://${this.DNS}:${this.HTTP_PORT}/get_tasks/flicker?username=${this.USER_INFO.username}`,
                 goToImageSummary: `http://${this.DNS}:${this.HTTP_PORT}/image_set_summary`,
-                getImageCompareListNames: `http://${this.DNS}:${this.HTTP_PORT}/get_image_compare_lists`,
-                getImageClassifyListNames: `http://${this.DNS}:${this.HTTP_PORT}/get_image_classify_lists`,
-                getImageGridListNames: `http://${this.DNS}:${this.HTTP_PORT}/get_image_grid_lists`,
-                getImagePairListNames: `http://${this.DNS}:${this.HTTP_PORT}/get_image_pair_lists`
             }
         },
-        // Right Column
+        // Right Column "Create Task"
         userErrors() {
             const errors = []
             if (!this.$v.user.$dirty) return errors
@@ -112,10 +110,17 @@ var tasksList = new Vue({
                         this.compareTasks.push(v)
                     })
                 })
+            fetch(this.URLS.getFlickerTasks)
+                .then((response) => response.json())
+                .then((data) => {
+                    data.rows.forEach((v, i, a) => {
+                        this.flickerTasks.push(v)
+                    })
+            })
         },
         goToImageSummary(imageList) {
             console.log("goToImageSummary")
-            debugger
+            //debugger
             if (imageList != null){
                 window.location.replace(this.URLS.goToImageSummary + `/${imageList}`)
             }else {
@@ -124,7 +129,7 @@ var tasksList = new Vue({
             }
           },
         goToApp(task) {
-          debugger
+          //debugger
           console.log(`goToApp(${task.value.user}, ${task.value.list_name})`)
           window.location.replace(this.URLS.getBase + `/${task.value.app}App/${task.value.user}/${task.value.list_name}`)
         },
