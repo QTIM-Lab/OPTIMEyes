@@ -17,14 +17,38 @@
 
 <!-- Index Vue App -->
 <div id="index">
-	<v-app>
-		<navbar-tag></navbar-tag>
-	  <v-main>
-		  <v-container>
-			<h2>Welcome to QTIM's Image Comparator and Classifier</h2>
-		  </v-container>
-	  </v-main>
-	</v-app>
+    <v-app>
+        <navbar-tag></navbar-tag>
+      <v-main>
+          <v-container>
+            <h2>Welcome to QTIM's Image Comparator and Classifier</h2>
+            <h3>Instructions:</h3>
+            <ol>
+              <li
+              v-for="item in items"
+              >
+                <v-card
+                v-if="item.name"
+                >
+                <v-card-title class="text-h6">
+                    [[ item.name ]]
+                </v-card-title>
+                <v-card-text>
+                    <v-img
+                    :src="item.src"
+                    width="75%"
+                    class="bg-grey-lighten-2"
+                    ></v-img>
+                </v-card-text>
+
+                </v-card>
+              </li>
+            </ol>
+
+
+          </v-container>
+      </v-main>
+    </v-app>
 </div>
 
 
@@ -34,14 +58,68 @@
 
 
 <script>
-	var index =new Vue({
-	  el: '#index',
-	  vuetify: new Vuetify(),
-	  data() {
-		return {message: "This is the index"}
-	  },
-	  delimiters: ['[[',']]'],
-	})
+    var index =new Vue({
+        el: '#index',
+        vuetify: new Vuetify(),
+        data: () => ({
+            items: [
+                {
+                name: "Sign Up",
+                src: "/static/img/home_images/sign_up.png",
+                },
+                {
+                name: "Log In",
+                src: "/static/img/home_images/log_in.png",
+                },
+                {
+                name: "Main Dashboard",
+                src: "/static/img/home_images/main_dashboard.png",
+                },
+                {
+                name: "Navigate",
+                src: "/static/img/home_images/navigate.png",
+                },
+                {
+                name: "Images Dashboard",
+                src: "/static/img/home_images/images_dashboard.png",
+                },
+                {
+                name: "Create Task",
+                src: "/static/img/home_images/create_task.png",
+                },
+            ],
+        }),
+        delimiters: ['[[',']]'],
+        async mounted() {
+            configuration = await this.getConfiguration()
+            this.DNS = configuration.DNS;
+            this.IMAGES_DB = configuration.IMAGES_DB;
+            this.DB_PORT = configuration.DB_PORT;
+            this.HTTP_PORT = configuration.HTTP_PORT;
+            this.ADMIN_PARTY = configuration.ADMIN_PARTY;
+            this.USER_INFO = configuration.USER_INFO;
+        },
+        computed: {
+            // General
+            URLS() {
+                return {
+                    configuration: "/configuration"
+                }
+            },
+        },
+        methods: {
+            async getConfiguration() {
+                // https://dmitripavlutin.com/javascript-fetch-async-await/
+                const response = await fetch('/configuration');
+                if (!response.ok) {
+                    const message = `An error has occured: ${response.status}`;
+                    throw new Error(message);
+                }
+                const configuration = await response.json();
+                return configuration;
+            },
+        }
+    })
 </script>
 
 {% endblock %}

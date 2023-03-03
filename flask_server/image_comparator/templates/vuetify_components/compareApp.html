@@ -219,25 +219,25 @@ var compare_app =new Vue({
 
     async mounted() {
       configuration = await this.getConfiguration()
-        this.DNS = configuration.DNS;
-        this.IMAGES_DB = configuration.IMAGES_DB;
-        this.DB_PORT = configuration.DB_PORT;
-        this.HTTP_PORT = configuration.HTTP_PORT;
-        this.ADMIN_PARTY = configuration.ADMIN_PARTY;
-        this.USER_INFO = configuration.USER_INFO;
-        await this.getTask(this.app, this.user, this.list_name);
-        if (this.task.value.completed){
-          this.alert_info = "This task is completed"
-          setTimeout(()=>{this.alert_info = null}, 2000)
-          setTimeout(()=>{window.location.replace(this.URLS.taskList);}, 2000)
-        }else{
-          await this.getImageList();
-          this.getTools(this.app, this.task.value.tool_set)
-          //debugger
-          // Need to get image compare list so we can get pair to display based on current_idx
-          //debugger
-          this.displayImages(current_image=this.task.value.current_idx);
-        }
+      this.DNS = configuration.DNS;
+      this.IMAGES_DB = configuration.IMAGES_DB;
+      this.DB_PORT = configuration.DB_PORT;
+      this.HTTP_PORT = configuration.HTTP_PORT;
+      this.ADMIN_PARTY = configuration.ADMIN_PARTY;
+      this.USER_INFO = configuration.USER_INFO;
+      await this.getTask(this.app, this.user, this.list_name);
+      if (this.task.value.completed){
+        this.alert_info = "This task is completed"
+        setTimeout(()=>{this.alert_info = null}, 2000)
+        setTimeout(()=>{window.location.replace(this.URLS.taskList);}, 2000)
+      }else{
+        await this.getImageList();
+        this.getTools(this.app, this.task.value.tool_set)
+        //debugger
+        // Need to get image compare list so we can get pair to display based on current_idx
+        //debugger
+        this.displayImages(current_image=this.task.value.current_idx);
+      }
     },
 
     computed: {
