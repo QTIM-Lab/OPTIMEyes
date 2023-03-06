@@ -55,31 +55,43 @@ def getImageIDs(url: str) -> list:
 
     return imageIDs
 
+def checkIfListExists(classifyListName):
+    db = couch[IMAGES_DB]
+    try:
+        db[classifyListName]
+        return True
+    except couchdb.http.ResourceNotFound:
+        print(f"Cannot find classifyListName: {classifyListName}")
+        return False
+
 
 #def makeClassifyList(classifyListName: str, images: list) -> None:
 def makeClassifyList(imageSet: str, classifyListName: str, pctRepeat: int = 0) -> None:
-    url = getURL(imageSet)
+    listExists = checkIfListExists(classifyListName)
     # pdb.set_trace()
-    imageIDs = getImageIDs(url)
-    # create all unique combinations
-    amountRepeat = math.ceil(pctRepeat/100 * len(imageIDs))
-    random.shuffle(imageIDs)
-    repeats = random.sample(imageIDs, amountRepeat)
-    images = imageIDs + repeats
+    if not listExists:
+        url = getURL(imageSet)
+        # pdb.set_trace()
+        imageIDs = getImageIDs(url)
+        # create all unique combinations
+        amountRepeat = math.ceil(pctRepeat/100 * len(imageIDs))
+        random.shuffle(imageIDs)
+        repeats = random.sample(imageIDs, amountRepeat)
+        images = imageIDs + repeats
 
-    uid = uuid.uuid1()
-    t = datetime.now() - timedelta(hours=4)
-    obj = {
-        "_id":classifyListName,
-        "app": "classify",
-        "type": "imageList",
-        "imageSet": imageSet, # probably redundant now
-        "count": len(images),
-        "list": images,
-        "time_added": t.strftime('%Y-%m-%d %H:%M:%S')}
-    db = couch[IMAGES_DB]
-    print(f"Created Classify List: {classifyListName}")
-    doc_id, doc_rev = db.save(obj)
+        uid = uuid.uuid1()
+        t = datetime.now() - timedelta(hours=4)
+        obj = {
+            "_id":classifyListName,
+            "app": "classify",
+            "type": "imageList",
+            "imageSet": imageSet, # probably redundant now
+            "count": len(images),
+            "list": images,
+            "time_added": t.strftime('%Y-%m-%d %H:%M:%S')}
+        db = couch[IMAGES_DB]
+        print(f"Created Classify List: {classifyListName}")
+        doc_id, doc_rev = db.save(obj)
 
 
 def main(imageSet: str, classifyListName: str, pctRepeat: int = 0):

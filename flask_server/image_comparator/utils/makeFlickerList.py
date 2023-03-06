@@ -56,28 +56,41 @@ def getImageIDs(url: str) -> list:
     return imageIDs
 
 
-def makeFlickerList(imageSet: str, flickerListName: str, pctRepeat: int) -> None:
-    url = getURL(imageSet)
-    imageIDs = getImageIDs(url)
-    # pdb.set_trace()
-    group_size = 2
-    pairs = list(zip(*(iter(imageIDs),) * group_size))
-    pairs = [[i,j] for i,j in pairs]
-     
-    uid = uuid.uuid1()
-    t = datetime.now() - timedelta(hours=4)
-    obj = {
-        "_id": flickerListName,
-        "app": "flicker",
-        "type": "imageList",
-        "imageSet": imageSet,
-        "count": len(pairs),
-        "list": pairs,
-        "time_added": t.strftime('%Y-%m-%d %H:%M:%S')}
+def checkIfListExists(flickerListName):
     db = couch[IMAGES_DB]
+    try:
+        db[flickerListName]
+        return True
+    except couchdb.http.ResourceNotFound:
+        print(f"Cannot find flickerListName: {flickerListName}")
+        return False
+
+
+def makeFlickerList(imageSet: str, flickerListName: str, pctRepeat: int) -> None:
+    listExists = checkIfListExists(flickerListName)
     # pdb.set_trace()
-    print(f"Created Flicker List: {flickerListName}")
-    doc_id, doc_rev = db.save(obj)
+    if not listExists:
+        url = getURL(imageSet)
+        imageIDs = getImageIDs(url)
+        # pdb.set_trace()
+        group_size = 2
+        pairs = list(zip(*(iter(imageIDs),) * group_size))
+        pairs = [[i,j] for i,j in pairs]
+        
+        uid = uuid.uuid1()
+        t = datetime.now() - timedelta(hours=4)
+        obj = {
+            "_id": flickerListName,
+            "app": "flicker",
+            "type": "imageList",
+            "imageSet": imageSet,
+            "count": len(pairs),
+            "list": pairs,
+            "time_added": t.strftime('%Y-%m-%d %H:%M:%S')}
+        db = couch[IMAGES_DB]
+        # pdb.set_trace()
+        print(f"Created Flicker List: {flickerListName}")
+        doc_id, doc_rev = db.save(obj)
 
 
 def main(imageSet: str, flickerListName: str, pctRepeat: int = 0):

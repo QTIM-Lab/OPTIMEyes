@@ -55,37 +55,50 @@ def getImageIDs(url: str) -> list:
 
     return imageIDs
 
+def checkIfListExists(compareListName):
+    db = couch[IMAGES_DB]
+    try:
+        db[compareListName]
+        return True
+    except couchdb.http.ResourceNotFound:
+        print(f"Cannot find compareListName: {compareListName}")
+        return False
+
+
 
 def makeCompareList(imageSet: str, compareListName: str, pctRepeat: int, combos: bool = False) -> None:
-    url = getURL(imageSet)
-    imageIDs = getImageIDs(url)
-    # create all unique combinations
-    if combos:
-        unique_pairs = [list(comb) for comb in combinations(imageIDs, 2)]
-        random.shuffle(unique_pairs)
-        amountRepeat = math.ceil(pctRepeat/100 * len(unique_pairs))
-        repeats = random.sample(unique_pairs, amountRepeat)
-        pairs = unique_pairs + repeats
-    else:
-        # pdb.set_trace()
-        group_size = 2
-        pairs = list(zip(*(iter(imageIDs),) * group_size))
-        pairs = [[i,j] for i,j in pairs]
-     
-    uid = uuid.uuid1()
-    t = datetime.now() - timedelta(hours=4)
-    obj = {
-        "_id": compareListName,
-        "app": "compare",
-        "type": "imageList",
-        "imageSet": imageSet,
-        "count": len(pairs),
-        "list": pairs,
-        "time_added": t.strftime('%Y-%m-%d %H:%M:%S')}
-    db = couch[IMAGES_DB]
+    listExists = checkIfListExists(compareListName)
     # pdb.set_trace()
-    print(f"Created Compare List: {compareListName}")
-    doc_id, doc_rev = db.save(obj)
+    if not listExists:
+        url = getURL(imageSet)
+        imageIDs = getImageIDs(url)
+        # create all unique combinations
+        if combos:
+            unique_pairs = [list(comb) for comb in combinations(imageIDs, 2)]
+            random.shuffle(unique_pairs)
+            amountRepeat = math.ceil(pctRepeat/100 * len(unique_pairs))
+            repeats = random.sample(unique_pairs, amountRepeat)
+            pairs = unique_pairs + repeats
+        else:
+            # pdb.set_trace()
+            group_size = 2
+            pairs = list(zip(*(iter(imageIDs),) * group_size))
+            pairs = [[i,j] for i,j in pairs]
+        
+        uid = uuid.uuid1()
+        t = datetime.now() - timedelta(hours=4)
+        obj = {
+            "_id": compareListName,
+            "app": "compare",
+            "type": "imageList",
+            "imageSet": imageSet,
+            "count": len(pairs),
+            "list": pairs,
+            "time_added": t.strftime('%Y-%m-%d %H:%M:%S')}
+        db = couch[IMAGES_DB]
+        # pdb.set_trace()
+        print(f"Created Compare List: {compareListName}")
+        doc_id, doc_rev = db.save(obj)
 
 
 def main(imageSet: str, compareListName: str, pctRepeat: int = 0):
