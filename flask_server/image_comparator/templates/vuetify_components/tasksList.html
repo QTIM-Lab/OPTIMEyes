@@ -206,7 +206,7 @@
 
               </v-col>
 
-              <v-col cols=4>
+              <v-col v-if="admin" cols=4>
                 <h2>Create Task:</h2>
                 <v-form action="/make_task" method="post" ref="form">
                   <v-text-field

@@ -23,6 +23,7 @@ var tasksList = new Vue({
         flickerTasks: [],
         alert_message: null,
         // Right Column - Create Task
+        admin: false,
         user: '',
         imageSetName: '',
         imageListTypeSelect: null,
@@ -38,6 +39,7 @@ var tasksList = new Vue({
         this.HTTP_PORT = configuration.HTTP_PORT;
         this.ADMIN_PARTY = configuration.ADMIN_PARTY;
         this.USER_INFO = configuration.USER_INFO;
+        this.admin = this.USER_INFO.admin
         this.getTasks();
     },
 

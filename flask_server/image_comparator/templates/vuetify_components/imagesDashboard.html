@@ -78,8 +78,9 @@
 
               </v-col>
 
-              <v-col cols=6>
+              <v-col v-if="admin" cols=6>
                 <v-alert
+                  v-if="admin"
                   color="blue"
                   elevation="4"
                   type="success"
@@ -167,6 +168,7 @@ var template_app =new Vue({
         message: 'This is the images dashboard',
         imageSets: [],
         // form data
+        admin: false,
         folder: '',
         imageSetName: '',
         imageSetTypeSelect: null,
@@ -184,6 +186,7 @@ var template_app =new Vue({
       this.HTTP_PORT = configuration.HTTP_PORT;
       this.ADMIN_PARTY = configuration.ADMIN_PARTY;
       this.USER_INFO = configuration.USER_INFO;
+      this.admin = this.USER_INFO.admin
       this.getImageSets();
   },
 
