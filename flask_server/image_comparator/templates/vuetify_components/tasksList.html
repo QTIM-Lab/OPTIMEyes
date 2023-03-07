@@ -28,8 +28,16 @@
                 <h2>Tasks:</h2>
                 <v-alert
                   type="warning"
-                  v-if="alert_message"
-                >[[ alert_message ]]</v-alert>
+                  v-if="alert_warning"
+                >[[ alert_warning ]]</v-alert>
+                <v-alert
+                  type="success"
+                  v-if="alert_success"
+                >[[ alert_success ]]</v-alert>
+                <v-alert
+                  type="error"
+                  v-if="alert_error"
+                >[[ alert_error ]]</v-alert>
                 
                 <h3>Classify Tasks:</h3>
 

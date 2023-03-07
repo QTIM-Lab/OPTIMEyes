@@ -42,6 +42,7 @@ def checkIfListExists(taskName):
 def makeTask(user: str, imageListName: str, imageSet: str, imageListType: str, taskOrder: int, linkedWithImageListName: str = None) -> None:
     task_id = f"{user}-{imageListName}"
     listExists = checkIfListExists(task_id)
+    #pdb.set_trace()
     if not listExists:
         t = datetime.now() - timedelta(hours=4)
         obj = {"_id":task_id,

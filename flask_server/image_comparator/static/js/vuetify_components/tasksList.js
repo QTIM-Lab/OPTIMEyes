@@ -21,7 +21,9 @@ var tasksList = new Vue({
         classifyTasks: [],
         compareTasks: [],
         flickerTasks: [],
-        alert_message: null,
+        alert_warning: null,
+        alert_success: null,
+        alert_error: null,
         // Right Column - Create Task
         admin: false,
         user: '',
@@ -127,8 +129,8 @@ var tasksList = new Vue({
             if (imageList != null){
                 window.location.replace(this.URLS.goToImageSummary + `/${imageList}`)
             }else {
-                this.alert_message = "No Image List Associated"
-                setTimeout(()=>{this.alert_message = null}, 2000)
+                this.alert_error = "No Image List Associated"
+                setTimeout(()=>{this.alert_error = null}, 2000)
             }
           },
         goToApp(task) {
@@ -155,10 +157,16 @@ var tasksList = new Vue({
             .then((response) => response.json())
             .then((data) => {
                 console.log("back!")
-                //debugger
+                debugger
                 response_message = JSON.parse(data);
-                this.alert_message = "This task exists already."
-                setTimeout(()=>{this.alert_message = null}, 2000)
+                if (response_message === 'new_task_created'){
+                    this.alert_success = "New task created."
+                    setTimeout(()=>{this.alert_success = null}, 2000)
+                }else{
+                    this.alert_warning = "This task exists already."
+                    setTimeout(()=>{this.alert_warning = null}, 2000)
+                }
+
             })
         },
         clear() {
