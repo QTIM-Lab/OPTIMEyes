@@ -241,13 +241,14 @@ def delete_image_set(imageSet):
     
 @bp.route('/make_task', methods=['POST'])
 def make_task():
-    # pdb.set_trace()
+    #pdb.set_trace()
     print("in /make_task")
-    user=request.form['user']
-    imageSetName=request.form['imageSetName'] # pre-existing; imageSet
-    imageListTypeSelect=request.form['imageListTypeSelect']
+    new_task = json.loads(request.data)
+    user=new_task['user']
+    imageSetName=new_task['imageSetName'] # pre-existing; imageSet
+    imageListTypeSelect=new_task['imageListTypeSelect']
     pctRepeat = 0
-    taskOrder=request.form['taskOrder']
+    taskOrder=new_task['taskOrder']
     #pdb.set_trace()
     if imageListTypeSelect == "classify":
         listName=f"{imageSetName}-{imageListTypeSelect}-{pctRepeat}" # Placeholder and won't allow duplicates; add form entry to truly customze and add duplicates
@@ -262,8 +263,8 @@ def make_task():
         pass
     elif imageListTypeSelect == "pair":
         pass
-    makeTask(user=user, imageListName=listName, imageSet=imageSetName, imageListType=imageListTypeSelect, taskOrder=taskOrder)
-    return redirect(f'/tasksList')
+    makeTaskMessage = makeTask(user=user, imageListName=listName, imageSet=imageSetName, imageListType=imageListTypeSelect, taskOrder=taskOrder)
+    return json.dumps(makeTaskMessage)
     
 
 @bp.route('/get_users', methods=['GET'])

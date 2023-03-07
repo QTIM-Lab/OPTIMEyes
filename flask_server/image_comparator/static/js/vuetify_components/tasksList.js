@@ -51,6 +51,7 @@ var tasksList = new Vue({
                 getCompareTasks: `http://${this.DNS}:${this.HTTP_PORT}/get_tasks/compare?username=${this.USER_INFO.username}`,
                 getFlickerTasks: `http://${this.DNS}:${this.HTTP_PORT}/get_tasks/flicker?username=${this.USER_INFO.username}`,
                 goToImageSummary: `http://${this.DNS}:${this.HTTP_PORT}/image_set_summary`,
+                makeTask: `http://${this.DNS}:${this.HTTP_PORT}/make_task`,
             }
         },
         // Right Column "Create Task"
@@ -135,9 +136,28 @@ var tasksList = new Vue({
         },
         // Right Column
         submit() {
-            this.$v.$touch()
-            //debugger
-            this.$refs.form.$el.submit()
+            // debugger
+            var new_task = {}
+            new_task['user'] = this.user
+            new_task['imageSetName'] = this.imageSetName
+            new_task['imageListTypeSelect'] = this.imageListTypeSelect
+            new_task['taskOrder'] = this.taskOrder
+
+            fetch(this.URLS.makeTask, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(new_task)
+            })
+            .then((response) => response.json())
+            .then((data) => {
+                console.log("back!")
+                //debugger
+                response_message = JSON.parse(data);
+                this.alert_message = "This task exists already."
+                setTimeout(()=>{this.alert_message = null}, 2000)
+            })
         },
         clear() {
             this.$v.$reset()
