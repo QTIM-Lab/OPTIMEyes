@@ -33,42 +33,34 @@ else:
 def getBase64Representation(image_id: str):
     pdb.set_trace()
 
+
 def addImages(path_to_images: str, imageSetName: str, imageSetType: str = 'non-DICOM', fromCSV: str = None):
     # get images
-    # pdb.set_trace()
-    images_path = os.path.join(IMAGE_COMPARATOR_DATA, path_to_images)
-    images_unfiltered = os.listdir(images_path)
-    images = list(filter(lambda x: x.find(".jpg") != -1 \
-                         or x.find(".png") != -1 \
-                         or x.find(".bmp") != -1 \
-                         or x.find(".tiff") != -1, \
-                         images_unfiltered))
+    # Sense csv for input
+    if "image_key.csv" in os.listdir(os.path.join(IMAGE_COMPARATOR_DATA, path_to_images)):
+        fromCSV = True
 
     # We need to check current current image counts
     db = couch[IMAGES_DB]
-    # I DON'T THINK WE NEED THIS IF WE USE COMPLEX IMAGE NAMES
-    count_image_docs = [i for i in db.view("images/count_image_docs")]
-    imgCount = count_image_docs[0].value if len(count_image_docs) > 0 else 0
-    # I DON'T THINK WE NEED THIS IF WE USE COMPLEX IMAGE NAMES
     # If from csv we need to get the extra column data and save it
-    if fromCSV != None:
-        images_csv = pd.read_csv(images_path, fromCSV)
+    if fromCSV:
+        os.listdir("/"+IMAGE_COMPARATOR_DATA)
+        os.listdir(IMAGE_COMPARATOR_DATA)
+        images_csv = pd.read_csv(os.path.join(IMAGE_COMPARATOR_DATA, path_to_images, "image_key.csv"))
         records = images_csv.to_dict(orient="records")
         for i, record in enumerate(records):
             t = datetime.now() - timedelta(hours=4)
             # mandatory fields
-            # pdb.set_trace()
             image = record.pop('image')
             _id = imageSetName + "_" + image
             record['_id'] = _id
             record['origin'] = image
-            record['id'] = str(uuid.uuid1())
             record['type'] = "image"
             record['imageSetName'] = imageSetName
-            record['imageSetType'] = imageSetType
             record['timeAdded'] = t.strftime('%Y-%m-%d %H:%M:%S')
-
+            # pdb.set_trace()
             db.save(record)
+            images_path = os.path.join(IMAGE_COMPARATOR_DATA, path_to_images)
             print(f"Saved record: {record['origin']}")
             image_content = open(os.path.join(
                 images_path, record['origin']), "rb")
@@ -79,20 +71,27 @@ def addImages(path_to_images: str, imageSetName: str, imageSetType: str = 'non-D
             # getBase64Representation(_id)
 
     else:
+        images_path = os.path.join(IMAGE_COMPARATOR_DATA, path_to_images)
+        images_unfiltered = os.listdir(images_path)
+        images = list(filter(lambda x: x.find(".jpg") != -1 \
+                            or x.find(".png") != -1 \
+                            or x.find(".bmp") != -1 \
+                            or x.find(".tiff") != -1, \
+                            images_unfiltered))
         for i, image in enumerate(images):
             # pdb.set_trace()
             t = datetime.now() - timedelta(hours=4)
             _id = imageSetName + "_" + image
             obj = {"_id": _id,
                    "origin": image,
-                   "id": str(uuid.uuid1()),
                    "type": "image",
                    "imageSetName": imageSetName,
                    "timeAdded": t.strftime('%Y-%m-%d %H:%M:%S')}
 
             db.save(obj)
-            print(f"Saved record: {obj}")
-            image_content = open(os.path.join(images_path, image), "rb")
+            print(f"Saved record: {record['origin']}")
+            image_content = open(os.path.join(
+                images_path, record['origin']), "rb")
             image_extension = image.split(".")[-1]
             db.put_attachment(doc=obj, content=image_content,
                               filename="image", content_type=f'image/{image_extension}')
