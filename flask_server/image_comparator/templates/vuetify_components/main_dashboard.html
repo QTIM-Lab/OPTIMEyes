@@ -40,6 +40,12 @@
                     List Name: [[ item.value.list_name ]]; Count: [[ item.value.count ]]; Added: [[ item.value.time_added ]]
                   </li>
                 </ul>
+                <h3>Flicker Image Lists:</h3>
+                <ul>
+                  <li v-for="item in flickerImageLists">
+                    List Name: [[ item.value.list_name ]]; Count: [[ item.value.count ]]; Added: [[ item.value.time_added ]]
+                  </li>
+                </ul>
               </div>
   
               <h2>Tasks:</h2>
@@ -52,6 +58,12 @@
               <h3>Compare Tasks:</h3>
               <ul>
                 <li v-for="item in compareTasks">
+                  Task Type: [[ item.value.app ]]; Completed: [[ item.value.completed ]]; Associated List: [[ item.value.list_name ]]; Priority: [[ item.value.task_order ]]
+                </li>
+              </ul>
+              <h3>Flicker Tasks:</h3>
+              <ul>
+                <li v-for="item in flickerTasks">
                   Task Type: [[ item.value.app ]]; Completed: [[ item.value.completed ]]; Associated List: [[ item.value.list_name ]]; Priority: [[ item.value.task_order ]]
                 </li>
               </ul>

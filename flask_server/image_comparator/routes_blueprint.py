@@ -284,26 +284,6 @@ def get_toolset(app,tool_set):
     return json.loads(response.content.decode('utf-8'))
 
 
-@bp.route('/get_image_compare_lists', methods=['GET'])
-def get_image_compare_lists():
-    base = "http://{}:{}/{}".format(
-        current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
-    try:
-        key = request.args['key']
-    except:
-        print("in except")
-        # view = f"_design/basic_views/_view/image_compare_lists"
-        view = f"_design/compareApp/_view/imageLists"
-        url = f"{base}/{view}"
-        response = check_if_admin_party_then_make_request(url)
-        return json.loads(response.content.decode('utf-8'))
-    print("past except")
-    # view = f"_design/basic_views/_view/image_compare_lists?key=\"{key}\""
-    view = f"_design/compareApp/_view/imageLists?key=\"{key}\""
-    url = f"{base}/{view}"
-    response = check_if_admin_party_then_make_request(url)
-    return json.loads(response.content.decode('utf-8'))
-
 
 @bp.route('/get_image_classify_lists', methods=['GET'])
 def get_image_classify_lists():
@@ -320,6 +300,27 @@ def get_image_classify_lists():
         return json.loads(response.content.decode('utf-8'))
     # view = f"_design/basic_views/_view/image_classify_lists?key=\"{key}\""
     view = f"_design/classifyApp/_view/imageLists?key=\"{key}\""
+    url = f"{base}/{view}"
+    response = check_if_admin_party_then_make_request(url)
+    return json.loads(response.content.decode('utf-8'))
+
+
+@bp.route('/get_image_compare_lists', methods=['GET'])
+def get_image_compare_lists():
+    base = "http://{}:{}/{}".format(
+        current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
+    try:
+        key = request.args['key']
+    except:
+        print("in except")
+        # view = f"_design/basic_views/_view/image_compare_lists"
+        view = f"_design/compareApp/_view/imageLists"
+        url = f"{base}/{view}"
+        response = check_if_admin_party_then_make_request(url)
+        return json.loads(response.content.decode('utf-8'))
+    print("past except")
+    # view = f"_design/basic_views/_view/image_compare_lists?key=\"{key}\""
+    view = f"_design/compareApp/_view/imageLists?key=\"{key}\""
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
     return json.loads(response.content.decode('utf-8'))

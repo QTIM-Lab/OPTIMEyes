@@ -67,6 +67,7 @@
                         <td>[[ item.images ]]</td>
                         <td>
                           <v-btn
+                          v-if="admin"
                           elevation="2"
                           @click="deleteImageSet([[ item.imageSet ]])" 
                           >Delete</v-btn>

@@ -14,8 +14,10 @@ var main_dashboard = new Vue({
         message: '',
         classifyImageLists: [],
         compareImageLists: [],
+        flickerImageLists: [],
         classifyTasks: [],
         compareTasks: [],
+        flickerTasks: [],
         tasks: []
     }),
 
@@ -35,10 +37,12 @@ var main_dashboard = new Vue({
         URLS() {
             return {
                 configuration: "/configuration",
-                getCompareLists: `http://${this.DNS}:${this.HTTP_PORT}/get_image_compare_lists`,
                 getClassifyLists: `http://${this.DNS}:${this.HTTP_PORT}/get_image_classify_lists`,
+                getCompareLists: `http://${this.DNS}:${this.HTTP_PORT}/get_image_compare_lists`,
+                getFlickerLists: `http://${this.DNS}:${this.HTTP_PORT}/get_image_flicker_lists`,
+                getClassifyTasks: `http://${this.DNS}:${this.HTTP_PORT}/get_tasks/classify?username=${this.USER_INFO.username}`,
                 getCompareTasks: `http://${this.DNS}:${this.HTTP_PORT}/get_tasks/compare?username=${this.USER_INFO.username}`,
-                getClassifyTasks: `http://${this.DNS}:${this.HTTP_PORT}/get_tasks/classify?username=${this.USER_INFO.username}`
+                getFlickerTasks: `http://${this.DNS}:${this.HTTP_PORT}/get_tasks/flicker?username=${this.USER_INFO.username}`
             }
         }
     },
@@ -70,6 +74,13 @@ var main_dashboard = new Vue({
                         this.compareImageLists.push(v)
                     })
                 })
+            fetch(this.URLS.getFlickerLists)
+                .then((response) => response.json())
+                .then((data) => {
+                    data.rows.forEach((v, i, a) => {
+                        this.flickerImageLists.push(v)
+                    })
+                })
         },
 
         getTasks() {
@@ -86,6 +97,13 @@ var main_dashboard = new Vue({
                 .then((data) => {
                     data.rows.forEach((v, i, a) => {
                         this.compareTasks.push(v)
+                    })
+                })
+            fetch(this.URLS.getFlickerTasks)
+                .then((response) => response.json())
+                .then((data) => {
+                    data.rows.forEach((v, i, a) => {
+                        this.flickerTasks.push(v)
                     })
                 })
         },
