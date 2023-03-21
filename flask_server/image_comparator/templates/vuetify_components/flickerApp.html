@@ -423,24 +423,34 @@ var flicker_app =new Vue({
       submit() {
         //this.$v.$touch() // for uswe with veulidate which you haven't setup for this app
         // this.$refs.form.$el.submit() // Normal submit but we want to send results in a better organized way
-        this.result['_id'] = `${this.task.id}-result-image1_${this.pair[0].image_id}-image2_${this.pair[1].image_id}`
-        this.result['user'] = this.user
-        this.result['list_name'] = this.task.value.list_name
-        this.result['app'] = "flicker"
-        this.result['type'] = "result"
-        this.result['taskid'] = this.task.id
-        fetch(this.URLS.taskResult, {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(this.result)
+        let error = null;
+        this.result['radio_button_categories'].forEach((v, i, a) => {
+          if (v['selected'] === null){
+            error = true
+            this.alert_error = "You must make a selection for the radio buttons."
+            setTimeout(()=>{this.alert_error = null}, 2000)
+          }
         })
-        .then((response) => response.json())
-        .then((data) => {
-          window.location.replace(this.URLS.flickerApp);
-        })
-
+        if (!error){
+          this.result
+          this.result['_id'] = `${this.task.id}-result-image1_${this.pair[0].image_id}-image2_${this.pair[1].image_id}`
+          this.result['user'] = this.user
+          this.result['list_name'] = this.task.value.list_name
+          this.result['app'] = "flicker"
+          this.result['type'] = "result"
+          this.result['taskid'] = this.task.id
+          fetch(this.URLS.taskResult, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(this.result)
+          })
+          .then((response) => response.json())
+          .then((data) => {
+            window.location.replace(this.URLS.flickerApp);
+          })
+        }
       },
       // This might be a relect of a copy and paste...don't think this is used
       clear() {
