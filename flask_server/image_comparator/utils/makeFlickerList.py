@@ -7,6 +7,7 @@ import uuid
 import pdb
 import random
 import math
+import pandas as pd
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
 from itertools import combinations
@@ -51,9 +52,13 @@ def getImageIDs(url: str) -> list:
     response = response.content.decode('utf-8')
     # pdb.set_trace()
     response = json.loads(response)
-    imageIDs = [row['id'] for row in response['rows']]
+    rows = []
+    for row in response['rows']:
+        row['value'].pop('_attachments')
+        rows.append(row['value'])
+    # imageIDs = [row['id'] for row in response['rows']]
 
-    return imageIDs
+    return rows
 
 
 def checkIfListExists(flickerListName):
@@ -72,11 +77,11 @@ def makeFlickerList(imageSet: str, flickerListName: str, pctRepeat: int) -> None
     if not listExists:
         url = getURL(imageSet)
         imageIDs = getImageIDs(url)
-        # pdb.set_trace()
+        imageIDs = pd.DataFrame(imageIDs)
+        imageIDs = imageIDs.sort_values('index')
         group_size = 2
-        pairs = list(zip(*(iter(imageIDs),) * group_size))
+        pairs = list(zip(*(iter(imageIDs['_id']),) * group_size))
         pairs = [[i,j] for i,j in pairs]
-        
         uid = uuid.uuid1()
         t = datetime.now() - timedelta(hours=4)
         obj = {

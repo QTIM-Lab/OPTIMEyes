@@ -34,42 +34,41 @@ def getBase64Representation(image_id: str):
     pdb.set_trace()
 
 
-def addImages(path_to_images: str, imageSetName: str, imageSetType: str = 'non-DICOM', fromCSV: str = None):
+def addImages(path_to_images: str, imageSetName: str, imageSetType: str = 'non-DICOM'):
     # get images
     # Sense csv for input
-    if "image_key.csv" in os.listdir(os.path.join(IMAGE_COMPARATOR_DATA, path_to_images)):
-        fromCSV = True
-
     # We need to check current current image counts
     db = couch[IMAGES_DB]
     # If from csv we need to get the extra column data and save it
-    if fromCSV:
-        os.listdir("/"+IMAGE_COMPARATOR_DATA)
-        os.listdir(IMAGE_COMPARATOR_DATA)
+    if "image_key.csv" in os.listdir(os.path.join(IMAGE_COMPARATOR_DATA, path_to_images)):
         images_csv = pd.read_csv(os.path.join(IMAGE_COMPARATOR_DATA, path_to_images, "image_key.csv"))
+        images_csv.head()
+        images_csv['index'] = images_csv.index+1
         records = images_csv.to_dict(orient="records")
-        for i, record in enumerate(records):
+        for record in records:
             t = datetime.now() - timedelta(hours=4)
             # mandatory fields
-            image = record.pop('image')
-            _id = imageSetName + "_" + image
+            # pdb.set_trace()
+            index = record['index']
+            image_path_orig = record.pop('image_path_orig')
+            dirname = os.path.dirname(image_path_orig)
+            basename = os.path.basename(image_path_orig)
+            _id = imageSetName + "_" + dirname + "_" + basename
             record['_id'] = _id
-            record['origin'] = image
+            record['index'] = index
+            record['origin'] = basename
             record['type'] = "image"
             record['imageSetName'] = imageSetName
             record['timeAdded'] = t.strftime('%Y-%m-%d %H:%M:%S')
-            # pdb.set_trace()
             db.save(record)
-            images_path = os.path.join(IMAGE_COMPARATOR_DATA, path_to_images)
             print(f"Saved record: {record['origin']}")
             image_content = open(os.path.join(
-                images_path, record['origin']), "rb")
-            image_extension = record['origin'].split(".")[-1]
+                IMAGE_COMPARATOR_DATA, path_to_images, dirname, basename), "rb")
+            image_extension = basename.split(".")[-1]
             db.put_attachment(doc=record, content=image_content,
                               filename="image", content_type=f'image/{image_extension}')
             print(f"Added image attachment ({image_extension})")
             # getBase64Representation(_id)
-
     else:
         images_path = os.path.join(IMAGE_COMPARATOR_DATA, path_to_images)
         images_unfiltered = os.listdir(images_path)
@@ -97,8 +96,8 @@ def addImages(path_to_images: str, imageSetName: str, imageSetType: str = 'non-D
                               filename="image", content_type=f'image/{image_extension}')
             # getBase64Representation(_id)
 
-def main(path_to_images: str, imageSetName: str, imageSetType: str = 'non-DICOM', fromCSV: str = None):
-    addImages(path_to_images, imageSetName, imageSetType, fromCSV)
+def main(path_to_images: str, imageSetName: str, imageSetType: str = 'non-DICOM'):
+    addImages(path_to_images, imageSetName, imageSetType)
    
 
 if __name__ == "__main__":
