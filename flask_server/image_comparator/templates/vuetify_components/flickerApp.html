@@ -330,7 +330,11 @@ var flicker_app =new Vue({
             if (data.rows.length === 1){
               this.task = data.rows[0]
             }else{
-              alert("more than one task or less than 1 task...debug...")
+              data.rows.forEach((v,i,a)=>{
+                if(v['id'] === this.user+"-"+this.list_name){
+                  this.task = v
+                }
+              })
             }
           })
       },
