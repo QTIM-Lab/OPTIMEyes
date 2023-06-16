@@ -1,0 +1,565 @@
+<!-- TEMPLATE -->
+{% extends "vuetify_components/base.html" %}
+
+<!-- TITLE -->
+{% block title %}Image Slider{% endblock %}
+
+<!-- CSS -->
+{% block custom_css %}
+<style>
+  .parent {
+    position: relative;
+    top: 0;
+    left: 0;
+    background-color: black;
+  }
+  
+  .imageHidden {
+    /* position: relative;
+    top: 0;
+    left: 0;
+    border: 1px red solid; */
+    display: none;
+  }
+  
+  .imageShown {
+    /* position: absolute;
+    top: 0px;
+    left: 0px; */
+    border: 1px green solid;
+  }
+</style>
+{% endblock %}
+
+
+
+<!-- BODY -->
+{% block content %}
+
+<!-- Components -->
+{% include 'vuetify_components/navbar.html' %}
+{% include 'vuetify_components/slider-chart.html' %}
+
+<!-- Index Vue App -->
+<div id="slider_app">
+    <v-app>
+      <navbar-tag></navbar-tag>
+      <v-main v-if="dataReady">
+          <!-- <v-container class="ma-0"> -->
+          <v-container fluid>
+            <h2>
+              slider Task for Image List [[ list_name ]] | On Collection
+              <span
+                v-if="current_deck.length != 0"
+                >[[ this.task.value.current_idx + 1 ]] of [[ this.current_deck.length ]]
+              </span>
+            </h2>
+            <p>[[ time_point_message ]]</p>
+
+            <!-- Alert -->
+            <v-alert
+              title="Info"
+              color="blue"
+              elevation="4"
+              type="info"
+              v-if="alert_info != null"
+            >
+              [[ alert_info ]]
+            </v-alert>
+            <v-alert
+              title="Error"
+              color="red"
+              elevation="4"
+              type="error"
+              v-if="alert_error != null"
+            >
+              [[ alert_error ]]
+            </v-alert>
+
+
+            <v-row>
+              <!-- Col for images -->
+              <v-col
+                cols="12"
+                md="5"
+              >
+                <!-- Div parent for two images -->
+                <div class="ma-0 parent">
+                  <v-img
+                    v-for="current_image in collection"
+                    :ref="'image_' + current_image.index"
+                    :class="classes_for_images[current_image.index]"
+                    width="100%"
+                    v-if="current_image.base64"
+                    :lazy-src="current_image.base64"
+                    :src="current_image.base64"
+                    aspect-ratio="1/1"
+                  ></v-img>
+                </div>
+
+              </v-col>
+
+              <!-- Col for tool_set -->
+              <v-col
+              cols="12"
+              md="3"
+              >
+
+                <!-- Tools -->
+                <!--https://codepen.io/zed_at_home/pen/LYpWyEM-->
+                <v-form v-if="tool_set" action="/task_result" method="post" ref="form">
+
+                  <v-row no-gutters>
+                    <v-col
+                    cols="12"
+                    md="6"
+                    >
+                      <div
+                        v-for="(checkbox_category, index_checkbox_category) in tool_set.checkbox_categories"
+                        :key="checkbox_category['category_id']"
+                      >
+                      <p>[[ checkbox_category['category_id'] ]]</p>
+
+                      <v-checkbox
+                        v-for="(checkbox, indexCheckbox) in checkbox_category['checkboxes']"
+                        :key="checkbox['checkbox_id']"
+                        v-model="result.checkbox_categories[index_checkbox_category].checkboxes[indexCheckbox].checked"
+                        :label="`${result.checkbox_categories[index_checkbox_category].checkboxes[indexCheckbox].checked.toString()}`"
+                        color="red"
+                        hide-details
+                      ></v-checkbox>
+
+                      </div>
+
+                      <v-radio-group
+                        v-for="(radio_button_category, index_radio_category) in tool_set.radio_button_categories"
+                        :key="radio_button_category['category_id']"
+                        v-model="result.radio_button_categories[index_radio_category].selected"
+                      >
+                        <p>[[ radio_button_category['category_id'] ]]</p>
+                        <v-radio
+                          v-for="(radio_button, index_radio_button) in radio_button_category['buttons']"
+                          :key="radio_button['button_id']"
+                          :label="`${result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id}`"
+                          :value="`${result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id}`"
+                        ></v-radio>
+
+                      </v-radio-group>
+                    </v-col>
+                    <v-col
+                    cols="12"
+                    md="6"
+                    >
+  
+                      <div
+                        v-for="(text_input_category, index_text_input_category) in tool_set.text_input_categories"
+                        :key="text_input_category['category_id']"
+                      >
+                        <p>[[ text_input_category.category_id ]]</p>
+                        <v-textarea
+                          v-for="(text_input, index_text_input) in text_input_category['text_inputs']"
+                          :key="text_input['text_input_id']"
+                          v-model="result.text_input_categories[index_text_input_category].text_inputs[index_text_input].message"
+                          :label="`${result.text_input_categories[index_text_input_category].text_inputs[index_text_input].text_input_id}`"
+                        ></v-textarea>
+    
+                      </div>
+
+
+
+                    </v-col>
+
+                  </v-row>
+                  
+                  <!-- Slider -->
+                  <div
+                    v-for="(slider_input_category, index_slider_input_category) in tool_set.slider_input_categories"
+                    v-if=tool_set.slider_input_categories
+                    :key="slider_input_category['category_id']"
+                  >
+                    <p>[[ slider_input_category.category_id ]]</p>
+                    <v-row
+                      v-for="(slider_input, index_slider_input) in slider_input_category['slider_inputs']"
+                    >
+                      <!-- It looks like pairs of two sliders but it's not. -->
+                      <!-- For each slider one of either an image or fade slider will be rendered. -->
+                      <!-- From the flicker app there are 2 image and 1 fade slider. -->
+                      <!-- The loop will loop 3 times and each time render the appropriate slider below. -->
+
+                      <!-- Image Slider if that is the slider type -->
+                      <v-slider
+                        v-if="result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].label.search('Image') != -1"
+                        v-model="result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].value"
+                        prepend-icon="mdi-opacity"
+                        direction=""
+                        :min="`${result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].min}`"
+                        :max="`${result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].max}`"
+                        :label="`${result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].label}`"
+                      ></v-slider>
+                      <!-- Fade Slider if that is the slider type -->
+                      <v-slider
+                        v-if="result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].label.search('Fade') != -1"
+                        v-model="result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].value"
+                        prepend-icon="mdi-opacity"
+                        direction=""
+                        :min="`${result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].min}`"
+                        :max="`${result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].max}`"
+                        :label="`${result.slider_input_categories[index_slider_input_category].slider_inputs[index_slider_input].label}`"
+                        @input="fadeImages"
+                      ></v-slider>
+                    </v-row>
+                  </div>              
+                    
+
+                  <v-btn
+                    class="mr-4"
+                    @click="submit"
+                  >
+                    submit
+                  </v-btn>
+                  <v-btn @click="clear">
+                    clear
+                  </v-btn>
+
+
+                </v-form>
+
+              </v-col>
+
+              <v-col
+                cols="12"
+                md="4"
+              >
+              <slider-chart :rgb_values=r_rgb_at_pixel_10></slider-chart>
+              </v-col>
+
+            </v-row>
+
+            <v-slider
+              v-if="collection"
+              v-model="current_image_index"
+              v-on:change="reloadDisplayOfImages" 
+              :min="0"
+              :max="collection.length - 1"
+              show-ticks="always"
+              tick-size="4"
+            ></v-slider>
+            <v-text-field
+              label="Current Image Index"
+              hide-details="auto"
+              v-model="current_image_index"
+              v-on:input="reloadDisplayOfImages" 
+              type="number"
+            ></v-text-field>
+            <p>current_image_index: [[ current_image_index ]]</p>
+
+              
+
+
+          </v-container>
+      </v-main>
+    </v-app>
+</div>
+
+{% endblock %}
+
+
+
+{% block js_scripts %}
+
+<script>
+
+var slider_app =new Vue({
+    el: '#slider_app',
+    vuetify: new Vuetify(),
+
+    data: () => ({
+      app: "slider",
+      dataReady: false,
+      user: "{{ task.user }}",
+      list_name: "{{ task.list_name }}",
+      current_deck: [], // all images
+      current_image_index: 0, // index of the current image in collection of deck
+      time_point_message: "Time Point 1",
+      //showImage1: "", 
+      borderImage1: "5px solid green",
+      //showImage2: "none", 
+      borderImage2: "5px solid red",
+      collection: null, // [{image_id: null, base64: null}, ...],
+      classes_for_images: [],
+      r_rgb_at_pixel_10: [],
+      task: null,
+      tool_set: null,
+      result: null, // copy of tool set to store results
+      alert_info: null,
+      alert_error: null
+    }),
+
+    delimiters: ['[[',']]'],
+
+    async mounted() {
+      configuration = await this.getConfiguration()
+      this.DNS = configuration.DNS;
+      this.IMAGES_DB = configuration.IMAGES_DB;
+      this.DB_PORT = configuration.DB_PORT;
+      this.HTTP_PORT = configuration.HTTP_PORT;
+      this.ADMIN_PARTY = configuration.ADMIN_PARTY;
+      this.USER_INFO = configuration.USER_INFO;
+      await this.getTask(this.app, this.user, this.list_name);
+      if (this.task.value.completed){
+        this.alert_info = "This task is completed"
+        setTimeout(()=>{this.alert_info = null}, 2000)
+        setTimeout(()=>{window.location.replace(this.URLS.taskList);}, 2000)
+      }else{
+        await this.getImageList();
+        this.getTools(this.app, this.task.value.tool_set)
+        // Need to get image slider list so we can get collection to display based on current_idx
+        await this.loadImages(current_idx=this.task.value.current_idx);
+        this.dataReady = true;    
+        this.reloadDisplayOfImages()
+        document.addEventListener('keydown', function(event) {
+          // Note: You need either a bind() method attached to the regular function or
+          //       you need to user an arrow function to keep "this" referring to the 
+          //       vue instance versus the function itself.
+          //       I'm using bind for a little more "obvious" readability
+          this.respondToKeyboardInput(event);
+        }.bind(this)); // Look above for the explaination of why I'm using .bind(this)
+      }
+    },
+    computed: {
+      // General
+      URLS() {
+          return {
+              configuration: "/configuration",
+              sliderApp: `http://${this.DNS}:${this.HTTP_PORT}/sliderApp/${this.user}/${this.list_name}`,
+              getTask: `http://${this.DNS}:${this.HTTP_PORT}/get_task/${this.app}/${this.user}/${this.list_name}`,
+              taskList: `http://${this.DNS}:${this.HTTP_PORT}/tasksList`,
+              getToolSet: `http://${this.DNS}:${this.HTTP_PORT}/get_toolset`,
+              getImageList: `http://${this.DNS}:${this.HTTP_PORT}/get_image_slider_lists`,
+              taskResult: `http://${this.DNS}:${this.HTTP_PORT}/task_result`,
+          }
+      },
+      styles_for_images() {
+        var styles = []
+        this.collection.forEach((v,i,a)=>{
+          style = `{ border: borderImage${v.index}`
+          styles.push(style)
+        })
+        return styles
+      },
+      // classes_for_images() {
+      //   var classes = []
+      //   for (let i=0; i< this.collection.length; i++){
+      //     if (i === this.current_image_index){
+      //       image_class = 'imageShown'
+      //     }else {
+      //       image_class = 'imageHidden'
+      //     }
+      //     classes.push(image_class)
+      //   }
+      //   return classes
+      // }
+
+    },
+
+    methods: {
+      async getConfiguration() {
+        // https://dmitripavlutin.com/javascript-fetch-async-await/
+        const response = await fetch('/configuration');
+        if (!response.ok) {
+            const message = `An error has occured: ${response.status}`;
+            throw new Error(message);
+        }
+        const configuration = await response.json();
+        return configuration;
+      },
+      async getTask(app, user, list_name) {
+        console.log("getTask")
+        const response = await fetch(this.URLS.getTask);
+        const data = await response.json();
+        if (data.rows.length === 1){
+          this.task = data.rows[0]
+        }else{
+          data.rows.forEach((v,i,a)=>{
+            if(v['id'] === this.user+"-"+this.list_name){
+              this.task = v
+            }
+          })
+        }
+      },
+      async getImageList() {
+        console.log("getImageList")
+        let CA = this; // slider App Vue Object
+        const response = await fetch(this.URLS.getImageList+`?key=${this.list_name}`)
+        const data = await response.json()
+        if (data.rows.length === 1){
+          this.current_deck = data.rows[0].value.list
+          if (this.current_deck.length === 0){
+            this.alert_error = "Image list has no elements."
+            setTimeout(()=>{this.alert_error = null}, 2000)
+          }
+        }else{
+          alert("more than one task or less than 1 task...debug...")
+        }
+      },
+      async loadImages(current_idx) {
+        this.collection = []
+        for(let i=0; i<this.current_deck[current_idx].length; i++) {
+          // populate classes array
+          this.classes_for_images[i] = "imageHidden"
+          this.r_rgb_at_pixel_10[i] = 0
+          // get image metadata
+          v = this.current_deck[current_idx][i]
+          collection_image = {image_id: v, base64: null, index:i}
+          this.collection.push(collection_image)
+          await this.getBase64DataOfImageFromCouch(collection_image.image_id, collection_index=i)
+        }
+      },
+      async getTools(app, tool_set) {
+        console.log("getTools")
+        const response = await fetch(this.URLS.getToolSet + `/${app}/${tool_set}`);
+        const data = await response.json();
+        if (data.rows.length === 1){
+          //debugger
+          // Store tool_set and make results object to match
+          var tool_set = data.rows[0].value.tools
+          var result = JSON.parse(JSON.stringify(data.rows[0].value.tools));
+          this.result = result; 
+          this.tool_set = tool_set;
+        }else{
+          this.alert_error = "Can't find specified tool set"
+          setTimeout(()=>{this.alert_error = null}, 2000)
+        }
+      },
+      async getBase64DataOfImageFromCouch(image_id, collection_index) {
+        var url = `http://${this.DNS}:${this.HTTP_PORT}/get_image/${image_id}`
+        let SA = this; // slider App Vue Object
+        let I_ID = image_id;
+        let P_INDEX = collection_index;
+        await fetch(url)
+          .then(response => {
+            return response.text();
+          })
+          .then(data => {
+            DATA='data:image/png;base64,' + data
+            SA.collection[P_INDEX]['base64'] = DATA
+          })
+      },
+      respondToKeyboardInput(event){
+        // debugger
+        if (event.key === 'ArrowLeft') {
+          // Arrow Left key pressed and cycle right
+          if(this.current_image_index === 0) {
+            this.current_image_index = this.collection.length - 1
+          } else {
+            this.current_image_index -= 1
+          }
+        } else if (event.key === 'ArrowRight') {
+          // Arrow Right key pressed and cycle left
+          if(this.current_image_index === this.collection.length - 1) {
+            this.current_image_index = 0
+          } else {
+            this.current_image_index += 1
+          }
+        } else if (event.key === 'ArrowUp') {
+          // debugger
+          // Canvas practice
+          // this.$refs.image_0[0].$el // maybe not the way to go
+          // Get the base64 image data
+          var base64Data = this.collection[0].base64;
+          // Create a new Image object
+          var img = new Image();
+          // Set the base64 image data as the source
+          img.src = base64Data;
+          // Create a new canvas element
+          var canvas = document.createElement('canvas');
+          var context = canvas.getContext('2d');
+          // Set the canvas dimensions to match the image dimensions
+          canvas.width = img.width;
+          canvas.height = img.height;
+          // Draw the image onto the canvas
+          context.drawImage(img, 0, 0);
+          // Get the pixel data
+          var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+          var pixels = imageData.data;
+          // Access pixel information for a specific pixel (x, y)
+          var x = 10; // x-coordinate of the pixel
+          var y = 10; // y-coordinate of the pixel
+          //// Note img.width*img.height*channels is the length of pixels
+          //// Pixels is a flattened array of 4 channels
+          //// Below is breaking that array into 4 pieces to get the individual channels
+          var red = pixels[(y * canvas.width + x) * 4];
+          var green = pixels[(y * canvas.width + x) * 4 + 1];
+          var blue = pixels[(y * canvas.width + x) * 4 + 2];
+          var alpha = pixels[(y * canvas.width + x) * 4 + 3];
+          console.log("Pixel RGB values: " + red + ", " + green + ", " + blue);
+          console.log("Alpha value: " + alpha);
+          debugger
+
+        }
+        this.reloadDisplayOfImages()
+      },
+      reloadDisplayOfImages(){
+        this.current_image_index = Number(this.current_image_index)
+        deck_size = this.current_deck.length;
+        // Cycle to current image
+        for(let i=0; i<this.collection.length; i++) {
+          // Set up classes for images to show\hide
+          if(i === this.current_image_index){
+            // https://v2.vuejs.org/v2/guide/reactivity.html#Change-Detection-Caveats // Vue.set()...
+            Vue.set(this.classes_for_images, i, "imageShown")
+          }else{
+            // https://v2.vuejs.org/v2/guide/reactivity.html#Change-Detection-Caveats // Vue.set()...
+            Vue.set(this.classes_for_images, i, "imageHidden")
+          }
+        }
+      },
+      // For the submit form
+      submit() {
+        //this.$v.$touch() // for uswe with veulidate which you haven't setup for this app
+        // this.$refs.form.$el.submit() // Normal submit but we want to send results in a better organized way
+        let error = null;
+        this.result['radio_button_categories'].forEach((v, i, a) => {
+          if (v['selected'] === null){
+            error = true
+            this.alert_error = "You must make a selection for the radio buttons."
+            setTimeout(()=>{this.alert_error = null}, 2000)
+          }
+        })
+        if (!error){
+          this.result
+          this.result['_id'] = `${this.task.id}-result-image1_${this.collection[0].image_id}-image2_${this.collection[1].image_id}`
+          this.result['user'] = this.user
+          this.result['list_name'] = this.task.value.list_name
+          this.result['app'] = "slider"
+          this.result['type'] = "result"
+          this.result['taskid'] = this.task.id
+          fetch(this.URLS.taskResult, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(this.result)
+          })
+          .then((response) => response.json())
+          .then((data) => {
+            window.location.replace(this.URLS.sliderApp);
+          })
+        }
+      },
+      // This might be a relect of a copy and paste...don't think this is used
+      clear() {
+        this.$v.$reset()
+        this.user = ''
+        this.imageListName = ''
+        this.imageListTypeSelect = ''
+        this.taskOrder = ''
+      },
+    },
+
+
+  })
+</script>
+
+
+{% endblock %}

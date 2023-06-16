@@ -41,6 +41,10 @@ curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASSWORD@0.0.0.0:$DB_PORT/$DB_NAME/_de
 # Flicker App
 curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASSWORD@0.0.0.0:$DB_PORT/$DB_NAME/_design/flickerApp -d @flask_server/image_comparator/static/js/views/flickerApp_views.json
 
+# Slider App
+curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASSWORD@0.0.0.0:$DB_PORT/$DB_NAME/_design/sliderApp -d @flask_server/image_comparator/static/js/views/sliderApp_views.json
+
+
 # Images Views
 curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASSWORD@0.0.0.0:$DB_PORT/$DB_NAME/_design/images -d @flask_server/image_comparator/static/js/views/images_views.json
 
@@ -63,6 +67,10 @@ curl -X POST http://$COUCHDB_USER:$COUCHDB_PASSWORD@0.0.0.0:$DB_PORT/$DB_NAME \
 curl -X POST http://$COUCHDB_USER:$COUCHDB_PASSWORD@0.0.0.0:$DB_PORT/$DB_NAME \
   -H 'Content-Type: application/json' \
   -d @flask_server/image_comparator/static/js/views/tool_set_flicker_template.json
+
+curl -X POST http://$COUCHDB_USER:$COUCHDB_PASSWORD@0.0.0.0:$DB_PORT/$DB_NAME \
+  -H 'Content-Type: application/json' \
+  -d @flask_server/image_comparator/static/js/views/tool_set_slider_template.json
 ```
 
 ## Acknowledgements

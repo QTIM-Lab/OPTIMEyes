@@ -1,0 +1,104 @@
+<script type="text/template" id="slider-chart">
+    <div>
+        [[ title ]] [[ rgb_values ]]
+        <canvas ref="myChart"></canvas>
+    </div>
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// this is the JS file, eg app.js
+Vue.component('slider-chart', {
+    template: '#slider-chart',
+    props: ["rgb_values"],
+    data() {
+        return { 
+            title: 'slider-chart',
+        }
+    },
+    delimiters: ['[[',']]'],
+    mounted() {
+        this.createChart();
+    },
+    methods: {
+        createChart() {
+            // DOM
+            const ctx = this.$refs.myChart.getContext('2d');
+            // Define your chart data and options
+            const DATA_COUNT = 4;
+            const labels = [];
+            for (let i = 0; i < DATA_COUNT; ++i) {
+            labels.push(i.toString());
+            }
+            // const datapoints = [64, 128, 192, 255];
+            const datapoints = [...this.rgb_values];
+            const data = {
+            labels: labels,
+            datasets: [
+                {
+                label: 'Cubic interpolation (monotone)',
+                data: datapoints,
+                borderColor: Chart.helpers.color('red').rgbString(),
+                fill: false,
+                cubicInterpolationMode: 'monotone',
+                tension: 0.4
+                }, 
+                // {
+                // label: 'Cubic interpolation',
+                // data: datapoints,
+                // borderColor: Chart.helpers.color('blue').rgbString(),
+                // fill: false,
+                // tension: 0.4
+                // }, 
+                // {
+                // label: 'Linear interpolation (default)',
+                // data: datapoints,
+                // borderColor: Chart.helpers.color('green').rgbString(),
+                // fill: false
+                // }
+            ]
+            };
+
+            // Options
+            const options = {
+                responsive: true,
+                plugins: {
+                title: {
+                    display: true,
+                    text: 'Chart.js Line Chart - Cubic interpolation mode'
+                },
+                },
+                interaction: {
+                intersect: false,
+                },
+                scales: {
+                x: {
+                    display: true,
+                    title: {
+                    display: true
+                    }
+                },
+                y: {
+                    display: true,
+                    title: {
+                    display: true,
+                    text: 'Value'
+                    },
+                    suggestedMin: 0,
+                    suggestedMax: 255
+                }
+                }
+            }
+            // Create the chart using Chart.js
+            new Chart(ctx, {
+                type: 'line',
+                data: data,
+                options: options,
+            });
+
+        }
+    }
+
+});
+</script>

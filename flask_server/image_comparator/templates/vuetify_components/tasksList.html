@@ -211,6 +211,63 @@
                   </template>
                 </v-simple-table>
 
+                <h3>Slider Tasks:</h3>
+                
+                <v-simple-table>
+                  <template v-slot:default>
+                    <thead>
+                      <tr>
+                        <th class="text-left">
+                          Start/Continue
+                        </th>
+                        <th class="text-left">
+                          Image List
+                        </th>
+                        <th class="text-left">
+                          Task Type
+                        </th>
+                        <th class="text-left">
+                          Completed
+                        </th>
+                        <!--<th class="text-left">
+                          Associated List
+                        </th>-->
+                        <th class="text-left">
+                          Priority
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        v-for="item in sliderTasks"
+                        :key="item.value.list_name"
+                      >
+                        <td>
+                          <v-btn
+                          elevation="2"
+                          @click="goToApp(item)" 
+                          >Start/Continue</v-btn>
+                        </td> 
+                        <td>
+                          <v-btn
+                          elevation="2"
+                          @click="goToImageSummary(item.value.imageSet)" 
+                          >[[ item.value.imageSet ]]</v-btn>
+                        </td> 
+                        <td>[[ item.value.app ]]</td> 
+                        <td>[[ item.value.completed ]]</td> 
+                        <!--<td>
+                          <v-btn
+                          elevation="2"
+                          @click="goToImageSummary(item.value.linked_with_image_list_name)" 
+                          >[[ item.value.linked_with_image_list_name ? item.value.linked_with_image_list_name : "None" ]]</v-btn>
+                        </td>-->
+                        <td>[[ item.value.task_order ]]</td> 
+                      </tr>
+                    </tbody>
+                  </template>
+                </v-simple-table>
+
 
               </v-col>
 

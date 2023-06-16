@@ -1,0 +1,24 @@
+{
+    "_id": "tool_set_slider_template",
+    "type": "toolSet",
+    "app": "slider",
+    "tools": {
+      "radio_button_categories": [
+        {
+          "category_id": "Choose Single Class",
+          "selected": null,
+          "buttons": [
+            {
+              "button_id": "Choice 1"
+            },
+            {
+              "button_id": "Choice 2"
+            },
+            {
+              "button_id": "Choice 3"
+            }
+          ]
+        }
+      ]
+    }
+  }

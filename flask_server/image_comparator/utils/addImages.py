@@ -48,22 +48,28 @@ def addImages(path_to_images: str, imageSetName: str, imageSetType: str = 'non-D
         for record in records:
             t = datetime.now() - timedelta(hours=4)
             # mandatory fields
-            # pdb.set_trace()
             index = record['index']
             image_path_orig = record.pop('image_path_orig')
-            dirname = os.path.dirname(image_path_orig)
+            # pdb.set_trace()
+            try:
+                relative_path = os.path.dirname(record.pop('relative_path'))
+            except:
+                relative_path = os.path.dirname(image_path_orig)
             basename = os.path.basename(image_path_orig)
-            _id = imageSetName + "_" + dirname + "_" + basename
+            _id = imageSetName + "_" + relative_path.replace("/", "-") + "_" + basename
             record['_id'] = _id
             record['index'] = index
-            record['origin'] = basename
+            record['image'] = basename
+            record['image_orig_path'] = image_path_orig
+            record['relative_path'] = relative_path
             record['type'] = "image"
             record['imageSetName'] = imageSetName
             record['timeAdded'] = t.strftime('%Y-%m-%d %H:%M:%S')
             db.save(record)
-            print(f"Saved record: {record['origin']}")
+            print(f"Saved record: {record['image']}")
+            # pdb.set_trace()            
             image_content = open(os.path.join(
-                IMAGE_COMPARATOR_DATA, path_to_images, dirname, basename), "rb")
+                IMAGE_COMPARATOR_DATA, path_to_images, relative_path, basename), "rb")
             image_extension = basename.split(".")[-1]
             db.put_attachment(doc=record, content=image_content,
                               filename="image", content_type=f'image/{image_extension}')
@@ -82,15 +88,15 @@ def addImages(path_to_images: str, imageSetName: str, imageSetType: str = 'non-D
             t = datetime.now() - timedelta(hours=4)
             _id = imageSetName + "_" + image
             obj = {"_id": _id,
-                   "origin": image,
+                   "image": image,
                    "type": "image",
                    "imageSetName": imageSetName,
                    "timeAdded": t.strftime('%Y-%m-%d %H:%M:%S')}
 
             db.save(obj)
-            print(f"Saved record: {record['origin']}")
+            print(f"Saved record: {record['image']}")
             image_content = open(os.path.join(
-                images_path, record['origin']), "rb")
+                images_path, record['image']), "rb")
             image_extension = image.split(".")[-1]
             db.put_attachment(doc=obj, content=image_content,
                               filename="image", content_type=f'image/{image_extension}')

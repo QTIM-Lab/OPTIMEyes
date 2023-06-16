@@ -24,6 +24,7 @@ from .utils.makeTask import makeTask
 from .utils.makeClassifyList import makeClassifyList
 from .utils.makeCompareList import makeCompareList
 from .utils.makeFlickerList import makeFlickerList
+from .utils.makeSliderList import makeSliderList
 from .utils.addImages import addImages
 from .utils.deleteImageSet import deleteImageSet
 
@@ -122,6 +123,11 @@ def flickerApp(user, list_name):
     task_dict = {"user":user, "list_name":list_name}
     return render_template('/vuetify_components/flickerApp.html', task=task_dict)
 
+@bp.route('/sliderApp/<user>/<list_name>', methods=['GET'])
+def sliderApp(user, list_name):
+    task_dict = {"user":user, "list_name":list_name}
+    return render_template('/vuetify_components/sliderApp.html', task=task_dict)
+
 @bp.route('/ohif', methods=['GET'])
 @login_required
 def ohif():
@@ -165,6 +171,9 @@ def make_task():
     elif imageListTypeSelect == "flicker":
         listName=f"{imageSetName}-{imageListTypeSelect}-{pctRepeat}" # Placeholder and won't allow duplicates; add form entry to truly customze and add duplicates
         makeFlickerList(imageSet=imageSetName, flickerListName=listName, pctRepeat=pctRepeat)
+    elif imageListTypeSelect == "slider":
+        listName=f"{imageSetName}-{imageListTypeSelect}-{pctRepeat}" # Placeholder and won't allow duplicates; add form entry to truly customze and add duplicates
+        makeSliderList(imageSet=imageSetName, sliderListName=listName, pctRepeat=pctRepeat)
     elif imageListTypeSelect == "grid":
         pass
     elif imageListTypeSelect == "pair":
@@ -199,7 +208,6 @@ def get_images_by_set(imageSet):
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
     return json.loads(response.content.decode('utf-8'))
-
 
 @bp.route('/get_tasks/<app>', methods=['GET'])
 def get_tasks(app):
@@ -345,6 +353,25 @@ def get_image_flicker_lists():
     response = check_if_admin_party_then_make_request(url)
     return json.loads(response.content.decode('utf-8'))
 
+@bp.route('/get_image_slider_lists', methods=['GET'])
+def get_image_slider_lists():
+    base = "http://{}:{}/{}".format(
+        current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
+    try:
+        key = request.args['key']
+    except:
+        print("in except")
+        # view = f"_design/basic_views/_view/image_slider_lists"
+        view = f"_design/sliderApp/_view/imageLists"
+        url = f"{base}/{view}"
+        response = check_if_admin_party_then_make_request(url)
+        return json.loads(response.content.decode('utf-8'))
+    # view = f"_design/basic_views/_view/image_slider_lists?key=\"{key}\""
+    view = f"_design/sliderApp/_view/imageLists?key=\"{key}\""
+    url = f"{base}/{view}"
+    response = check_if_admin_party_then_make_request(url)
+    return json.loads(response.content.decode('utf-8'))
+
 
 @bp.route('/get_image/<image_id>', methods=['GET'])
 def get_image(image_id):
@@ -358,8 +385,11 @@ def get_image(image_id):
     url_for_couchdb_image_name_fetch = f'http://{current_app.config["DNS"]}:{current_app.config["DB_PORT"]}/{current_app.config["IMAGES_DB"]}/{IMAGE_ID}/'
     response = check_if_admin_party_then_make_request(url_for_couchdb_image_name_fetch)
     image_meta_data = json.loads(response.content)
-    #pdb.set_trace()
-    attachment_filename = image_meta_data['origin']
+    # pdb.set_trace()
+    try:
+        attachment_filename = image_meta_data['image'] # was this before...keeping in case others have this pattern
+    except:
+        attachment_filename = image_meta_data['origin']
     attachment_extension = attachment_filename[-3:]
     response = send_file(
         path_or_file=io.BytesIO(image_response),

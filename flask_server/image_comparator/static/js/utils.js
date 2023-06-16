@@ -30,25 +30,28 @@ async function delete_docs_in_view(design_doc, view) {
 
 }
 
-// delete_docs_in_view(VIEW)
 
-// Dangerous!!!
-// views_to_clear = ['users', 'taskresults', 'tasks', 'classifyResults', 'image_classify_lists', 'image_compare_lists', 'image_grid_lists', 'imageSet2ImageId_deleteme']
-views_to_clear = ['images']
-// views_to_clear = ['classifyResults']
 
+// Flicker app
+views_to_clear = ['tasksDelete']
 views_to_clear.forEach((v, i, a) => {
-    delete_docs_in_view(design_doc = 'images', view = v) //delete al docs in this view
+    delete_docs_in_view(design_doc = 'flickerApp', view = v) //delete al docs in this view
 })
+
+// images
+// views_to_clear = ['imagesDelete']
+// views_to_clear.forEach((v, i, a) => {
+//     delete_docs_in_view(design_doc = 'images', view = v) //delete al docs in this view
+// })
 
 
 // Get Doc
-let DOC_ID = "9218b9c59ce6a2194bd03091e7005c92"
-let DOC_URL = `http://${HOST}:${PORT}/${DB}/${DOC_ID}`
-$.ajax({
-    url: DOC_URL,
-    type: "GET",
-    success: function (data) {
-        console.log(data)
-    }
-})
+//let DOC_ID = "9218b9c59ce6a2194bd03091e7005c92"
+//let DOC_URL = `http://${HOST}:${PORT}/${DB}/${DOC_ID}`
+//$.ajax({
+//    url: DOC_URL,
+//    type: "GET",
+//    success: function (data) {
+//        console.log(data)
+//    }
+//})

@@ -1,0 +1,16 @@
+<script type="text/template" id="template-component">
+    <div>
+        [[ title ]]
+    </div>
+</script>
+
+<script>
+// this is the JS file, eg app.js
+Vue.component('template-component', {
+    template: '#template-component',
+    data() {
+        return { title: 'template-component' }
+    },
+    delimiters: ['[[',']]'],
+});
+</script>

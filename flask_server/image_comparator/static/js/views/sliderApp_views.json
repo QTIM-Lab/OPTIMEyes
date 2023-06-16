@@ -1,0 +1,27 @@
+{
+    "_id": "_design/sliderApp",
+    "language": "javascript",
+    "views": {
+        "tasks": {
+            "map": "function(doc) {\n  if (doc.type === \"task\" && doc.app === \"slider\") {\n    emit (doc.user, doc);\n  }\n}"
+        },
+        "completedTasks": {
+            "map": "function(doc) {\n  if (doc.type === \"task\" && doc.app === \"slider\" && doc.completed === true) {\n    emit ([doc.user, doc.list_name], doc);\n  }\n}"
+          },
+        "incompleteTasks": {
+            "map": "function(doc) {\n  if (doc.type === \"task\" && doc.app === \"slider\" && doc.completed === false) {\n    emit (doc.user, doc);\n  }\n}"
+        },
+        "imageLists": {
+            "map": "function(doc) {\n  if (doc.type === \"imageList\" && doc.app === \"slider\")\n   emit(doc._id, doc);\n}"
+        },
+        "toolSets": {
+            "map": "function(doc) {\n  if (doc.type === \"toolSet\" && doc.app === \"slider\")\n    emit(doc._id, doc);\n}"
+        },
+        "results": {
+            "map": "function(doc) {\n  if (doc.type === \"result\" && doc.app === \"slider\")\n    emit(doc.user, doc);\n}"
+        },
+        "tasksByUserAndListName": {
+            "map": "function(doc) {\n  if (doc.type === \"task\" && doc.app === \"slider\") {\n    emit ([doc.user, doc.list_name], doc);\n  }\n}"
+          }
+    }
+}
