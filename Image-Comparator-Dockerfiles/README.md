@@ -2,18 +2,18 @@
 Decide on a place to store the couchdb data. ```/opt/couchdb/data``` is where a normal couchdb installs will store data so don't use this directory in a docker mount unless you don't have couchdb installed on the machine already.
 ```
 APP_NAME=default
-sudo mkdir -p /opt/couchdb/data/$APP_NAME # if it doesn't exist already
+DB_LOCATION=/opt/couchdb/data/$APP_NAME
+sudo mkdir -p $DB_LOCATION # if it doesn't exist already
 
 # Change in production
 COUCHDB_USER=admin
 COUCHDB_PASSWORD=password
 COUCH_PORT=5984
 
-
 docker run \
  -p $COUCH_PORT:5984 \
  --name image-comparator-couchdb-$APP_NAME \
- -v /opt/couchdb/data/$APP_NAME:/opt/couchdb/data \
+ -v $DB_LOCATION:/opt/couchdb/data \
  -d \
  -e COUCHDB_USER=$COUCHDB_USER \
  -e COUCHDB_PASSWORD=$COUCHDB_PASSWORD \
