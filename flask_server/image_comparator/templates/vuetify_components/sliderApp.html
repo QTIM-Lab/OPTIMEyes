@@ -12,6 +12,8 @@
     top: 0;
     left: 0;
     background-color: black;
+    width: 512px;
+    height: 512px;
   }
   
   .imageHidden {
@@ -23,10 +25,22 @@
   }
   
   .imageShown {
+    width: 512px;
+    height: 512px;
     /* position: absolute;
     top: 0px;
-    left: 0px; */
-    border: 1px green solid;
+    left: 0px;
+    border: 1px green solid; */
+  }
+
+  .imageROI {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 512px;
+    height: 512px;
+    /* height: 100%; */
+    border: 1px rgb(88, 160, 154) solid;
   }
 </style>
 {% endblock %}
@@ -45,7 +59,6 @@
     <v-app>
       <navbar-tag></navbar-tag>
       <v-main v-if="dataReady">
-          <!-- <v-container class="ma-0"> -->
           <v-container fluid>
             <h2>
               slider Task for Image List [[ list_name ]] | On Collection
@@ -85,18 +98,20 @@
               >
                 <!-- Div parent for two images -->
                 <div class="ma-0 parent">
-                  <v-img
+                  <canvas
                     v-for="current_image in collection"
                     :ref="'image_' + current_image.index"
                     :class="classes_for_images[current_image.index]"
-                    width="100%"
-                    v-if="current_image.base64"
-                    :lazy-src="current_image.base64"
-                    :src="current_image.base64"
-                    aspect-ratio="1/1"
-                  ></v-img>
+                    :id="'myCanvas_' + current_image.index">
+                  </canvas>
+                  <canvas
+                    id="imageROI"
+                    ref="image_roi"
+                    width="512px"
+                    height="512px"
+                    class="imageROI">
+                  </canvas>
                 </div>
-
               </v-col>
 
               <!-- Col for tool_set -->
@@ -104,7 +119,6 @@
               cols="12"
               md="3"
               >
-
                 <!-- Tools -->
                 <!--https://codepen.io/zed_at_home/pen/LYpWyEM-->
                 <v-form v-if="tool_set" action="/task_result" method="post" ref="form">
@@ -230,7 +244,7 @@
                 cols="12"
                 md="4"
               >
-              <slider-chart :rgb_values=r_rgb_at_pixel_10></slider-chart>
+                <slider-chart :rgb_values=ROI_avg_intensities></slider-chart>
               </v-col>
 
             </v-row>
@@ -238,7 +252,7 @@
             <v-slider
               v-if="collection"
               v-model="current_image_index"
-              v-on:change="reloadDisplayOfImages" 
+              v-on:change="reloadDisplayOfCanvases" 
               :min="0"
               :max="collection.length - 1"
               show-ticks="always"
@@ -248,13 +262,10 @@
               label="Current Image Index"
               hide-details="auto"
               v-model="current_image_index"
-              v-on:input="reloadDisplayOfImages" 
+              v-on:input="reloadDisplayOfCanvases" 
               type="number"
             ></v-text-field>
             <p>current_image_index: [[ current_image_index ]]</p>
-
-              
-
 
           </v-container>
       </v-main>
@@ -287,7 +298,8 @@ var slider_app =new Vue({
       borderImage2: "5px solid red",
       collection: null, // [{image_id: null, base64: null}, ...],
       classes_for_images: [],
-      r_rgb_at_pixel_10: [],
+      ROI_avg_intensities: [],
+      ROI : {x_min:150, y_min:150, x_max:300, y_max:300},
       task: null,
       tool_set: null,
       result: null, // copy of tool set to store results
@@ -316,7 +328,12 @@ var slider_app =new Vue({
         // Need to get image slider list so we can get collection to display based on current_idx
         await this.loadImages(current_idx=this.task.value.current_idx);
         this.dataReady = true;    
-        this.reloadDisplayOfImages()
+        // Wait for DOM update so we can access canvas elements
+        this.$nextTick(() =>{
+          this.reloadDisplayOfCanvases()
+          // Initialize ROI sensing
+          this.senseROICreation()
+        })
         document.addEventListener('keydown', function(event) {
           // Note: You need either a bind() method attached to the regular function or
           //       you need to user an arrow function to keep "this" referring to the 
@@ -347,19 +364,6 @@ var slider_app =new Vue({
         })
         return styles
       },
-      // classes_for_images() {
-      //   var classes = []
-      //   for (let i=0; i< this.collection.length; i++){
-      //     if (i === this.current_image_index){
-      //       image_class = 'imageShown'
-      //     }else {
-      //       image_class = 'imageHidden'
-      //     }
-      //     classes.push(image_class)
-      //   }
-      //   return classes
-      // }
-
     },
 
     methods: {
@@ -403,17 +407,22 @@ var slider_app =new Vue({
         }
       },
       async loadImages(current_idx) {
+        console.log('loadImages')
         this.collection = []
+        let initial_avg_intensities = []
         for(let i=0; i<this.current_deck[current_idx].length; i++) {
           // populate classes array
           this.classes_for_images[i] = "imageHidden"
-          this.r_rgb_at_pixel_10[i] = 0
+          initial_avg_intensities[i] = 0
           // get image metadata
           v = this.current_deck[current_idx][i]
           collection_image = {image_id: v, base64: null, index:i}
           this.collection.push(collection_image)
           await this.getBase64DataOfImageFromCouch(collection_image.image_id, collection_index=i)
         }
+        this.ROI_avg_intensities[0] = initial_avg_intensities
+        this.ROI_avg_intensities[1] = initial_avg_intensities
+        this.ROI_avg_intensities[2] = initial_avg_intensities
       },
       async getTools(app, tool_set) {
         console.log("getTools")
@@ -462,44 +471,141 @@ var slider_app =new Vue({
             this.current_image_index += 1
           }
         } else if (event.key === 'ArrowUp') {
-          // debugger
-          // Canvas practice
-          // this.$refs.image_0[0].$el // maybe not the way to go
-          // Get the base64 image data
-          var base64Data = this.collection[0].base64;
+          this.calculate_roi_intensities()
+        }
+        this.reloadDisplayOfCanvases()
+      },
+      calculate_roi_intensities(){
+        // Define ROI
+        //var ROI = {x_min:150, y_min:150, x_max:300, y_max:300}
+        var ROI = this.ROI
+        // Access pixel information for a specific pixel (x, y)
+        //// Note img.width*img.height*channels is the length of pixels
+        //// Pixels is a flattened array of 4 channels
+        //// Below is breaking that array into 4 pieces to get the individual channels
+        // Note imagine 4 grids like this:
+        //              x (512)
+        //          0123456...
+        //         0*********************
+        //         1*********************
+        //         2*********************
+        // y (512) 3*********************
+        //         4*********************
+        //         5*********************
+        //         6*********************
+        //         .
+        //         .
+        //         .
+        // here r00 is the red pixel at (x,y) = (0,0)
+        // here g00 is the green pixel at (x,y) = (0,0)
+        // here b00 is the blue pixel at (x,y) = (0,0)
+        // here a00 is the alpha pixel at (x,y) = (0,0)
+        // [r00,g00,b00,a00,r10,g10,b10,a10,...
+        //  r01,g01,b01,a01,r11,g11,b11,a11,...
+        //  r02,g02,b02,a02,r12,g12,b12,a12] - pixels
+        rai_list = []
+        gai_list = []
+        bai_list = []
+        for(let i=0; i<this.collection.length; i++){
+          // For each image
+          var canvas = document.getElementById(`myCanvas_${i}`);
+          var context = canvas.getContext('2d');
+          // Get the pixel data
+          var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+          var pixels = imageData.data;
+          avg_intensities = this.calculate_avg_intensities_by_pixels(pixels, ROI, canvas) 
+          //debugger
+          // this is supposed to be all red or all green...fix
+          // Vue2 needs special update so child component slider-chart updates
+          rai = avg_intensities.r_ROI_avg_intensity
+          gai = avg_intensities.g_ROI_avg_intensity
+          bai = avg_intensities.b_ROI_avg_intensity
+          rai_list.push(rai)
+          gai_list.push(gai)
+          bai_list.push(bai)
+        }
+        console.log(rai_list)
+        console.log(gai_list)
+        console.log(bai_list)
+        Vue.set(this.ROI_avg_intensities, 0, rai_list)
+        Vue.set(this.ROI_avg_intensities, 1, gai_list)
+        Vue.set(this.ROI_avg_intensities, 2, bai_list)
+      },
+      calculate_avg_intensities_by_pixels(pixels, ROI, canvas){
+        var r_pixels = []
+        var g_pixels = []
+        var b_pixels = []
+        var a_pixels = []
+        // debugger
+          for(let x=ROI.x_min; x<ROI.x_max; x++){
+            for(let y=ROI.y_min; y<ROI.y_max; y++){
+              var red_pixel_value = pixels[(y * canvas.width + x) * 4];
+              var green_pixel_value = pixels[(y * canvas.width + x) * 4 + 1];
+              var blue_pixel_value = pixels[(y * canvas.width + x) * 4 + 2];
+              var alpha_pixel_value = pixels[(y * canvas.width + x) * 4 + 3];
+              r_pixels.push(red_pixel_value)
+              g_pixels.push(green_pixel_value)
+              b_pixels.push(blue_pixel_value)
+              a_pixels.push(alpha_pixel_value)
+            }
+          }
+          // def avg function
+          const average = array => array.reduce((a, b) => a + b) / array.length;
+          r_ROI_avg_intensity = average(r_pixels)
+          g_ROI_avg_intensity = average(g_pixels)
+          b_ROI_avg_intensity = average(b_pixels)
+          a_ROI_avg_intensity = average(a_pixels)
+          //debugger
+          return {r_ROI_avg_intensity:r_ROI_avg_intensity,
+                  g_ROI_avg_intensity:g_ROI_avg_intensity,
+                  b_ROI_avg_intensity:b_ROI_avg_intensity,
+                  a_ROI_avg_intensity:a_ROI_avg_intensity}
+      },
+      reloadDisplayOfCanvases(){
+        for(let i=0; i<this.collection.length; i++){
+          var base64Data = this.collection[i].base64;
           // Create a new Image object
           var img = new Image();
           // Set the base64 image data as the source
           img.src = base64Data;
-          // Create a new canvas element
-          var canvas = document.createElement('canvas');
+          img.width = 512;
+          img.height = 512;
+          THIS = this;
+          var canvas = document.getElementById(`myCanvas_${i}`);
           var context = canvas.getContext('2d');
-          // Set the canvas dimensions to match the image dimensions
           canvas.width = img.width;
           canvas.height = img.height;
-          // Draw the image onto the canvas
-          context.drawImage(img, 0, 0);
-          // Get the pixel data
-          var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-          var pixels = imageData.data;
-          // Access pixel information for a specific pixel (x, y)
-          var x = 10; // x-coordinate of the pixel
-          var y = 10; // y-coordinate of the pixel
-          //// Note img.width*img.height*channels is the length of pixels
-          //// Pixels is a flattened array of 4 channels
-          //// Below is breaking that array into 4 pieces to get the individual channels
-          var red = pixels[(y * canvas.width + x) * 4];
-          var green = pixels[(y * canvas.width + x) * 4 + 1];
-          var blue = pixels[(y * canvas.width + x) * 4 + 2];
-          var alpha = pixels[(y * canvas.width + x) * 4 + 3];
-          console.log("Pixel RGB values: " + red + ", " + green + ", " + blue);
-          console.log("Alpha value: " + alpha);
-          debugger
-
+          // Super tricky but important:
+          // Create a closure using an IIFE (Immediately Invoked Function Expression) 
+          // to capture the current value of img and context variables for each iteration.
+          // This will ensure that the correct image and canvas
+          // are used within the onload event handler.
+          // Summary:
+          // - Need onload as while we set img.src...the image hasn't "loaded" that data.
+          //   We need it to load so we use onload.
+          // - However even with onload because of async js, the for loop above adds
+          //   n number of img.onloads to the evaluation stack and by the time they are
+          //   actually evaluated, there is only one "img" and one "context" defined and
+          //   all n img.onloads load the same last image onto the last context.
+          //   Meaning all canvases are blank except the last one. This is the "closure"
+          (function(img, context) {
+            img.onload = function() {
+              context.drawImage(img, 0, 0);
+            };
+          })(img, context); // Create a closure with the current img and context
+          
         }
-        this.reloadDisplayOfImages()
-      },
-      reloadDisplayOfImages(){
+        // Load imageROI canvas
+        // var canvas = document.getElementById("imageROI");
+        // // canvas.style.width = '100%';
+        // var context = canvas.getContext('2d');
+        // // debugger
+        // context.beginPath();
+        // context.rect(128, 128, 256, 256);
+        // context.fillStyle = "rgba(0, 0, 255, 0.25)";
+        // context.fill();
+
+        console.log('reloadDisplayOfCanvases')
         this.current_image_index = Number(this.current_image_index)
         deck_size = this.current_deck.length;
         // Cycle to current image
@@ -513,6 +619,72 @@ var slider_app =new Vue({
             Vue.set(this.classes_for_images, i, "imageHidden")
           }
         }
+      },
+      senseROICreation(){
+        THIS = this
+
+        // Get the canvas element and its 2D drawing context
+        const canvas = document.getElementById('imageROI');
+        const ctx = canvas.getContext('2d');
+        
+        // Variables to store mouse position and rectangle data
+        let isDrawing = false;
+        let startX, startY, endX, endY;
+        
+        // Event listener for mouse down event
+        canvas.addEventListener('mousedown', (event) => {
+          // debugger
+          isDrawing = true;
+          startX = event.offsetX //- canvas.offsetLeft;
+          startY = event.offsetY //- canvas.offsetTop;
+        });
+
+        // Event listener for mouse move event
+        canvas.addEventListener('mousemove', (event) => {
+          if (!isDrawing) return;
+
+          // Clear the canvas
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          // Get the current mouse position
+          const mouseX = event.offsetX //- canvas.offsetLeft;
+          const mouseY = event.offsetY //- canvas.offsetTop;
+
+          // Calculate the width and height of the rectangle
+          const width = mouseX - startX;
+          const height = mouseY - startY;
+
+          // Draw the rectangle
+          ctx.strokeStyle = 'black';
+          ctx.strokeRect(startX, startY, width, height);
+        });
+
+        // Event listener for mouse up event
+        canvas.addEventListener('mouseup', (event) => {
+          isDrawing = false;
+          // debugger
+          endX = event.offsetX //- canvas.offsetLeft;
+          endY = event.offsetY //- canvas.offsetTop;
+
+          // Calculate the indices and pixel range
+          const minX = Math.min(startX, endX);
+          const maxX = Math.max(startX, endX);
+          const minY = Math.min(startY, endY);
+          const maxY = Math.max(startY, endY);
+
+          THIS.ROI = {x_min:minX, y_min:minY, x_max:maxX, y_max:maxY}
+          Vue.set(THIS.ROI, 'x_min', minX)
+          Vue.set(THIS.ROI, 'y_min', minY)
+          Vue.set(THIS.ROI, 'x_max', maxX)
+          Vue.set(THIS.ROI, 'y_max', maxY)
+          
+          // calculate roi intensities and regenerate graph
+          THIS.calculate_roi_intensities()
+          
+          console.log('Indices:', minX, minY, maxX, maxY);
+          console.log('Pixel Range:', maxX - minX, maxY - minY);
+        });
+
       },
       // For the submit form
       submit() {

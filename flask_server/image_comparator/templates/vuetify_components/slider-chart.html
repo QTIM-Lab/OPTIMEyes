@@ -1,6 +1,7 @@
+
 <script type="text/template" id="slider-chart">
     <div>
-        [[ title ]] [[ rgb_values ]]
+        [[ title ]]
         <canvas ref="myChart"></canvas>
     </div>
 </script>
@@ -15,11 +16,32 @@ Vue.component('slider-chart', {
     data() {
         return { 
             title: 'slider-chart',
+            chart: null
         }
     },
     delimiters: ['[[',']]'],
     mounted() {
-        this.createChart();
+        this.$nextTick(() => {
+            this.createChart();
+        });
+    },
+    watch: {
+        rgb_values: function() {
+            // Destroy the existing chart if it exists
+            this.removeData(this.chart)
+            const DATA_COUNT = 4;
+            const labels = [];
+            for (let i = 0; i < DATA_COUNT; ++i) {
+                labels.push(i.toString());
+            }
+            // debugger
+            const red_datapoints = this.rgb_values[0];
+            const green_datapoints = this.rgb_values[1];
+            const blue_datapoints = this.rgb_values[2];
+            const datapoints = [red_datapoints, green_datapoints, blue_datapoints]
+            //debugger
+            this.addData(this.chart, labels, datapoints)
+        }
     },
     methods: {
         createChart() {
@@ -32,31 +54,36 @@ Vue.component('slider-chart', {
             labels.push(i.toString());
             }
             // const datapoints = [64, 128, 192, 255];
-            const datapoints = [...this.rgb_values];
+            const red_datapoints = this.rgb_values[0];
+            const green_datapoints = this.rgb_values[1];
+            const blue_datapoints = this.rgb_values[2];
             const data = {
             labels: labels,
             datasets: [
                 {
-                label: 'Cubic interpolation (monotone)',
-                data: datapoints,
+                label: 'Red Avg. Pixel Intensity',
+                data: red_datapoints,
                 borderColor: Chart.helpers.color('red').rgbString(),
                 fill: false,
                 cubicInterpolationMode: 'monotone',
                 tension: 0.4
                 }, 
-                // {
-                // label: 'Cubic interpolation',
-                // data: datapoints,
-                // borderColor: Chart.helpers.color('blue').rgbString(),
-                // fill: false,
-                // tension: 0.4
-                // }, 
-                // {
-                // label: 'Linear interpolation (default)',
-                // data: datapoints,
-                // borderColor: Chart.helpers.color('green').rgbString(),
-                // fill: false
-                // }
+                {
+                label: 'Green Avg. Pixel Intensity',
+                data: green_datapoints,
+                borderColor: Chart.helpers.color('green').rgbString(),
+                fill: false,
+                cubicInterpolationMode: 'monotone',
+                tension: 0.4
+                }, 
+                {
+                label: 'Blue Avg. Pixel Intensity',
+                data: blue_datapoints,
+                borderColor: Chart.helpers.color('blue').rgbString(),
+                fill: false,
+                cubicInterpolationMode: 'monotone',
+                tension: 0.4
+                }
             ]
             };
 
@@ -66,7 +93,7 @@ Vue.component('slider-chart', {
                 plugins: {
                 title: {
                     display: true,
-                    text: 'Chart.js Line Chart - Cubic interpolation mode'
+                    text: 'Line Chart - Cubic Interpolation Mode'
                 },
                 },
                 interaction: {
@@ -86,19 +113,36 @@ Vue.component('slider-chart', {
                     text: 'Value'
                     },
                     suggestedMin: 0,
-                    suggestedMax: 255
+                    suggestedMax: 300
                 }
                 }
             }
             // Create the chart using Chart.js
-            new Chart(ctx, {
+            this.chart = new Chart(ctx, {
                 type: 'line',
                 data: data,
                 options: options,
             });
 
+        },
+        addData(chart, labels, data) {
+            chart.data.labels = labels
+            chart.data.datasets.forEach((dataset,i,a) => {
+                //dataset.data.push(data);
+                dataset.data = data[i]
+            });
+            chart.update();
+        },
+        removeData(chart) {
+            //chart.data.labels.pop();
+            chart.data.labels = null
+            chart.data.datasets.forEach((dataset) => {
+                //dataset.data.pop();
+                dataset.data = null
+            });
+            chart.update();
         }
-    }
-
+         
+    },
 });
 </script>
