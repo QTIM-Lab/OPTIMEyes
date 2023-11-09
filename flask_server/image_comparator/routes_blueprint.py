@@ -25,6 +25,7 @@ from .utils.makeClassifyList import makeClassifyList
 from .utils.makeCompareList import makeCompareList
 from .utils.makeFlickerList import makeFlickerList
 from .utils.makeSliderList import makeSliderList
+from .utils.makeMonaiSegmentationList import makeMonaiSegmentationList
 from .utils.addImages import addImages
 from .utils.deleteImageSet import deleteImageSet
 
@@ -128,6 +129,12 @@ def sliderApp(user, list_name):
     task_dict = {"user":user, "list_name":list_name}
     return render_template('/vuetify_components/sliderApp.html', task=task_dict)
 
+@bp.route('/monaiSegmentationApp/<user>/<list_name>', methods=['GET'])
+def monaiSegmentationApp(user, list_name):
+    task_dict = {"user":user, "list_name":list_name}
+    return render_template('/vuetify_components/monaiSegmentationApp.html', task=task_dict)
+
+
 @bp.route('/ohif', methods=['GET'])
 @login_required
 def ohif():
@@ -161,6 +168,7 @@ def make_task():
     imageListTypeSelect=new_task['imageListTypeSelect']
     pctRepeat = 0
     taskOrder=new_task['taskOrder']
+    # pdb.set_trace()
     #pdb.set_trace()
     if imageListTypeSelect == "classify":
         listName=f"{imageSetName}-{imageListTypeSelect}-{pctRepeat}" # Placeholder and won't allow duplicates; add form entry to truly customze and add duplicates
@@ -174,6 +182,9 @@ def make_task():
     elif imageListTypeSelect == "slider":
         listName=f"{imageSetName}-{imageListTypeSelect}-{pctRepeat}" # Placeholder and won't allow duplicates; add form entry to truly customze and add duplicates
         makeSliderList(imageSet=imageSetName, sliderListName=listName, pctRepeat=pctRepeat)
+    elif imageListTypeSelect == "monaiSegmentation":
+        listName=f"{imageSetName}-{imageListTypeSelect}-{pctRepeat}" # Placeholder and won't allow duplicates; add form entry to truly customze and add duplicates
+        makeMonaiSegmentationList(imageSet=imageSetName, monaiSegmentationListName=listName, pctRepeat=pctRepeat)
     elif imageListTypeSelect == "grid":
         pass
     elif imageListTypeSelect == "pair":
@@ -234,20 +245,22 @@ def get_task(app, user, list_name):
 @bp.route('/reset_to_previous_result/<app>', methods=['POST'])
 def reset_to_previous_result(app):
     currentTask = json.loads(request.data)
+    # currentTask['value']['current_idx']
+    # currentTask[image_list']
     base = "http://{}:{}/{}".format(
         current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
-    # get old result
-    if app.capitalize() == "Compare":
-        view = f"_design/basic_views/_view/results{app.capitalize()}?key=[\"{currentTask['user']}\",\"{currentTask['list_name']}\"]"
-    else:
-        view = f"_design/basic_views/_view/results{app.capitalize()}_userList?key=[\"{currentTask['user']}\",\"{currentTask['list_name']}\"]"
-    url = f"{base}/{view}"
+    last_image_key=currentTask['last_result_key']
+    view = f'_design/{app}App/_view/results?key=%22{last_image_key}%22'
+    url = f'{base}/{view}'
     response = check_if_admin_party_then_make_request(url)
     all_results = json.loads(response.content.decode('utf-8'))
-    for row in all_results['rows']:
-        # [row['value']['task_idx'] for row in all_results['rows']]
-        if row['value']['task_idx'] + 1 == currentTask['current_idx']:
-            old_result_id, old_result_rev = row['value']['_id'], row['value']['_rev']
+    # pdb.set_trace()
+    row = all_results['rows'][0]
+    if len(all_results['rows']) > 1:
+        print("We have a problem! len(all_results['rows']) > 1 ")
+        pdb.set_trace()
+    else:
+        old_result_id, old_result_rev = row['value']['_id'], row['value']['_rev']
 
     if len(old_result_id) == 0 or len(old_result_rev) == 0:
         pdb.set_trace()  # quick error handling till I properly implement
@@ -259,16 +272,14 @@ def reset_to_previous_result(app):
     delete_response_content = json.loads(response.content.decode('utf-8'))
 
     # adjust task idx
-    view = f"{currentTask['_id']}?rev={currentTask['_rev']}"
+    view = f"{currentTask['value']['_id']}?rev={currentTask['value']['_rev']}"
     url = f"{base}/{view}"
-    if currentTask['current_idx'] != 0 and not currentTask['current_idx'] < 0:
-        currentTask['current_idx'] -= 1
-    response = check_if_admin_party_then_make_request(
-        url, method="PUT", data=json.dumps(currentTask))
-    adjust_task_idx_response_content = json.loads(
-        response.content.decode('utf-8'))
+    if currentTask['value']['current_idx'] != 0 and not currentTask['value']['current_idx'] < 0:
+        currentTask['value']['current_idx'] -= 1
+    response = check_if_admin_party_then_make_request(url, method="PUT", data=json.dumps(currentTask['value']))
+    adjust_task_idx_response_content = json.loads(response.content.decode('utf-8'))
 
-    return jsonify({'deleted_result_id': old_result_id, 'previous_result_id': old_result_rev})
+    return jsonify({'deleted_result_id': old_result_id, 'previous_result_rev': old_result_rev})
 
 # Marked for deletion...maybe needs to be used when making update functionality
 @bp.route('/update_tasks/<task_id>', methods=['PUT'])
@@ -372,6 +383,24 @@ def get_image_slider_lists():
     response = check_if_admin_party_then_make_request(url)
     return json.loads(response.content.decode('utf-8'))
 
+@bp.route('/get_image_monai_segmentation_lists', methods=['GET'])
+def get_image_monai_segmentation_lists():
+    base = "http://{}:{}/{}".format(
+        current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
+    try:
+        key = request.args['key']
+    except:
+        print("in except")
+        view = f"_design/monaiSegmentationApp/_view/imageLists"
+        url = f"{base}/{view}"
+        response = check_if_admin_party_then_make_request(url)
+        return json.loads(response.content.decode('utf-8'))
+    view = f"_design/monaiSegmentationApp/_view/imageLists?key=\"{key}\""
+    url = f"{base}/{view}"
+    response = check_if_admin_party_then_make_request(url)
+    return json.loads(response.content.decode('utf-8'))
+
+
 
 @bp.route('/get_image/<image_id>', methods=['GET'])
 def get_image(image_id):
@@ -409,13 +438,55 @@ def task_result():
         couch = couchdb.Server(
             f'http://{current_app.config["DB_ADMIN_USER"]}:{current_app.config["DB_ADMIN_PASS"]}@{current_app.config["DNS"]}:{current_app.config["DB_PORT"]}')
     db = couch[current_app.config["IMAGES_DB"]]
-    results = json.loads(request.data)
-    # 1 save results to db
-    doc_id, doc_rev = db.save(results)
-    doc = db.get(doc_id)  # the doc we saved if we need it
-
+    if request.data != b'': # Super hacky
+        results = json.loads(request.data)
+        # 1 save results to db
+        doc_id, doc_rev = db.save(results)
+        doc = db.get(doc_id)  # the doc we saved if we need it
+    else:
+        # Get the JSON data
+        json_data = request.form.get('json')
+        # Parse the JSON data
+        json_data = json.loads(json_data)
     # Determine task type
-    if results['app'] == "grid": # I've modified without back testing
+    if json_data['app'] == "monaiSegmentation":
+        # Get the image blob data
+        results = json_data
+        image_blob = request.files.get('image') 
+        # Save doc
+        # pdb.set_trace()
+        doc_id, doc_rev = db.save(results)
+        # Attach the image to the document
+        db.put_attachment(db[doc_id], image_blob.read(), 'image.png', content_type='image/png')
+        # pdb.set_trace()
+        # 2 needs to mark flicker task being referenced as "completed" if this was the last task
+        #   or we need to increment the current_idx on the task
+        # Get Task
+        task_map = db.find({'selector': {
+            "_id": results['taskid'],
+            'list_name': results['list_name'],
+            'app': results['app'],
+            'type': 'task',
+            'user': results['user']}})
+        # Get Monail Segmentation List
+        list_map = db.find(
+            {'selector': {
+                "_id": results['list_name'],
+                "type": "imageList"}
+            })
+        task = task_map.__next__()
+        image_list = list_map.__next__()
+        if task['current_idx'] == image_list['count'] - 1:
+            # That was the last task so mark task as complete
+            task['completed'] = True
+            db[task['_id']] = task
+        else:
+            task['current_idx'] += 1
+            db[task['_id']] = task
+        return jsonify('asdf')  # ! What is this
+        # Now you have saved the JSON document with the image attachment
+        return jsonify({"message": "Upload successful"})      
+    elif results['app'] == "grid": # I've modified without back testing
         # 2 needs to mark grid task being referenced as "completed"
         x = db.find({'selector': {
             'list_name': results['task_list_name'],
@@ -531,3 +602,4 @@ def task_result():
         return jsonify('asdf')  # ! What is this
 
     return jsonify('asdf')  # ! What is this
+

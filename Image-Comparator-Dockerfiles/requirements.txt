@@ -1,5 +1,6 @@
 Flask
 flask_login
+werkzeug==2.3.0 # https://stackoverflow.com/questions/77215107/importerror-cannot-import-name-url-decode-from-werkzeug-urls
 python-dotenv
 flask_cors
 requests

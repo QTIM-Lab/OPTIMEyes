@@ -44,6 +44,8 @@ curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASSWORD@0.0.0.0:$DB_PORT/$DB_NAME/_de
 # Slider App
 curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASSWORD@0.0.0.0:$DB_PORT/$DB_NAME/_design/sliderApp -d @flask_server/image_comparator/static/js/views/sliderApp_views.json
 
+# Monai Segmentation App
+curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASSWORD@0.0.0.0:$DB_PORT/$DB_NAME/_design/monaiSegmentationApp -d @flask_server/image_comparator/static/js/views/monaiSegmentationApp_views.json
 
 # Images Views
 curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASSWORD@0.0.0.0:$DB_PORT/$DB_NAME/_design/images -d @flask_server/image_comparator/static/js/views/images_views.json
@@ -71,6 +73,19 @@ curl -X POST http://$COUCHDB_USER:$COUCHDB_PASSWORD@0.0.0.0:$DB_PORT/$DB_NAME \
 curl -X POST http://$COUCHDB_USER:$COUCHDB_PASSWORD@0.0.0.0:$DB_PORT/$DB_NAME \
   -H 'Content-Type: application/json' \
   -d @flask_server/image_comparator/static/js/views/tool_set_slider_template.json
+
+curl -X POST http://$COUCHDB_USER:$COUCHDB_PASSWORD@0.0.0.0:$DB_PORT/$DB_NAME \
+  -H 'Content-Type: application/json' \
+  -d @flask_server/image_comparator/static/js/views/tool_set_monaiSegmentation_template.json
+
+```
+
+## Monai Label Integration (Optional):
+You will need to deploy this Monai Label server implementation for a basic segmentation model: [QTIM - Segmentation Monai Label Server Repo](https://github.com/qtim-lab/segmentationmonailabel)
+
+# Make sure you can hit the basic /info/ endpoint to test you can reach the sever
+```bash
+curl http://localhost:8000/info/
 ```
 
 ## Acknowledgements
