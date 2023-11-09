@@ -1,0 +1,39 @@
+{
+  "_id": "tool_set_monaiSegmentation_template",
+  "_rev": "6-9f1d8618516e1da70794f22cc1e583c2",
+  "type": "toolSet",
+  "app": "monaiSegmentation",
+  "tools": {
+    "radio_button_categories": [
+      {
+        "category_id": "Choose Region To Segment",
+        "selected": null,
+        "buttons": [
+          {
+            "button_id": "Erase"
+          },
+          {
+            "button_id": "Background"
+          },
+          {
+            "button_id": "Disc"
+          },
+          {
+            "button_id": "Cup"
+          }
+        ]
+      }
+    ],
+    "text_input_categories": [
+      {
+        "category_id": "Misc Comments",
+        "text_inputs": [
+          {
+            "text_input_id": "Message 1",
+            "message": "Default Message 1"
+          }
+        ]
+      }
+    ]
+  }
+}

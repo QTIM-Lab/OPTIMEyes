@@ -1,0 +1,824 @@
+<!-- TEMPLATE -->
+{% extends "vuetify_components/base.html" %}
+
+<!-- TITLE -->
+{% block title %}Image Classifier{% endblock %}
+
+<!-- CSS -->
+{% block custom_css %}
+<style>
+  .parent {
+    position: relative;
+    top: 0;
+    left: 0;
+    background-color: black;
+    width: 800px;
+    height: 800px;
+  }
+  
+  .image {
+    position: relative;
+    top: 0;
+    left: 0;
+    display: block;
+  }
+  
+  .segmentation {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+  }
+
+  .spinner {
+    display: inline-block; /* Add this line */
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    animation: spin 1s linear infinite;
+  }
+
+  .spinner-inner {
+    width: 8px;
+    height: 8px;
+    border: 4px solid transparent;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .check-mark {
+    display: inline-block; /* Add this line */
+    font-size: 16px;
+    color: #4CAF50; /* Green color for the check mark */
+  }
+</style>
+{% endblock %}
+
+
+
+<!-- BODY -->
+{% block content %}
+
+<!-- Components -->
+{% include 'vuetify_components/navbar.html' %}
+
+<!-- Index Vue App -->
+<div id="monai_segmentation_app">
+    <v-app>
+        <navbar-tag></navbar-tag>
+      <v-main>
+          <v-container>
+            <h1>
+              Monai Segmentation Task for Image List [[ list_name ]] | On Image
+              <span
+                v-if="images.length != 0"
+                >[[ this.task.value.current_idx + 1 ]] of [[ this.images.length ]]
+              </span>
+            </h1>
+            
+            <!-- Alert -->
+            <v-alert
+              title="Info"
+              color="blue"
+              elevation="4"
+              type="info"
+              v-if="alert_info != null"
+            >
+              [[ alert_info ]]
+            </v-alert>
+            <v-alert
+              title="Error"
+              color="red"
+              elevation="4"
+              type="error"
+              v-if="alert_error != null"
+            >
+              [[ alert_error ]]
+            </v-alert>
+
+            <v-row no-gutters>
+              <v-col
+                cols="12"
+                lg="9"
+              >
+
+                <div class="ma-0 parent">
+
+                  <canvas
+                    ref="image"
+                    class="image"
+                    :style="{ border: borderImage }"
+                  ></canvas>
+
+                  <canvas
+                    @mousedown="startBrushing"
+                    @mousemove="brush"
+                    @mouseup="stopBrushing"
+                    ref="segmentation"
+                    class="segmentation"
+                    :style="{ border: borderSegmentation, opacity: 0.2, display: segmentation_image.display }"
+                  ></canvas>
+
+                </div>
+
+              </v-col>
+
+              <v-col
+              cols="12"
+              lg="3"
+              >
+
+                <!-- Tools -->
+                <!--https://codepen.io/zed_at_home/pen/LYpWyEM-->
+                <v-form v-if="tool_set" action="/task_result" method="post" ref="form">
+                  <v-row no-gutters>
+                    <v-col
+                    cols="12"
+                    lg="6"
+                    >
+                      <!-- Monai Label Buttons and Tools -->
+                      <div>
+                        <v-btn @click="performInference">
+                          Perform_Inference
+                          <div v-if="inferenceLoading" class="spinner">
+                            <div class="spinner-inner"></div>
+                          </div>
+                          <div v-if="inferenceDoneTraining" class="check-mark">✔</div>
+                        </v-btn>
+
+                        <v-btn @click="saveLabel">
+                          Save_To_MonaiLabel
+                          <div v-if="saveLoading" class="spinner">
+                            <div class="spinner-inner"></div>
+                          </div>
+                          <div v-if="saveDoneTraining" class="check-mark">✔</div>
+                        </v-btn>
+                        
+                        <v-btn @click="trainOnLabels">
+                          Train_On_Labels
+                          <div v-if="trainLoading" class="spinner">
+                            <div class="spinner-inner"></div>
+                          </div>
+                          <div v-if="trainDoneTraining" class="check-mark">✔</div>
+                        </v-btn>
+
+                        <v-btn @click="hideCanvas">
+                          [[ hideButtonText ]]
+                        </v-btn>
+                        <!-- Brush size adjustment -->
+                        <label>Brush Size:</label>
+                        <input type="range" v-model="brushSize" min="1" max="50" />
+                      
+                      </div>
+
+                    </v-col>
+                  </v-row>  
+                  <v-row no-gutters>
+                    <v-col
+                    cols="12"
+                    lg="6"
+                    >
+                      <!-- Monai Label Buttons and Tools -->
+                      <div
+                        v-for="(checkbox_category, index_checkbox_category) in tool_set.checkbox_categories"
+                        :key="checkbox_category['category_id']"
+                      >
+                        <p>[[ checkbox_category['category_id'] ]]</p>
+
+                        <v-checkbox
+                          
+                          v-for="(checkbox, indexCheckbox) in checkbox_category['checkboxes']"
+                          :key="checkbox['checkbox_id']"
+                          v-model="result.checkbox_categories[index_checkbox_category].checkboxes[indexCheckbox].checked"
+                          :label="`${result.checkbox_categories[index_checkbox_category].checkboxes[indexCheckbox].checked.toString()}`"
+                          color="red"
+                          hide-details
+                        ></v-checkbox>
+
+                      </div>
+                      <button @click="changeImageChannel">Click Me</button>
+                      <v-radio-group
+                        v-for="(radio_button_category, index_radio_category) in tool_set.radio_button_categories"
+                        :key="radio_button_category['category_id']"
+                        v-model="result.radio_button_categories[index_radio_category].selected"
+                        @input="changeImageChannel"
+                      >
+                        <p>[[ radio_button_category['category_id'] ]]</p>
+                        <v-radio
+                          
+                          v-for="(radio_button, index_radio_button) in radio_button_category['buttons']"
+                          :key="radio_button['button_id']"
+                          :label="`${result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id}`"
+                          :value="`${result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id}`"
+                        ></v-radio>
+
+                      </v-radio-group>
+                    </v-col>
+                    <v-col
+                    cols="12"
+                    lg="6"
+                    >
+  
+                      <div
+                        v-for="(text_input_category, index_text_input_category) in tool_set.text_input_categories"
+                        :key="text_input_category['category_id']"
+                      >
+                        <p>[[ text_input_category.category_id ]]</p>
+                        <v-textarea
+                          v-for="(text_input, index_text_input) in text_input_category['text_inputs']"
+                          :key="text_input['text_input_id']"
+                          v-model="result.text_input_categories[index_text_input_category].text_inputs[index_text_input].message"
+                          :label="`${result.text_input_categories[index_text_input_category].text_inputs[index_text_input].text_input_id}`"
+                        ></v-textarea>
+    
+                      </div>
+
+                    </v-col>
+
+                  </v-row>
+                  <!--  -->
+
+                  <v-btn
+                    class="mr-4"
+                    @click="submit"
+                  >
+                    submit
+                  </v-btn>
+                  <v-btn @click="clear">
+                    clear
+                  </v-btn>
+                  <v-btn @click="resetToPreviousResult">
+                    Go Back One Image
+                  </v-btn>
+
+
+                </v-form>
+
+              </v-col>
+
+              </v-row>
+
+            </v-container>
+      </v-main>
+    </v-app>
+</div>
+
+{% endblock %}
+
+
+
+{% block js_scripts %}
+
+<script>
+
+var monai_segmentation_app =new Vue({
+    el: '#monai_segmentation_app',
+    vuetify: new Vuetify(),
+
+    data: () => ({
+      app: "monaiSegmentation",
+      user: "{{ task.user }}",
+      list_name: "{{ task.list_name }}",
+      monaiLabelPort: 8000,
+      images: [],
+      // Image
+      image: {image_id: null, base64: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAIAAABEtEjdAAAC7UlEQVR4nO3BAQEAAACCIP+vbkhAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPwYdEkAAXvqzcMAAAAASUVORK5CYII="},
+      borderImage: "0px green solid", /* for debugging */
+      // Segmentation
+      segmentation_image: {image_id: null, base64: null, display:""},
+      borderSegmentation: "0px green solid", /* for debugging */
+      //// Edit Segmentation
+      selectedChannel: 'B',
+      isBrushing: false,
+      brushSize: 10, // Default brush size
+      // Hide Button
+      hideButtonText: "Hide Canvas",
+      task: null,
+      tool_set: null,
+      result: null,
+      alert_info: null,
+      alert_error: null,
+      // Spinners
+      //// Inference
+      inferenceLoading: false,
+      inferenceDoneTraining: false,
+      //// Save Image and Label to MonaiLabel
+      saveLoading: false,
+      saveDoneTraining: false,
+      //// Training
+      trainLoading: false,
+      trainIntervalId: null,
+      trainDoneTraining: false
+    }),
+
+    delimiters: ['[[',']]'],
+
+    async mounted() {
+        configuration = await this.getConfiguration()
+        this.DNS = configuration.DNS;
+        this.IMAGES_DB = configuration.IMAGES_DB;
+        this.DB_PORT = configuration.DB_PORT;
+        this.HTTP_PORT = configuration.HTTP_PORT;
+        this.ADMIN_PARTY = configuration.ADMIN_PARTY;
+        this.USER_INFO = configuration.USER_INFO;
+        await this.getTask(this.app, this.user, this.list_name);
+        if (this.task.value.completed){
+          this.alert_info = "This task is completed"
+          setTimeout(()=>{this.alert_info = null}, 2000)
+          setTimeout(()=>{window.location.replace(this.URLS.taskList);}, 2000)
+        }else{
+          await this.getImageList();
+          this.getTools(this.app, this.task.value.tool_set)
+          // Need to get image compare list so we can get pair to display based on current_idx
+          this.displayCanvasImage(current_image=this.task.value.current_idx);
+        }
+    },
+
+    computed: {
+      // General
+      URLS() {
+          return {
+              configuration: "/configuration",
+              monaiSegmentationApp: `http://${this.DNS}:${this.HTTP_PORT}/monaiSegmentationApp/${this.user}/${this.list_name}`,
+              getTask: `http://${this.DNS}:${this.HTTP_PORT}/get_task/${this.app}/${this.user}/${this.list_name}`,
+              taskList: `http://${this.DNS}:${this.HTTP_PORT}/tasksList`,
+              getToolSet: `http://${this.DNS}:${this.HTTP_PORT}/get_toolset`,
+              getImageList: `http://${this.DNS}:${this.HTTP_PORT}/get_image_monai_segmentation_lists`,
+              taskResult: `http://${this.DNS}:${this.HTTP_PORT}/task_result`,
+              resetToPreviousResult: `http://${this.DNS}:${this.HTTP_PORT}/reset_to_previous_result`,
+              // MonaiLabel URLS
+              activeLearning: `http://${this.DNS}:${this.monaiLabelPort}/activelearning/last`,
+              performInference: `http://${this.DNS}:${this.monaiLabelPort}/infer/SegformerBundle`,
+              uploadImage: `http://${this.DNS}:${this.monaiLabelPort}/datastore/image`,
+              saveLabel: `http://${this.DNS}:${this.monaiLabelPort}/datastore/label`,
+              trainOnLables: `http://${this.DNS}:${this.monaiLabelPort}/train/SegformerBundle`,
+              trainStatus: `http://${this.DNS}:${this.monaiLabelPort}/train/?all=false&check_if_running=false`
+          }
+      },
+    },
+
+    methods: {
+      async getConfiguration() {
+          // https://dmitripavlutin.com/javascript-fetch-async-await/
+          const response = await fetch('/configuration');
+          if (!response.ok) {
+              const message = `An error has occured: ${response.status}`;
+              throw new Error(message);
+          }
+          const configuration = await response.json();
+          return configuration;
+      },
+      async getTask(app, user, list_name) {
+          console.log("getTask")
+          //debugger
+          await fetch(this.URLS.getTask)
+          .then((response) => response.json())
+          .then((data) => {
+            //debugger
+            if (data.rows.length === 1){
+              this.task = data.rows[0]
+            }else{
+              alert("more than one task or less than 1 task...debug...")
+            }
+          })
+      },
+      async getImageList() {
+        console.log("getImageList")
+        let CA = this; // Classify App Vue Object
+        await fetch(this.URLS.getImageList+`?key=${this.list_name}`)
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.rows.length === 1){
+            this.images = data.rows[0].value.list
+            if (this.images.length === 0){
+              this.alert_error = "Image list has no elements."
+              setTimeout(()=>{this.alert_error = null}, 2000)
+            }
+          }else{
+            alert("more than one task or less than 1 task...debug...")
+          }
+        })
+      },
+      async displayCanvasImage(current_image, fromInference=false) {
+        const image = new Image();
+        const segmentation = new Image();
+        image.onload = () => {
+          // Once the image is loaded, draw it onto the canvas
+          const canvas = this.$refs['image'];
+          canvas.width = 800
+          canvas.height = 800
+          const context = canvas.getContext('2d');
+          // context.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, destX, destY, destWidth, destHeight);
+          context.drawImage(image, 0, 0, 800, 800);
+        };
+        segmentation.onload = () => {
+          // Once the image is loaded, draw it onto the canvas
+          const canvas = this.$refs['segmentation'];
+          canvas.width = 800
+          canvas.height = 800
+          const context = canvas.getContext('2d');
+          context.drawImage(segmentation, 0, 0, 800, 800);
+        };
+
+        // Set the base64 data as the source of the Image
+        this.image['image_id'] = this.images[current_image]
+        this.image['base64'] = await this.getBase64DataOfImageFromCouch(this.image.image_id)
+        image.src = `${this.image.base64}`;
+                
+        // green
+        // extention_orig
+        this.segmentation_image['image_id'] = this.images[current_image]
+        if (!fromInference){
+          this.segmentation_image['base64'] = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAIAAABEtEjdAAAC7UlEQVR4nO3BAQEAAACCIP+vbkhAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPwYdEkAAXvqzcMAAAAASUVORK5CYII="
+        }
+        segmentation.src = `${this.segmentation_image.base64}`;
+
+      },
+      changeImageChannel(value) {
+        // This function will be called when the selected radio button changes.
+        debugger
+        console.log('Selected radio button:', value);
+        // You can perform any additional actions you need here.
+      },
+      startBrushing(event) {
+        this.isBrushing = true;
+        this.brush(event); // Start brushing immediately
+      },
+      stopBrushing() {
+        this.isBrushing = false;
+      },
+      brush(event) {
+        if (this.isBrushing) {
+          const canvas = this.$refs['segmentation'];
+          const context = canvas.getContext('2d');
+          const x = event.offsetX;
+          const y = event.offsetY;
+
+          // Get the color value based on the selected channel
+          let colorValue = 0;
+          // debugger
+          // console.log(this.result.radio_button_categories[0].selected)
+          switch (this.result.radio_button_categories[0].selected) {
+            case 'Erase':
+              // N: #000000
+              colorValue = 0;
+              break;
+            case 'Background':
+              // B: #0000ff
+              colorValue = 255;
+              break;
+            case 'Disc':
+              // G: #00ff00
+              colorValue = 255 << 8;
+              break;
+            case 'Cup':
+              // R: #ff0000
+              colorValue = 255 << 16;
+              break;
+          }
+
+          // Draw a circle on the canvas with the selected color and brush size
+          context.fillStyle = `#${colorValue.toString(16).padStart(6, '0')}`;
+          console.log(context.fillStyle)
+          context.beginPath();
+          context.arc(x, y, this.brushSize / 2, 0, Math.PI * 2);
+          context.fill();
+        }
+      },
+      getTools(app, tool_set) {
+        console.log("getTask")
+        fetch(this.URLS.getToolSet + `/${app}/${tool_set}`)
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.rows.length === 1){
+            // Store tool_set and make results object to match
+            var tool_set = data.rows[0].value.tools
+            var result = JSON.parse(JSON.stringify(data.rows[0].value.tools));
+            this.result = result; 
+            this.tool_set = tool_set;
+          }else{
+            this.alert_error = "Can't find specified tool set"
+            setTimeout(()=>{this.alert_error = null}, 2000)
+          }
+        })
+      },
+      async getBase64DataOfImageFromCouch(image_id) {
+        const url = `http://${this.DNS}:${this.HTTP_PORT}/get_image/${image_id}`;
+
+        try {
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+
+          const data = await response.text();
+          return `data:image/png;base64,${data}`;
+        } catch (error) {
+          console.error('Error fetching image:', error);
+          throw error; // Rethrow the error for handling in the calling function
+        }
+      },
+      async performInference() {
+        let MSA = this; // Classify App Vue Object
+        console.log('performInference')
+        this.inferenceLoading = true;
+        this.inferenceDoneTraining = false;
+        await this.uploadImage();
+        image_name = this.segmentation_image.image_id.split('.')[0] // sans extension, as shows up in datastore_v2.json
+        const url = this.URLS.performInference+'?image=' + image_name + '&output=image';
+        const headers = {
+          'Accept': 'application/json',
+        };
+    
+        // Create a new FormData object to handle multipart/form-data
+        const formData = new FormData();
+    
+        // Add the parameters, empty file field, and label (if needed) to the FormData
+        formData.append('params', JSON.stringify({}));
+        formData.append('file', '');
+        formData.append('label', '');
+    
+        // Send a POST request with the FormData using the fetch API
+        fetch(url, {
+          method: 'POST',
+          headers: headers,
+          body: formData,
+        })
+        .then(response => response.blob())
+        .then(imageBlob => {
+          const reader = new FileReader(); // While FileReader used for files, the api works for imageBlob data.
+          reader.onloadend = function() {
+            // The result contains the Base64 string
+            const base64String = reader.result;
+            console.log('Base64:', base64String);
+            MSA.inferenceLoading = false;
+            MSA.inferenceDoneTraining = true;
+            // If you need to use the Base64 string elsewhere, do it here.
+            // For instance, to set it as the source of an image:
+            // const imageElement = document.getElementById('myImage');
+            // imageElement.src = base64String;
+            MSA.segmentation_image['base64'] = base64String
+            MSA.displayCanvasImage(current_image=MSA.task.value.current_idx, fromInference=true); // fix later
+          };
+          reader.readAsDataURL(imageBlob);
+        })
+        .catch(error => {
+          this.inferenceLoading = false;
+          this.inferenceDoneTraining = false;
+          console.error('Error:', error);
+        });
+      },
+      async uploadImage() {
+        console.log('uploadImage');
+        // Define the URL and headers
+        image_name = this.image.image_id.split('.')[0]; // Use const or let to declare the variable
+        url = this.URLS.uploadImage + `?image=${image_name}`;
+        headers = {
+            'Accept': 'application/json',
+        };
+
+        // Create a new FormData object to handle multipart/form-data
+        formData = new FormData();
+
+        formData.append('params', JSON.stringify({}));
+
+        // Add the image data as a blob with a "image/png" type
+        formFileName = `${image_name}.png`;
+        byteCharacters = atob(this.image.base64.split(',')[1]);
+        byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        byteArray = new Uint8Array(byteNumbers);
+        imageBlob = new Blob([byteArray], { type: 'image/png' });
+        formData.append('file', imageBlob, formFileName);
+
+        try {
+            // Send a PUT request with the FormData using the fetch API
+            response = await fetch(url, {
+                method: 'PUT',
+                headers: headers,
+                body: formData,
+            });
+            const file = await response.json();
+            // Handle the response here if needed
+        } catch (error) {
+            console.error('Error:', error);
+        }
+      },
+      async saveLabel() {
+        console.log('saveLabel')
+        this.saveLoading = true;
+        this.saveDoneTraining = false;
+        await this.uploadImage();
+        this.alert_info = "Saved Image"
+        this.saveLoading = false;
+        this.saveDoneTraining = true;
+        setTimeout(()=>{this.alert_info = null}, 2000)
+        // Define the URL and headers
+        image_name = this.segmentation_image.image_id.split('.')[0] // sans extension, as shows up in datastore_v2.json
+        // image_name = "AAA"
+        const url = this.URLS.saveLabel+`?image=${image_name}&tag=final`;
+        const headers = {
+            'Accept': 'application/json',
+        };
+    
+        // Create a new FormData object to handle multipart/form-data
+        const formData = new FormData();
+
+        formData.append('params', JSON.stringify({}));
+    
+        // Add the image data as a blob with a "image/png" type
+        const formFileName = `${image_name}.png`;
+        const byteCharacters = atob(this.segmentation_image.base64.split(',')[1]);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const imageBlob = new Blob([byteArray], { type: 'image/png' });
+        formData.append('label', imageBlob, formFileName);
+    
+        // Send a PUT request with the FormData using the fetch API
+        fetch(url, {
+            method: 'PUT',
+            headers: headers,
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(file => {
+            // setResponseData(file);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+      },
+      trainOnLabels() {
+        console.log('trainOnLabels')
+        this.trainLoading = true; // Set loading to true
+        this.trainDoneTraining = false;
+        // Define the URL and headers
+        const url = this.URLS.trainOnLables + '?run_sync=false&enqueue=false';
+        const headers = {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        };
+    
+        // Define the POST request body data
+        const postData = {};
+    
+        // Send a POST request using the fetch API
+        fetch(url, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(postData),
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log(data)
+          // Start polling for job status using setInterval
+          this.trainIntervalId = setInterval(this.checkJobStatus, 1000); // Adjust the interval as needed
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          setVariantName('danger')
+        });
+      },
+      checkJobStatus() {
+        // Make an API request to check the job status
+        // You should implement the logic to check the status and update the loading spinner accordingly
+        // For example, you can make a GET request to an endpoint that provides the job status
+        MSA = this;
+        fetch(this.URLS.trainStatus, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+            },
+            })
+            .then(response => response.json())
+            .then(data => {
+            if (data.status === 'DONE') {
+                MSA.trainLoading = false;
+                MSA.trainDoneTraining = true;
+            }
+            })
+            .catch(error => {
+            console.error('Error fetching data:', error);
+            });
+        // When the job is completed or has a certain status, you can stop the interval
+        if (jobCompleted) {
+          clearInterval(this.intervalId);
+          this.trainLoading = false; // Set loading to false when the job is completed
+        }
+      },
+      hideCanvas() {
+        console.log('hideCanvas')
+        if(this.segmentation_image.display === ""){
+          this.hideButtonText = "Unhide Canvas"
+          this.segmentation_image.display = "none"
+        }else{
+          this.hideButtonText = "Hide Canvas"
+          this.segmentation_image.display = ""
+        }
+      },
+
+      // For the submit form
+      submit() {
+        //this.$v.$touch() // for uswe with veulidate which you haven't setup for this app
+        // this.$refs.form.$el.submit() // Normal submit but we want to send results in a better organized way
+        // Define the URL and headers
+        debugger
+        segmentation_name = this.segmentation_image.image_id.split('.')[0] // sans extension, as shows up in datastore_v2.json
+        const headers = {
+            'Accept': 'application/json',
+        };
+        // Create a new FormData object to handle multipart/form-data
+        const formData = new FormData();
+        // Add the image data as a blob with a "image/png" type
+        const formFileName = `${segmentation_name}.png`;
+        const byteCharacters = atob(this.segmentation_image.base64.split(',')[1]);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const imageBlob = new Blob([byteArray], { type: 'image/png' });
+        formData.append('image', imageBlob, formFileName);
+        // Add metadata
+        this.result['_id'] = `${this.task.id}-result-${this.image.image_id}`
+        this.result['user'] = this.user
+        this.result['list_name'] = this.task.value.list_name
+        this.result['app'] = "monaiSegmentation"
+        this.result['type'] = "result"
+        this.result['taskid'] = this.task.id
+        formData.append('json', JSON.stringify(this.result));
+        fetch(this.URLS.taskResult, {
+          method: 'POST',
+          // headers: {
+          //     'Content-Type': 'application/json'
+          // },
+          body: formData
+        })
+        .then((response) => response.json())
+        .then((data) => {
+          window.location.replace(this.URLS.monaiSegmentationApp);
+        })
+      },
+      // This might be a relect of a copy and paste...don't think this is used
+      clear() {
+        this.$v.$reset()
+        this.user = ''
+        this.imageListName = ''
+        this.imageListTypeSelect = ''
+        this.taskOrder = ''
+      },
+      resetToPreviousResult() {
+        if(this.task['value']['current_idx'] === 0){
+          this.alert_error = "You're on the first image of list!"
+          setTimeout(()=>{this.alert_error = null}, 2000)
+          return
+        }
+        Task = {
+          id: this.task['id'],
+          key: this.task['key'],
+          value: this.task['value'],
+          last_result_key: this.task.id+"-"+"result"+"-"+this.images[this.task.value.current_idx-1]
+        }
+        const headers = {
+          'Content-Type': 'application/json',
+        };
+        fetch(this.URLS.resetToPreviousResult+"/"+`${this.app}`, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(Task)
+        })
+        .then((response) => response.json())
+        .then((data) => {
+          debugger
+          if (data["deleted_result_id"] === null){
+              this.alert_error = "Can't find deleted_result_id"
+              setTimeout(()=>{this.alert_error = null}, 2000)
+          }else{
+            this.alert_info = `Deleted ${data["deleted_result_id"]}`
+            setTimeout(()=>{this.alert_info = null; location.reload();}, 2000)
+          }
+        })
+      },
+    },
+
+
+  })
+</script>
+
+
+{% endblock %}
