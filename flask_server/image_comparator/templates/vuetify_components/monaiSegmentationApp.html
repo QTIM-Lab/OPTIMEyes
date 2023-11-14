@@ -29,6 +29,12 @@
     left: 0px;
   }
 
+  .coco {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+  }
+
   .spinner {
     display: inline-block; /* Add this line */
     border: 4px solid rgba(255, 255, 255, 0.3);
@@ -126,7 +132,15 @@
                     @mouseup="stopBrushing"
                     ref="segmentation"
                     class="segmentation"
-                    :style="{ border: borderSegmentation, opacity: 0.2, display: segmentation_image.display }"
+                    :style="{ border: borderSegmentation, opacity: 0.2, display: segmentation_image.display, 'z-index': segmentation_z_index}"
+                  ></canvas>
+
+                  <canvas
+                    ref="coco"
+                    class="coco"
+                    width="800px"
+                    height="800px"
+                    :style="{ border: borderCoco, display: polygonDisplay, 'z-index': polygons_z_index}"
                   ></canvas>
 
                 </div>
@@ -148,7 +162,7 @@
                     >
                       <!-- Monai Label Buttons and Tools -->
                       <div>
-                        <v-btn @click="performInference">
+                        <!-- <v-btn @click="performInference">
                           Perform_Inference
                           <div v-if="inferenceLoading" class="spinner">
                             <div class="spinner-inner"></div>
@@ -170,15 +184,27 @@
                             <div class="spinner-inner"></div>
                           </div>
                           <div v-if="trainDoneTraining" class="check-mark">✔</div>
-                        </v-btn>
+                        </v-btn> -->
 
                         <v-btn @click="hideCanvas">
-                          [[ hideButtonText ]]
+                          [[ hideBrushButtonText ]]
+                          <v-icon>[[ segmentation_image.display === '' ? 'mdi-eye-outline' : 'mdi-eye-off' ]]</v-icon>
                         </v-btn>
                         <!-- Brush size adjustment -->
                         <label>Brush Size:</label>
                         <input type="range" v-model="brushSize" min="1" max="50" />
-                      
+                        <v-btn @click="hidePolygon">
+                          [[ hidePolygonButtonText ]]
+                          <v-icon>[[ polygonDisplay === '' ? 'mdi-eye-outline' : 'mdi-eye-off' ]]</v-icon>
+                        </v-btn>
+                        <v-btn ref="toggleBrushPolygonButton" @click="toggleBrushPolygon">
+                          [[ toggleBrushPolygonButtonText ]]
+                        </v-btn>
+                        <v-btn @click="mergePolygonsToBrushCanvas">
+                          Merge Canvases to Brush
+                        </v-btn>
+
+
                       </div>
 
                     </v-col>
@@ -206,20 +232,18 @@
                         ></v-checkbox>
 
                       </div>
-                      <button @click="changeImageChannel">Click Me</button>
                       <v-radio-group
                         v-for="(radio_button_category, index_radio_category) in tool_set.radio_button_categories"
                         :key="radio_button_category['category_id']"
                         v-model="result.radio_button_categories[index_radio_category].selected"
-                        @input="changeImageChannel"
                       >
                         <p>[[ radio_button_category['category_id'] ]]</p>
                         <v-radio
-                          
                           v-for="(radio_button, index_radio_button) in radio_button_category['buttons']"
                           :key="radio_button['button_id']"
                           :label="`${result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id}`"
-                          :value="`${result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id}`"
+                          :value="`${result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id}`"                       
+                          @click="toggleBrushPolygon(result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id)"
                         ></v-radio>
 
                       </v-radio-group>
@@ -228,22 +252,45 @@
                     cols="12"
                     lg="6"
                     >
-  
-                      <div
-                        v-for="(text_input_category, index_text_input_category) in tool_set.text_input_categories"
-                        :key="text_input_category['category_id']"
-                      >
-                        <p>[[ text_input_category.category_id ]]</p>
-                        <v-textarea
-                          v-for="(text_input, index_text_input) in text_input_category['text_inputs']"
-                          :key="text_input['text_input_id']"
-                          v-model="result.text_input_categories[index_text_input_category].text_inputs[index_text_input].message"
-                          :label="`${result.text_input_categories[index_text_input_category].text_inputs[index_text_input].text_input_id}`"
-                        ></v-textarea>
-    
-                      </div>
-
+                      <v-container>
+                        <v-list dense>
+                          <v-list-item-group>
+                          <!-- If we need to model the selection later -->
+                          <!-- <v-list-item-group v-model="selectedAnnotation"> -->
+                            <v-list-item
+                              v-for="(annotation, index) in coco_annotations"
+                              :key="annotation.id"
+                            >
+                              <v-list-item-content>
+                                <v-list-item-title>ID: [[ annotation.id ]]</v-list-item-title>
+                                <v-list-item-subtitle>Area: [[ annotation.area ]]</v-list-item-subtitle>
+                              </v-list-item-content>
+                              <v-list-item-action>
+                                <v-btn icon @click="deleteAnnotation(index)">
+                                  <v-icon>mdi-delete</v-icon>
+                                </v-btn>
+                              </v-list-item-action>
+                            </v-list-item>
+                          </v-list-item-group>
+                        </v-list>
+                      </v-container>
                     </v-col>
+
+                  </v-row>
+                  <v-row no-gutters>
+                    <div
+                      v-for="(text_input_category, index_text_input_category) in tool_set.text_input_categories"
+                      :key="text_input_category['category_id']"
+                    >
+                      <p>[[ text_input_category.category_id ]]</p>
+                      <v-textarea
+                        v-for="(text_input, index_text_input) in text_input_category['text_inputs']"
+                        :key="text_input['text_input_id']"
+                        v-model="result.text_input_categories[index_text_input_category].text_inputs[index_text_input].message"
+                        :label="`${result.text_input_categories[index_text_input_category].text_inputs[index_text_input].text_input_id}`"
+                      ></v-textarea>
+
+                    </div>
 
                   </v-row>
                   <!--  -->
@@ -297,17 +344,33 @@ var monai_segmentation_app =new Vue({
       // Segmentation
       segmentation_image: {image_id: null, base64: null, display:""},
       borderSegmentation: "0px green solid", /* for debugging */
+      segmentation_z_index: 0,
       //// Edit Segmentation
-      selectedChannel: 'B',
       isBrushing: false,
       brushSize: 10, // Default brush size
+      // Coco polygons
+      // coco_annotations: [{
+      //   "segmentation": [[150.0,100.0, 150.0,250.0, 300.0,250.0, 400.0,175.0, 300.0,100.0]],
+      //   "area": 22500,
+      //   "iscrowd": 0,
+      //   "image_id": 324158,
+      //   "bbox":[0.0,0.0,350,400],
+      //   "category_id": 1,
+      //   "id": 11111111111111,
+      // }],
+      coco_annotations: [],
+      borderCoco: "1px red solid", /* for debugging */
+      hidePolygonButtonText: "Hide Polygon Canvas",
+      polygonDisplay: "",
+      polygons_z_index: 1,
       // Hide Button
-      hideButtonText: "Hide Canvas",
+      hideBrushButtonText: "Hide Brush Canvas",
       task: null,
       tool_set: null,
       result: null,
       alert_info: null,
       alert_error: null,
+      toggleBrushPolygonButtonText: "Select Brush",
       // Spinners
       //// Inference
       inferenceLoading: false,
@@ -322,7 +385,22 @@ var monai_segmentation_app =new Vue({
     }),
 
     delimiters: ['[[',']]'],
-
+    // watch: {
+    //   // Watch the entire array of radio_button_categories for deep changes
+    //   'result.radio_button_categories': {
+    //     handler: function (newValues, oldValues) {
+    //       for (let i = 0; i < newValues.length; i++) {
+    //         if (newValues[i].selected !== oldValues[i].selected) {
+    //           console.log(`Selection changed in category ${i}:`, newValues[i].selected);
+    //           // Do something when a selection is made
+    //           debugger
+    //           this.onSelectionChange(i, newValues[i].selected);
+    //         }
+    //       }
+    //     },
+    //     deep: true, // This is necessary to watch inside the array for object changes
+    //   },
+    // },
     async mounted() {
         configuration = await this.getConfiguration()
         this.DNS = configuration.DNS;
@@ -341,6 +419,11 @@ var monai_segmentation_app =new Vue({
           this.getTools(this.app, this.task.value.tool_set)
           // Need to get image compare list so we can get pair to display based on current_idx
           this.displayCanvasImage(current_image=this.task.value.current_idx);
+          this.drawCoco();
+          // Display message
+          this.alert_info = `* 3 layers: [Top] Polygon Tool [Middle] Brush Tool [Bottom] Image`; 
+          await setTimeout(()=>{this.alert_info = null}, 5000)
+          
         }
     },
 
@@ -368,6 +451,261 @@ var monai_segmentation_app =new Vue({
     },
 
     methods: {
+      mergePolygonsToBrushCanvas(){
+        // Get the canvas elements
+        var cocoCanvas = this.$refs['coco'];
+        var segmentationCanvas = this.$refs['segmentation'];
+
+        // Get the 2D contexts of the canvases
+        var cocoContext = cocoCanvas.getContext('2d');
+        var segmentationContext = segmentationCanvas.getContext('2d');
+        
+        // Here, you need to access the polygons data from the 'coco' canvas.
+        // This will depend on how you're storing the drawn polygons.
+        // Assuming you have an array of polygon points:
+        var coco_annotations = this.coco_annotations; // Your polygons data structure
+        debugger
+        // Clear the segmentation canvas if needed
+        // segmentationContext.clearRect(0, 0, segmentationCanvas.width, segmentationCanvas.height);
+        
+        // Iterate over the polygons and draw them on the segmentation canvas
+        coco_annotations.forEach(segmentation => {
+          const points = segmentation.segmentation;
+          if (points.length > 0) {
+            segmentationContext.beginPath();
+            segmentationContext.fillStyle = `#ff0000`;
+            segmentationContext.moveTo(points[0], points[1]);
+            for (let i = 2; i < points.length; i += 2) {
+              segmentationContext.lineTo(points[i], points[i + 1]);
+            }
+            segmentationContext.closePath();
+            segmentationContext.fill(); // Or use .stroke() if you just want the outline
+            }
+        });
+
+        // Optionally clear the 'coco' canvas
+        // cocoContext.clearRect(0, 0, cocoCanvas.width, cocoCanvas.height);
+        console.log(this.coco_annotations)
+      },
+      deleteAnnotation(index) {
+        // Confirm with the user before deleting
+        if (confirm(`Are you sure you want to delete annotation with ID ${this.coco_annotations[index].id}?`)) {
+          debugger
+          // Remove the annotation from the array
+          this.coco_annotations.splice(index, 1);
+          this.redrawAnnotations()
+        }
+        console.log(this.coco_annotations)
+      },
+      drawCoco(){
+        const canvas = this.$refs['coco'];
+        canvas.width = 800;
+        canvas.height = 800;
+        const ctx = canvas.getContext('2d');
+        // Load the annotations for the image
+        var cocoAnnotations = this.coco_annotations;
+        let currentSegmentation = [];
+        // Create an array to store draggable points (vertices)
+        const vertices = [];
+
+        // Flag to track whether the user is currently drawing a polygon
+        let isDrawing = false;
+
+        document.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            // debugger
+            // Enter key saves the current polygon (if one is being drawn)
+            if (isDrawing && vertices.length > 0) {
+              isDrawing = false;
+              debugger      
+              cocoAnnotations.push(currentSegmentation); // Store the current polygon
+              console.log(cocoAnnotations)
+              vertices.length = 0; // Clear the vertices
+              redrawAnnotations();
+            }
+            event.preventDefault(); // Prevent the default behavior of the Enter key
+          }
+        });
+
+        canvas.addEventListener('mousedown', (event) => {
+          const x = event.clientX - canvas.getBoundingClientRect().left;
+          const y = event.clientY - canvas.getBoundingClientRect().top;
+
+          // Check if a vertex was clicked (within a certain radius)
+          const clickedVertex = vertices.find((vertex) => {
+            const distance = Math.sqrt((vertex.x - x) ** 2 + (vertex.y - y) ** 2);
+            return distance < 5; // Adjust the radius as needed for your click detection
+          });
+
+          if (clickedVertex) {
+            // Clicked on an existing vertex, make it draggable
+            //debugger;
+            canvas.addEventListener('mousemove', onMouseMove);
+            canvas.addEventListener('mouseup', onMouseUp);
+
+            function onMouseMove(event) {
+              const newX = event.clientX - canvas.getBoundingClientRect().left;
+              const newY = event.clientY - canvas.getBoundingClientRect().top;
+              clickedVertex.x = newX;
+              clickedVertex.y = newY;
+              // debugger
+              redrawAnnotations();
+            }
+
+            function onMouseUp() {
+              canvas.removeEventListener('mousemove', onMouseMove);
+              canvas.removeEventListener('mouseup', onMouseUp);
+            }
+          } else {
+            if (!isDrawing) {
+              // Clicked outside existing vertices, add a new point
+              isDrawing = true;
+              const newVertex = { x, y };
+              vertices.push(newVertex);
+            } else {
+              // Continue adding vertices to the current polygon
+              vertices.push({ x, y });
+            }
+            // Redraw the entire canvas with updated points
+            redrawAnnotations();
+          }
+        });
+
+        // Add a keyboard event listener to listen for Ctrl+Z keypress
+        document.addEventListener('keydown', (event) => {
+          if (event.ctrlKey && event.key === 'z') {
+            // Check if there are vertices to delete
+            if (vertices.length > 0) {
+              // Remove the last vertex
+              vertices.pop();
+              // Redraw the annotations with the updated vertices
+              redrawAnnotations();
+            }
+          }
+        });
+
+        function calculateArea(segmentation) {
+          // Implement a function to calculate the area of a segmentation.
+          // You can use a formula or algorithm to calculate the area based on the segmentation points.
+          // This depends on your specific requirements.
+          return 100
+        }
+
+        function calculateBoundingBox(segmentation) {
+          // Implement a function to calculate the bounding box of a segmentation.
+          // You can find the minimum and maximum x and y coordinates in the segmentation points.
+          // This depends on your specific requirements.
+          return [0.0,0.0, 800,800]
+        }
+        
+        function generateUniqueId() {
+          // Implement a function to generate a unique ID for each segmentation.
+          // You can use a timestamp, a random number generator, or any other method to ensure uniqueness.
+          // This depends on your specific requirements.
+          return Date.now()
+        }
+
+        function redrawAnnotations() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          // Draw existing segmentations
+          if (cocoAnnotations.length > 0){
+            cocoAnnotations.forEach((segmentation) => {
+              // const points = segmentation.segmentation[0];
+              const points = segmentation.segmentation;
+              if (points.length > 0) {
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.10)';
+                ctx.strokeStyle = 'rgba(255, 0, 0, 1)'; // Set the line color
+                ctx.lineWidth = 1; // Set the line width
+                ctx.beginPath();
+                ctx.moveTo(points[0], points[1]);
+                for (let i = 2; i < points.length; i += 2) {
+                  ctx.lineTo(points[i], points[i + 1]);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+              }
+            });
+          }
+
+          // Draw existing vertices
+          ctx.fillStyle = 'blue'; // Set the vertex color
+          vertices.forEach((vertex) => {
+            ctx.beginPath();
+            ctx.arc(vertex.x, vertex.y, 5, 0, 2 * Math.PI);
+            ctx.fill();
+          });
+
+          // Draw the polygon based on the vertices
+          ctx.fillStyle = 'rgba(0, 255, 0, 0.10)';
+          ctx.strokeStyle = 'rgba(0, 255, 0, 1)'; // Set the line color
+          ctx.lineWidth = 1; // Set the line width
+          ctx.beginPath();
+          if (vertices.length > 0) {
+            ctx.moveTo(vertices[0].x, vertices[0].y);
+            vertices.forEach((vertex) => {
+              ctx.lineTo(vertex.x, vertex.y);
+            });
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+          }
+          ctx.stroke();
+
+          // Update cocoAnnotations based on vertices
+          const segmentation = vertices.map((vertex) => [vertex.x, vertex.y]);
+          
+          const flattenedSegmentation = vertices.reduce((acc, vertex) => {
+            acc.push(vertex.x, vertex.y);
+            return acc;
+          }, []);
+          // debugger
+          const newSegmentation = {
+            segmentation: flattenedSegmentation,
+            area: calculateArea(segmentation),
+            iscrowd: 0,
+            image_id: 324158, // Set the image ID as needed
+            bbox: calculateBoundingBox(segmentation),
+            category_id: 1, // Set the category ID as needed
+            id: generateUniqueId(), // Generate a unique ID for the segmentation
+          };
+
+          currentSegmentation = newSegmentation;
+        }
+        console.log(this.coco_annotations)
+      },
+      redrawAnnotations() {
+        const canvas = this.$refs['coco'];
+        canvas.width = 800;
+        canvas.height = 800;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Load the annotations for the image
+        var cocoAnnotations = this.coco_annotations;
+
+        // Draw existing segmentations
+        if (cocoAnnotations.length > 0){
+          cocoAnnotations.forEach((segmentation) => {
+            // const points = segmentation.segmentation[0];
+            const points = segmentation.segmentation;
+            if (points.length > 0) {
+              ctx.fillStyle = 'rgba(255, 0, 0, 0.10)';
+              ctx.strokeStyle = 'rgba(255, 0, 0, 1)'; // Set the line color
+              ctx.lineWidth = 1; // Set the line width
+              ctx.beginPath();
+              ctx.moveTo(points[0], points[1]);
+              for (let i = 2; i < points.length; i += 2) {
+                ctx.lineTo(points[i], points[i + 1]);
+              }
+              ctx.closePath();
+              ctx.fill();
+              ctx.stroke();
+            }
+          });
+        }
+
+      },
       async getConfiguration() {
           // https://dmitripavlutin.com/javascript-fetch-async-await/
           const response = await fetch('/configuration');
@@ -482,6 +820,10 @@ var monai_segmentation_app =new Vue({
               colorValue = 255 << 8;
               break;
             case 'Cup':
+              // R: #ff0000
+              colorValue = 255 << 16;
+              break;
+            case 'Mark GA':
               // R: #ff0000
               colorValue = 255 << 16;
               break;
@@ -724,14 +1066,56 @@ var monai_segmentation_app =new Vue({
       hideCanvas() {
         console.log('hideCanvas')
         if(this.segmentation_image.display === ""){
-          this.hideButtonText = "Unhide Canvas"
+          this.hideBrushButtonText = "Unhide Brush Canvas"
           this.segmentation_image.display = "none"
         }else{
-          this.hideButtonText = "Hide Canvas"
+          this.hideBrushButtonText = "Hide Brush Canvas"
           this.segmentation_image.display = ""
-        }
-      },
 
+        }
+        console.log(this.polygons_z_index)
+        console.log(this.segmentation_z_index)
+      },
+      hidePolygon() {
+        console.log('hidePolygon')
+        if(this.polygonDisplay === ""){
+          this.hidePolygonButtonText = "Unhide Polygon"
+          this.polygonDisplay = "none"
+        }else{
+          this.hidePolygonButtonText = "Hide Polygon"
+          this.polygonDisplay = ""
+        }
+        console.log(this.polygons_z_index)
+        console.log(this.segmentation_z_index)
+      },
+      toggleBrushPolygon(variable) {
+        if(variable instanceof PointerEvent){
+          // if we clicked the Select Polygon Tool button
+          if (this.polygons_z_index === 0){
+            debugger
+            this.polygons_z_index = 1
+            this.segmentation_z_index = 0
+            this.polygonDisplay = ""
+            this.toggleBrushPolygonButtonText = 'Select Brush'
+          } else {
+            debugger
+            this.polygons_z_index = 0
+            this.segmentation_z_index = 1
+            this.result.radio_button_categories[0]['selected'] = "Mark GA"
+            this.segmentation_image.display = ""
+            this.toggleBrushPolygonButtonText = 'Select Polygon Tool'
+          }
+        } else {
+          // if we clicked a radio button
+          debugger
+          this.polygons_z_index = 0
+          this.segmentation_z_index = 1
+          this.result.radio_button_categories[0]['selected'] = variable
+          this.segmentation_image.display = ""
+          this.toggleBrushPolygonButtonText = 'Select Polygon Tool'
+        }
+
+      },
       // For the submit form
       submit() {
         //this.$v.$touch() // for uswe with veulidate which you haven't setup for this app
@@ -760,6 +1144,7 @@ var monai_segmentation_app =new Vue({
         this.result['list_name'] = this.task.value.list_name
         this.result['app'] = "monaiSegmentation"
         this.result['type'] = "result"
+        this.result['coco_annotation'] = this.coco_annotations
         this.result['taskid'] = this.task.id
         formData.append('json', JSON.stringify(this.result));
         fetch(this.URLS.taskResult, {
