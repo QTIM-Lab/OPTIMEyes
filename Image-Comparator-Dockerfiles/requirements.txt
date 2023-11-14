@@ -9,3 +9,5 @@ couchdb
 pytest
 Pillow
 pandas
+pycocotools
+scikit-image
