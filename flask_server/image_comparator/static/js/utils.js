@@ -20,7 +20,9 @@ async function delete_docs_in_view(design_doc, view) {
     })
     data = await response.json();
     data.rows.forEach(async function (doc) {
-        response_delete = await fetch(url_delete_doc + `/${doc.id}?rev=${doc.value._rev}`, {
+        // debugger
+        var encodedDocId = encodeURIComponent(doc.id);
+        response_delete = await fetch(url_delete_doc + `/${encodedDocId}?rev=${doc.value._rev}`, {
             method: 'DELETE',
             headers: { 'Authorization': 'Basic ' + btoa(`${DB_USER}:${DB_PASS}`) }
         })
@@ -30,20 +32,16 @@ async function delete_docs_in_view(design_doc, view) {
 
 }
 
+// delete_docs_in_view(VIEW)
 
+// Dangerous!!!
+views_to_clear = ['imagesDelete']
+// views_to_clear = ['imageDelete']
+// views_to_clear = ['classifyResults']
 
-// Flicker app
-views_to_clear = ['tasksDelete']
 views_to_clear.forEach((v, i, a) => {
-    delete_docs_in_view(design_doc = 'flickerApp', view = v) //delete al docs in this view
+    delete_docs_in_view(design_doc = 'images', view = v) //delete al docs in this view
 })
-
-// images
-// views_to_clear = ['imagesDelete']
-// views_to_clear.forEach((v, i, a) => {
-//     delete_docs_in_view(design_doc = 'images', view = v) //delete al docs in this view
-// })
-
 
 // Get Doc
 //let DOC_ID = "9218b9c59ce6a2194bd03091e7005c92"

@@ -1,6 +1,5 @@
 {
   "_id": "tool_set_monaiSegmentation_template",
-  "_rev": "6-9f1d8618516e1da70794f22cc1e583c2",
   "type": "toolSet",
   "app": "monaiSegmentation",
   "tools": {

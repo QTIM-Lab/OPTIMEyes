@@ -18,7 +18,7 @@
             "map": "function(doc) {\n  if (doc.type === \"toolSet\" && doc.app === \"monaiSegmentation\")\n    emit(doc._id, doc);\n}"
         },
         "results": {
-            "map": "function(doc) {\n  if (doc.type === \"result\" && doc.app === \"monaiSegmentation\")\n    emit(doc.user, doc);\n}"
+            "map": "function(doc) {\n  if (doc.type === \"result\" && doc.app === \"monaiSegmentation\")\n    emit(doc._id, doc);\n}"
         },
         "tasksByUserAndListName": {
             "map": "function(doc) {\n  if (doc.type === \"task\" && doc.app === \"monaiSegmentation\") {\n    emit ([doc.user, doc.list_name], doc);\n  }\n}"
