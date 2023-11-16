@@ -7,13 +7,16 @@
 <!-- CSS -->
 {% block custom_css %}
 <style>
+  canvas {
+    width: 100%;
+    height: auto;
+  }
+
   .parent {
     position: relative;
     top: 0;
     left: 0;
     background-color: black;
-    width: 800px;
-    height: 800px;
   }
   
   .image {
@@ -115,10 +118,10 @@
             <v-row no-gutters>
               <v-col
                 cols="12"
-                lg="9"
+                lg="8"
               >
 
-                <div class="ma-0 parent">
+                <div ref="canvases_parent_div" class="parent">
 
                   <canvas
                     ref="image"
@@ -138,8 +141,6 @@
                   <canvas
                     ref="coco"
                     class="coco"
-                    width="800px"
-                    height="800px"
                     :style="{ border: borderCoco, display: polygonDisplay, 'z-index': polygons_z_index}"
                   ></canvas>
 
@@ -149,7 +150,7 @@
 
               <v-col
               cols="12"
-              lg="3"
+              lg="4"
               >
 
                 <!-- Tools -->
@@ -339,7 +340,16 @@ var monai_segmentation_app =new Vue({
       monaiLabelPort: 8000,
       images: [],
       // Image
-      image: {image_id: null, base64: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAIAAABEtEjdAAAC7UlEQVR4nO3BAQEAAACCIP+vbkhAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPwYdEkAAXvqzcMAAAAASUVORK5CYII="},
+      image: {
+        image_id: null, 
+        base64: null
+        // base64: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAIAAABEtEjdAAAC7UlEQVR4nO3BAQEAAACCIP+vbkhAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPwYdEkAAXvqzcMAAAAASUVORK5CYII="
+      },
+      imageWidth: 0,
+      imageHeight: 0,
+      canvasWidth: 0,
+      canvasHeight: 0,
+      aspectRatio: 1,
       borderImage: "0px green solid", /* for debugging */
       // Segmentation
       segmentation_image: {image_id: null, base64: null, display:""},
@@ -393,7 +403,7 @@ var monai_segmentation_app =new Vue({
     //         if (newValues[i].selected !== oldValues[i].selected) {
     //           console.log(`Selection changed in category ${i}:`, newValues[i].selected);
     //           // Do something when a selection is made
-    //           debugger
+    //           // debugger
     //           this.onSelectionChange(i, newValues[i].selected);
     //         }
     //       }
@@ -418,12 +428,28 @@ var monai_segmentation_app =new Vue({
           await this.getImageList();
           this.getTools(this.app, this.task.value.tool_set)
           // Need to get image compare list so we can get pair to display based on current_idx
-          this.displayCanvasImage(current_image=this.task.value.current_idx);
+          await this.displayCanvasImage(current_image=this.task.value.current_idx);
+          // debugger
           this.drawCoco();
-          // Display message
-          this.alert_info = `* 3 layers: [Top] Polygon Tool [Middle] Brush Tool [Bottom] Image`; 
-          await setTimeout(()=>{this.alert_info = null}, 5000)
+
+
+
+
+          this.resizeObserver = new ResizeObserver(entries => {
+            for (let entry of entries) {
+              // debugger
+              const {width} = entry.contentRect;
+              const newHeight = width / this.aspectRatio; // Calculate the new height based on the aspect ratio
+              this.adjustCanvasSize(width, newHeight);
+              this.canvasWidth = width
+              this.canvasHeight = newHeight
+            }
+          });
+          // debugger
+          this.resizeObserver.observe(this.$refs['canvases_parent_div']); // Observe the size of the canvas parent div
+
           
+
         }
     },
 
@@ -451,6 +477,32 @@ var monai_segmentation_app =new Vue({
     },
 
     methods: {
+      adjustCanvasSize(width, height) {
+        // Adjust the intrinsic dimensions of the canvases
+        const canvasList = ['image', 'segmentation', 'coco'];
+        // debugger
+        console.log('start')
+        canvasList.forEach(ref => {
+          var canvas = this.$refs[ref];
+          var dataURL = canvas.toDataURL(); // save state if needed...just a thought so far
+          canvas.width = width;
+          canvas.height = height;
+          console.log(canvas.width)
+          console.log(canvas.height)
+          // Restore the saved content
+          if (ref != 'image'){
+            var img = new Image();
+            img.onload = function() {
+                var ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+            };
+            img.src = dataURL;
+          } else {
+            this.displayCanvasImage(this.task.value.current_idx)
+          }
+        });
+        console.log('end')
+      },
       mergePolygonsToBrushCanvas(){
         // Get the canvas elements
         var cocoCanvas = this.$refs['coco'];
@@ -464,7 +516,7 @@ var monai_segmentation_app =new Vue({
         // This will depend on how you're storing the drawn polygons.
         // Assuming you have an array of polygon points:
         var coco_annotations = this.coco_annotations; // Your polygons data structure
-        debugger
+        // debugger
         // Clear the segmentation canvas if needed
         // segmentationContext.clearRect(0, 0, segmentationCanvas.width, segmentationCanvas.height);
         
@@ -490,7 +542,7 @@ var monai_segmentation_app =new Vue({
       deleteAnnotation(index) {
         // Confirm with the user before deleting
         if (confirm(`Are you sure you want to delete annotation with ID ${this.coco_annotations[index].id}?`)) {
-          debugger
+          // debugger
           // Remove the annotation from the array
           this.coco_annotations.splice(index, 1);
           this.redrawAnnotations()
@@ -499,8 +551,6 @@ var monai_segmentation_app =new Vue({
       },
       drawCoco(){
         const canvas = this.$refs['coco'];
-        canvas.width = 800;
-        canvas.height = 800;
         const ctx = canvas.getContext('2d');
         // Load the annotations for the image
         var cocoAnnotations = this.coco_annotations;
@@ -517,7 +567,7 @@ var monai_segmentation_app =new Vue({
             // Enter key saves the current polygon (if one is being drawn)
             if (isDrawing && vertices.length > 0) {
               isDrawing = false;
-              debugger      
+              // debugger      
               cocoAnnotations.push(currentSegmentation); // Store the current polygon
               console.log(cocoAnnotations)
               vertices.length = 0; // Clear the vertices
@@ -528,9 +578,10 @@ var monai_segmentation_app =new Vue({
         });
 
         canvas.addEventListener('mousedown', (event) => {
+
           const x = event.clientX - canvas.getBoundingClientRect().left;
           const y = event.clientY - canvas.getBoundingClientRect().top;
-
+          // debugger
           // Check if a vertex was clicked (within a certain radius)
           const clickedVertex = vertices.find((vertex) => {
             const distance = Math.sqrt((vertex.x - x) ** 2 + (vertex.y - y) ** 2);
@@ -595,7 +646,7 @@ var monai_segmentation_app =new Vue({
           // Implement a function to calculate the bounding box of a segmentation.
           // You can find the minimum and maximum x and y coordinates in the segmentation points.
           // This depends on your specific requirements.
-          return [0.0,0.0, 800,800]
+          return [0.0,0.0, 0.0,0.0]
         }
         
         function generateUniqueId() {
@@ -677,9 +728,10 @@ var monai_segmentation_app =new Vue({
       },
       redrawAnnotations() {
         const canvas = this.$refs['coco'];
-        canvas.width = 800;
-        canvas.height = 800;
+        // canvas.width = 800;
+        // canvas.height = 800;
         const ctx = canvas.getContext('2d');
+        // debugger
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         // Load the annotations for the image
         var cocoAnnotations = this.coco_annotations;
@@ -750,31 +802,42 @@ var monai_segmentation_app =new Vue({
       async displayCanvasImage(current_image, fromInference=false) {
         const image = new Image();
         const segmentation = new Image();
+        MS = this;
         image.onload = () => {
           // Once the image is loaded, draw it onto the canvas
+          // debugger;
+          MS.imageWidth = image.width;
+          MS.imageHeight = image.height;
+          this.aspectRatio = MS.imageWidth / MS.imageHeight;
           const canvas = this.$refs['image'];
-          canvas.width = 800
-          canvas.height = 800
           const context = canvas.getContext('2d');
+
           // context.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, destX, destY, destWidth, destHeight);
-          context.drawImage(image, 0, 0, 800, 800);
+          if(MS.canvasWidth === 0){
+            context.drawImage(image, 0, 0, MS.imageWidth, MS.imageHeight);
+          }else{
+            context.drawImage(image, 0, 0, MS.canvasWidth, MS.canvasHeight);
+          }
+          
         };
         segmentation.onload = () => {
           // Once the image is loaded, draw it onto the canvas
           const canvas = this.$refs['segmentation'];
-          canvas.width = 800
-          canvas.height = 800
           const context = canvas.getContext('2d');
-          context.drawImage(segmentation, 0, 0, 800, 800);
+          context.drawImage(segmentation, 0, 0, MS.canvasWidth, MS.canvasHeight);
         };
 
         // Set the base64 data as the source of the Image
         this.image['image_id'] = this.images[current_image]
-        this.image['base64'] = await this.getBase64DataOfImageFromCouch(this.image.image_id)
+        if (this.image.base64 === null){
+          this.image['base64'] = await this.getBase64DataOfImageFromCouch(this.image.image_id)
+        }
+        // debugger
         image.src = `${this.image.base64}`;
-                
+        
         // green
         // extention_orig
+        debugger
         this.segmentation_image['image_id'] = this.images[current_image]
         if (!fromInference){
           this.segmentation_image['base64'] = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAIAAABEtEjdAAAC7UlEQVR4nO3BAQEAAACCIP+vbkhAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPwYdEkAAXvqzcMAAAAASUVORK5CYII="
@@ -782,9 +845,12 @@ var monai_segmentation_app =new Vue({
         segmentation.src = `${this.segmentation_image.base64}`;
 
       },
+
+
+
       changeImageChannel(value) {
         // This function will be called when the selected radio button changes.
-        debugger
+        // debugger
         console.log('Selected radio button:', value);
         // You can perform any additional actions you need here.
       },
@@ -1092,13 +1158,13 @@ var monai_segmentation_app =new Vue({
         if(variable instanceof PointerEvent){
           // if we clicked the Select Polygon Tool button
           if (this.polygons_z_index === 0){
-            debugger
+            // debugger
             this.polygons_z_index = 1
             this.segmentation_z_index = 0
             this.polygonDisplay = ""
             this.toggleBrushPolygonButtonText = 'Select Brush'
           } else {
-            debugger
+            // debugger
             this.polygons_z_index = 0
             this.segmentation_z_index = 1
             this.result.radio_button_categories[0]['selected'] = "Mark GA"
@@ -1107,7 +1173,7 @@ var monai_segmentation_app =new Vue({
           }
         } else {
           // if we clicked a radio button
-          debugger
+          // debugger
           this.polygons_z_index = 0
           this.segmentation_z_index = 1
           this.result.radio_button_categories[0]['selected'] = variable
@@ -1118,10 +1184,11 @@ var monai_segmentation_app =new Vue({
       },
       // For the submit form
       submit() {
+        debugger
         //this.$v.$touch() // for uswe with veulidate which you haven't setup for this app
         // this.$refs.form.$el.submit() // Normal submit but we want to send results in a better organized way
         // Define the URL and headers
-        debugger
+        // debugger
         segmentation_name = this.segmentation_image.image_id.split('.')[0] // sans extension, as shows up in datastore_v2.json
         const headers = {
             'Accept': 'application/json',
@@ -1167,6 +1234,11 @@ var monai_segmentation_app =new Vue({
         this.imageListTypeSelect = ''
         this.taskOrder = ''
       },
+      beforeDestroy() {
+        if (this.resizeObserver) {
+          this.resizeObserver.disconnect(); // Clean up the observer when the component is destroyed
+        }
+      },
       resetToPreviousResult() {
         if(this.task['value']['current_idx'] === 0){
           this.alert_error = "You're on the first image of list!"
@@ -1189,7 +1261,7 @@ var monai_segmentation_app =new Vue({
         })
         .then((response) => response.json())
         .then((data) => {
-          debugger
+          // debugger
           if (data["deleted_result_id"] === null){
               this.alert_error = "Can't find deleted_result_id"
               setTimeout(()=>{this.alert_error = null}, 2000)
