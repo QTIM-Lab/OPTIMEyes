@@ -1197,6 +1197,11 @@ var monai_segmentation_app =new Vue({
         const formData = new FormData();
         // Add the image data as a blob with a "image/png" type
         const formFileName = `${segmentation_name}.png`;
+        // Save segmentation canvas to segmentation_image.base64
+        var segmentationCanvas = this.$refs['segmentation'];
+        // debugger
+        this.segmentation_image.base64 = segmentationCanvas.toDataURL('image/png')
+        //
         const byteCharacters = atob(this.segmentation_image.base64.split(',')[1]);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
