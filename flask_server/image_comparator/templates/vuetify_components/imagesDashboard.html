@@ -241,7 +241,6 @@ var template_app =new Vue({
           .then((response) => response.json())
           .then((data) => {
               data.rows.forEach((v, i, a) => {
-                //debugger
                 cleaned_data = {imageSet:v.key[0], images: v.value}
                 this.imageSets.push(cleaned_data)
               })
@@ -260,7 +259,6 @@ var template_app =new Vue({
           this.deleted_images = null;
           this.imageSets.forEach((v,i,a)=>{
             if (v['imageSet'] === IL){
-              //debugger
               this.imageSets.splice(i, 1)
             }
           })
@@ -274,7 +272,6 @@ var template_app =new Vue({
     // Right Column
     submit() {
       this.$v.$touch()
-      //debugger
       this.$refs.form.$el.submit()
     },
     clear() {

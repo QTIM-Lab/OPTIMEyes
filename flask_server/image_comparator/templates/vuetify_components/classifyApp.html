@@ -201,11 +201,9 @@ var classify_app =new Vue({
           setTimeout(()=>{this.alert_info = null}, 2000)
           setTimeout(()=>{window.location.replace(this.URLS.taskList);}, 2000)
         }else{
-          //debugger
           await this.getImageList();
           this.getTools(this.app, this.task.value.tool_set)
           // Need to get image compare list so we can get pair to display based on current_idx
-          //debugger
           this.displayImage(current_image=this.task.value.current_idx);
         }
     },
@@ -238,11 +236,9 @@ var classify_app =new Vue({
       },
       async getTask(app, user, list_name) {
           console.log("getTask")
-          //debugger
           await fetch(this.URLS.getTask)
           .then((response) => response.json())
           .then((data) => {
-            //debugger
             if (data.rows.length === 1){
               this.task = data.rows[0]
             }else{
@@ -273,7 +269,6 @@ var classify_app =new Vue({
       },
       getTools(app, tool_set) {
         console.log("getTask")
-        // debugger
         fetch(this.URLS.getToolSet + `/${app}/${tool_set}`)
         .then((response) => response.json())
         .then((data) => {
@@ -299,7 +294,6 @@ var classify_app =new Vue({
           })
           .then(data => {
             DATA='data:image/png;base64,' + data
-            //debugger
             CA.image['base64'] = DATA
           })
       },
@@ -307,7 +301,6 @@ var classify_app =new Vue({
       submit() {
         //this.$v.$touch() // for uswe with veulidate which you haven't setup for this app
         // this.$refs.form.$el.submit() // Normal submit but we want to send results in a better organized way
-        //debugger
         this.result['_id'] = `${this.task.id}-result-${this.image.image_id}`
         this.result['user'] = this.user
         this.result['list_name'] = this.task.value.list_name

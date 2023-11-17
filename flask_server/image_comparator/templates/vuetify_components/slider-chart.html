@@ -34,12 +34,10 @@ Vue.component('slider-chart', {
             for (let i = 0; i < DATA_COUNT; ++i) {
                 labels.push(i.toString());
             }
-            // debugger
             const red_datapoints = this.rgb_values[0];
             const green_datapoints = this.rgb_values[1];
             const blue_datapoints = this.rgb_values[2];
             const datapoints = [red_datapoints, green_datapoints, blue_datapoints]
-            //debugger
             this.addData(this.chart, labels, datapoints)
         }
     },

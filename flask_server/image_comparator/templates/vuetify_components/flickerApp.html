@@ -290,9 +290,7 @@ var flicker_app =new Vue({
         }else{
           await this.getImageList();
           this.getTools(this.app, this.task.value.tool_set)
-          //debugger
           // Need to get image flicker list so we can get pair to display based on current_idx
-          //debugger
           this.displayImages(current_idx=this.task.value.current_idx);
         }
     },
@@ -357,7 +355,6 @@ var flicker_app =new Vue({
         })
       },
       displayImages(current_idx) {
-        //debugger
         this.pair[0]['image_id'] = this.current_deck[current_idx][0]
         this.pair[1]['image_id'] = this.current_deck[current_idx][1]
         this.getBase64DataOfImageFromCouch(this.pair[0].image_id, pair_index=0)
@@ -369,7 +366,6 @@ var flicker_app =new Vue({
         .then((response) => response.json())
         .then((data) => {
           if (data.rows.length === 1){
-            //debugger
             // Store tool_set and make results object to match
             var tool_set = data.rows[0].value.tools
             var result = JSON.parse(JSON.stringify(data.rows[0].value.tools));
@@ -386,20 +382,17 @@ var flicker_app =new Vue({
         let CA = this; // flicker App Vue Object
         let I_ID = image_id;
         let P_INDEX = pair_index;
-        //debugger
         fetch(url)
           .then(response => {
             return response.text();
           })
           .then(data => {
             DATA='data:image/png;base64,' + data
-            //debugger
             CA.pair[P_INDEX]['base64'] = DATA
           })
       },
       cycleImages(){
         deck_size = this.current_deck.length;
-        // debugger;
         //// Cycle image 2
         if (this.current_image_index === 0){
           this.result.slider_input_categories[0].slider_inputs[this.current_image_index].value = 0

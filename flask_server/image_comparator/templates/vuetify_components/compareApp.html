@@ -234,9 +234,7 @@ var compare_app =new Vue({
       }else{
         await this.getImageList();
         this.getTools(this.app, this.task.value.tool_set)
-        //debugger
         // Need to get image compare list so we can get pair to display based on current_idx
-        //debugger
         this.displayImages(current_image=this.task.value.current_idx);
       }
     },
@@ -297,7 +295,6 @@ var compare_app =new Vue({
         })
       },
       displayImages(current_image) {
-        //debugger
         this.pair[0]['image_id'] = this.pairs[current_image][0]
         this.pair[1]['image_id'] = this.pairs[current_image][1]
         this.getBase64DataOfImageFromCouch(this.pair[0].image_id, pair_index=0)
@@ -309,7 +306,6 @@ var compare_app =new Vue({
         .then((response) => response.json())
         .then((data) => {
           if (data.rows.length === 1){
-            //debugger
             // Store tool_set and make results object to match
             var tool_set = data.rows[0].value.tools
             var result = JSON.parse(JSON.stringify(data.rows[0].value.tools));
@@ -326,14 +322,12 @@ var compare_app =new Vue({
         let CA = this; // Compare App Vue Object
         let I_ID = image_id;
         let P_INDEX = pair_index;
-        //debugger
         fetch(url)
           .then(response => {
             return response.text();
           })
           .then(data => {
             DATA='data:image/png;base64,' + data
-            //debugger
             CA.pair[P_INDEX]['base64'] = DATA
           })
       },
