@@ -182,6 +182,7 @@ var template_app =new Vue({
     async mounted() {
       configuration = await this.getConfiguration()
       this.DNS = configuration.DNS;
+      this.SSL = configuration.SSL
       this.IMAGES_DB = configuration.IMAGES_DB;
       this.DB_PORT = configuration.DB_PORT;
       this.HTTP_PORT = configuration.HTTP_PORT;
@@ -196,9 +197,9 @@ var template_app =new Vue({
     URLS() {
         return {
             configuration: "/configuration",
-            getImageSets: `http://${this.DNS}:${this.HTTP_PORT}/get_image_sets`,
-            goToImageSummary: `http://${this.DNS}:${this.HTTP_PORT}/image_set_summary`,
-            deleteImageSet: `http://${this.DNS}:${this.HTTP_PORT}/delete_image_set`,
+            getImageSets: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_image_sets`,
+            goToImageSummary: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/image_set_summary`,
+            deleteImageSet: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/delete_image_set`,
         }
     },
     // Right Column

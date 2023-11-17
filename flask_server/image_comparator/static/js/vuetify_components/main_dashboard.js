@@ -24,6 +24,7 @@ var main_dashboard = new Vue({
     async mounted() {
         configuration = await this.getConfiguration()
         this.DNS = configuration.DNS;
+        this.SSL = configuration.SSL;
         this.IMAGES_DB = configuration.IMAGES_DB;
         this.DB_PORT = configuration.DB_PORT;
         this.HTTP_PORT = configuration.HTTP_PORT;
@@ -37,12 +38,12 @@ var main_dashboard = new Vue({
         URLS() {
             return {
                 configuration: "/configuration",
-                getClassifyLists: `http://${this.DNS}:${this.HTTP_PORT}/get_image_classify_lists`,
-                getCompareLists: `http://${this.DNS}:${this.HTTP_PORT}/get_image_compare_lists`,
-                getFlickerLists: `http://${this.DNS}:${this.HTTP_PORT}/get_image_flicker_lists`,
-                getClassifyTasks: `http://${this.DNS}:${this.HTTP_PORT}/get_tasks/classify?username=${this.USER_INFO.username}`,
-                getCompareTasks: `http://${this.DNS}:${this.HTTP_PORT}/get_tasks/compare?username=${this.USER_INFO.username}`,
-                getFlickerTasks: `http://${this.DNS}:${this.HTTP_PORT}/get_tasks/flicker?username=${this.USER_INFO.username}`
+                getClassifyLists: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_image_classify_lists`,
+                getCompareLists: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_image_compare_lists`,
+                getFlickerLists: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_image_flicker_lists`,
+                getClassifyTasks: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_tasks/classify?username=${this.USER_INFO.username}`,
+                getCompareTasks: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_tasks/compare?username=${this.USER_INFO.username}`,
+                getFlickerTasks: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_tasks/flicker?username=${this.USER_INFO.username}`
             }
         }
     },

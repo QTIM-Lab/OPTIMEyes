@@ -78,6 +78,7 @@ def config():
         "DB_PORT": current_app.config['DB_PORT'],
         "HTTP_PORT": current_app.config['HTTP_PORT'],
         "ADMIN_PARTY": current_app.config['ADMIN_PARTY'],
+        "SSL": current_app.config['SSL'],
         "USER_INFO": USER_INFO
     }
     return jsonify(config)
@@ -252,6 +253,7 @@ def reset_to_previous_result(app):
     last_image_key=currentTask['last_result_key']
     view = f'_design/{app}App/_view/results?key=%22{last_image_key}%22'
     url = f'{base}/{view}'
+    print(url)
     response = check_if_admin_party_then_make_request(url)
     all_results = json.loads(response.content.decode('utf-8'))
     # pdb.set_trace()

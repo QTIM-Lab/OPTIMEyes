@@ -23,6 +23,7 @@ def create_app(test_config=None):
     app.config['DB_ADMIN_USER'] = os.getenv("DB_ADMIN_USER")
     app.config['DB_ADMIN_PASS'] = os.getenv("DB_ADMIN_PASS")
     app.config['DNS'] = os.getenv("DNS")
+    app.config['SSL'] =  True if os.getenv("SSL") == 'True' else False
     app.config['DB_DNS'] = os.getenv("DB_DNS")
     app.config['IMAGES_DB'] = os.getenv("IMAGES_DB")
     app.config['DB_PORT'] = os.getenv("DB_PORT")

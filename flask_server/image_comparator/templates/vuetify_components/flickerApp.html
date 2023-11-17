@@ -276,6 +276,7 @@ var flicker_app =new Vue({
     async mounted() {
       configuration = await this.getConfiguration()
         this.DNS = configuration.DNS;
+        this.SSL = configuration.SSL;
         this.IMAGES_DB = configuration.IMAGES_DB;
         this.DB_PORT = configuration.DB_PORT;
         this.HTTP_PORT = configuration.HTTP_PORT;
@@ -301,12 +302,12 @@ var flicker_app =new Vue({
       URLS() {
           return {
               configuration: "/configuration",
-              flickerApp: `http://${this.DNS}:${this.HTTP_PORT}/flickerApp/${this.user}/${this.list_name}`,
-              getTask: `http://${this.DNS}:${this.HTTP_PORT}/get_task/${this.app}/${this.user}/${this.list_name}`,
-              taskList: `http://${this.DNS}:${this.HTTP_PORT}/tasksList`,
-              getToolSet: `http://${this.DNS}:${this.HTTP_PORT}/get_toolset`,
-              getImageList: `http://${this.DNS}:${this.HTTP_PORT}/get_image_flicker_lists`,
-              taskResult: `http://${this.DNS}:${this.HTTP_PORT}/task_result`,
+              flickerApp: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/flickerApp/${this.user}/${this.list_name}`,
+              getTask: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_task/${this.app}/${this.user}/${this.list_name}`,
+              taskList: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/tasksList`,
+              getToolSet: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_toolset`,
+              getImageList: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_image_flicker_lists`,
+              taskResult: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/task_result`,
           }
       },
     },
@@ -381,7 +382,7 @@ var flicker_app =new Vue({
         })
       },
       getBase64DataOfImageFromCouch(image_id, pair_index) {
-        var url = `http://${this.DNS}:${this.HTTP_PORT}/get_image/${image_id}`
+        var url = `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_image/${image_id}`
         let CA = this; // flicker App Vue Object
         let I_ID = image_id;
         let P_INDEX = pair_index;
