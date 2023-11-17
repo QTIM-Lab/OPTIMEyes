@@ -100,6 +100,7 @@ var imageSetSummary =new Vue({
     async mounted() {
       configuration = await this.getConfiguration()
       this.DNS = configuration.DNS;
+      this.SSL = configuration.SSL;
       this.IMAGES_DB = configuration.IMAGES_DB;
       this.DB_PORT = configuration.DB_PORT;
       this.HTTP_PORT = configuration.HTTP_PORT;
@@ -113,7 +114,7 @@ var imageSetSummary =new Vue({
       URLS() {
           return {
               configuration: "/configuration",
-              getImagesBySet: `http://${this.DNS}:${this.HTTP_PORT}/get_images_by_set`
+              getImagesBySet: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_images_by_set`
           }
       },
       grid_cols() {
@@ -151,7 +152,7 @@ var imageSetSummary =new Vue({
             })
       },
       getBase64DataOfImageFromCouch(image_id) {
-        var url = `http://${this.DNS}:${this.HTTP_PORT}/get_image/${image_id}`
+        var url = `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_image/${image_id}`
         let ILS = this; // Image Set Summary Vue Object
         let I_ID = image_id;
         fetch(url)

@@ -93,6 +93,7 @@
         async mounted() {
             configuration = await this.getConfiguration()
             this.DNS = configuration.DNS;
+            this.SSL = configuration.SSL;
             this.IMAGES_DB = configuration.IMAGES_DB;
             this.DB_PORT = configuration.DB_PORT;
             this.HTTP_PORT = configuration.HTTP_PORT;
@@ -103,14 +104,14 @@
             // General
             URLS() {
                 return {
-                    configuration: "/configuration"
+                    configuration: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/configuration`
                 }
             },
         },
         methods: {
             async getConfiguration() {
                 // https://dmitripavlutin.com/javascript-fetch-async-await/
-                const response = await fetch('/configuration');
+                const response = await fetch(this.URLS.configuration);
                 if (!response.ok) {
                     const message = `An error has occured: ${response.status}`;
                     throw new Error(message);

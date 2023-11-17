@@ -414,6 +414,7 @@ var monai_segmentation_app =new Vue({
     async mounted() {
         configuration = await this.getConfiguration()
         this.DNS = configuration.DNS;
+        this.SSL = configuration.SSL;
         this.IMAGES_DB = configuration.IMAGES_DB;
         this.DB_PORT = configuration.DB_PORT;
         this.HTTP_PORT = configuration.HTTP_PORT;
@@ -458,20 +459,20 @@ var monai_segmentation_app =new Vue({
       URLS() {
           return {
               configuration: "/configuration",
-              monaiSegmentationApp: `http://${this.DNS}:${this.HTTP_PORT}/monaiSegmentationApp/${this.user}/${this.list_name}`,
-              getTask: `http://${this.DNS}:${this.HTTP_PORT}/get_task/${this.app}/${this.user}/${this.list_name}`,
-              taskList: `http://${this.DNS}:${this.HTTP_PORT}/tasksList`,
-              getToolSet: `http://${this.DNS}:${this.HTTP_PORT}/get_toolset`,
-              getImageList: `http://${this.DNS}:${this.HTTP_PORT}/get_image_monai_segmentation_lists`,
-              taskResult: `http://${this.DNS}:${this.HTTP_PORT}/task_result`,
-              resetToPreviousResult: `http://${this.DNS}:${this.HTTP_PORT}/reset_to_previous_result`,
+              monaiSegmentationApp: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/monaiSegmentationApp/${this.user}/${this.list_name}`,
+              getTask: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_task/${this.app}/${this.user}/${this.list_name}`,
+              taskList: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/tasksList`,
+              getToolSet: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_toolset`,
+              getImageList: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_image_monai_segmentation_lists`,
+              taskResult: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/task_result`,
+              resetToPreviousResult: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/reset_to_previous_result`,
               // MonaiLabel URLS
-              activeLearning: `http://${this.DNS}:${this.monaiLabelPort}/activelearning/last`,
-              performInference: `http://${this.DNS}:${this.monaiLabelPort}/infer/SegformerBundle`,
-              uploadImage: `http://${this.DNS}:${this.monaiLabelPort}/datastore/image`,
-              saveLabel: `http://${this.DNS}:${this.monaiLabelPort}/datastore/label`,
-              trainOnLables: `http://${this.DNS}:${this.monaiLabelPort}/train/SegformerBundle`,
-              trainStatus: `http://${this.DNS}:${this.monaiLabelPort}/train/?all=false&check_if_running=false`
+              activeLearning: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.monaiLabelPort}/activelearning/last`,
+              performInference: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.monaiLabelPort}/infer/SegformerBundle`,
+              uploadImage: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.monaiLabelPort}/datastore/image`,
+              saveLabel: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.monaiLabelPort}/datastore/label`,
+              trainOnLables: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.monaiLabelPort}/train/SegformerBundle`,
+              trainStatus: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.monaiLabelPort}/train/?all=false&check_if_running=false`
           }
       },
     },
@@ -921,7 +922,7 @@ var monai_segmentation_app =new Vue({
         })
       },
       async getBase64DataOfImageFromCouch(image_id) {
-        const url = `http://${this.DNS}:${this.HTTP_PORT}/get_image/${image_id}`;
+        const url = `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_image/${image_id}`;
 
         try {
           const response = await fetch(url);
@@ -1256,6 +1257,7 @@ var monai_segmentation_app =new Vue({
           value: this.task['value'],
           last_result_key: this.task.id+"-"+"result"+"-"+this.images[this.task.value.current_idx-1]
         }
+        debugger
         const headers = {
           'Content-Type': 'application/json',
         };
@@ -1266,7 +1268,6 @@ var monai_segmentation_app =new Vue({
         })
         .then((response) => response.json())
         .then((data) => {
-          // debugger
           if (data["deleted_result_id"] === null){
               this.alert_error = "Can't find deleted_result_id"
               setTimeout(()=>{this.alert_error = null}, 2000)

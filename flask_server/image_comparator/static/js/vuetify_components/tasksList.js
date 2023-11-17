@@ -38,6 +38,7 @@ var tasksList = new Vue({
     async mounted() {
         configuration = await this.getConfiguration()
         this.DNS = configuration.DNS;
+        this.SSL = configuration.SSL;
         this.IMAGES_DB = configuration.IMAGES_DB;
         this.DB_PORT = configuration.DB_PORT;
         this.HTTP_PORT = configuration.HTTP_PORT;
@@ -52,14 +53,14 @@ var tasksList = new Vue({
         URLS() {
             return {
                 configuration: "/configuration",
-                getBase: `http://${this.DNS}:${this.HTTP_PORT}`,
-                getClassifyTasks: `http://${this.DNS}:${this.HTTP_PORT}/get_tasks/classify?username=${this.USER_INFO.username}`,
-                getCompareTasks: `http://${this.DNS}:${this.HTTP_PORT}/get_tasks/compare?username=${this.USER_INFO.username}`,
-                getFlickerTasks: `http://${this.DNS}:${this.HTTP_PORT}/get_tasks/flicker?username=${this.USER_INFO.username}`,
-                getSliderTasks: `http://${this.DNS}:${this.HTTP_PORT}/get_tasks/slider?username=${this.USER_INFO.username}`,
-                getMonaiSegmentationTasks: `http://${this.DNS}:${this.HTTP_PORT}/get_tasks/monaiSegmentation?username=${this.USER_INFO.username}`,
-                goToImageSummary: `http://${this.DNS}:${this.HTTP_PORT}/image_set_summary`,
-                makeTask: `http://${this.DNS}:${this.HTTP_PORT}/make_task`,
+                getBase: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}`,
+                getClassifyTasks: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_tasks/classify?username=${this.USER_INFO.username}`,
+                getCompareTasks: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_tasks/compare?username=${this.USER_INFO.username}`,
+                getFlickerTasks: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_tasks/flicker?username=${this.USER_INFO.username}`,
+                getSliderTasks: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_tasks/slider?username=${this.USER_INFO.username}`,
+                getMonaiSegmentationTasks: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_tasks/monaiSegmentation?username=${this.USER_INFO.username}`,
+                goToImageSummary: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/image_set_summary`,
+                makeTask: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/make_task`,
             }
         },
         // Right Column "Create Task"

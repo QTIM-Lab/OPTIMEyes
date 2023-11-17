@@ -72,3 +72,46 @@ docker run \
   --name image-comparator-flask-"$APP_NAME" \
   image-comparator:flask flask run --port $MACHINE_PORT --host 0.0.0.0
 ```
+
+#### HTTPS
+```bash
+docker run \
+  -it \
+  --rm \
+  --network="host" \
+  -p $MACHINE_PORT:8080 \
+  -v $PWD/flask_server:/flask_server \
+  -v $PWD/Image-Comparator-Data:/Image-Comparator-Data \
+  -v $PWD:$PWD \
+  -w /flask_server \
+  -e FLASK_APP=image_comparator \
+  -e MACHINE_PORT=$MACHINE_PORT \
+  --name image-comparator-flask-"$APP_NAME" \
+  image-comparator:flask flask run --port $MACHINE_PORT --host 0.0.0.0 --cert=adhoc
+```
+
+```bash
+# self-signed certs
+openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
+```
+
+```bash
+docker run \
+  -it \
+  --rm \
+  --network="host" \
+  -p $MACHINE_PORT:8080 \
+  -v $PWD/flask_server:/flask_server \
+  -v $PWD/Image-Comparator-Data:/Image-Comparator-Data \
+  -v $PWD:$PWD \
+  -w /flask_server \
+  -e FLASK_APP=image_comparator \
+  -e MACHINE_PORT=$MACHINE_PORT \
+  --name image-comparator-flask-"$APP_NAME" \
+  image-comparator:flask flask run --port $MACHINE_PORT --host 0.0.0.0 --cert=certs/cert.pem --key=certs/key.pem
+```
+
+```bash
+# certbot certs
+# tbd
+```

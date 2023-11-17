@@ -154,7 +154,9 @@
                 fetch('/configuration')
                 .then((response) => response.json())
                 .then((data) => {
-                    this.config = data
+                  debugger 
+                  console.log("This debugger is to see if SSL comming through")
+                  this.config = data
                 });
             },
             test: function (nav_button){
