@@ -403,7 +403,6 @@ var monai_segmentation_app =new Vue({
     //         if (newValues[i].selected !== oldValues[i].selected) {
     //           console.log(`Selection changed in category ${i}:`, newValues[i].selected);
     //           // Do something when a selection is made
-    //           // debugger
     //           this.onSelectionChange(i, newValues[i].selected);
     //         }
     //       }
@@ -430,7 +429,6 @@ var monai_segmentation_app =new Vue({
           this.getTools(this.app, this.task.value.tool_set)
           // Need to get image compare list so we can get pair to display based on current_idx
           await this.displayCanvasImage(current_image=this.task.value.current_idx);
-          // debugger
           this.drawCoco();
 
 
@@ -438,7 +436,6 @@ var monai_segmentation_app =new Vue({
 
           this.resizeObserver = new ResizeObserver(entries => {
             for (let entry of entries) {
-              // debugger
               const {width} = entry.contentRect;
               const newHeight = width / this.aspectRatio; // Calculate the new height based on the aspect ratio
               this.adjustCanvasSize(width, newHeight);
@@ -446,7 +443,6 @@ var monai_segmentation_app =new Vue({
               this.canvasHeight = newHeight
             }
           });
-          // debugger
           this.resizeObserver.observe(this.$refs['canvases_parent_div']); // Observe the size of the canvas parent div
 
           
@@ -481,7 +477,6 @@ var monai_segmentation_app =new Vue({
       adjustCanvasSize(width, height) {
         // Adjust the intrinsic dimensions of the canvases
         const canvasList = ['image', 'segmentation', 'coco'];
-        // debugger
         console.log('start')
         canvasList.forEach(ref => {
           var canvas = this.$refs[ref];
@@ -517,7 +512,6 @@ var monai_segmentation_app =new Vue({
         // This will depend on how you're storing the drawn polygons.
         // Assuming you have an array of polygon points:
         var coco_annotations = this.coco_annotations; // Your polygons data structure
-        // debugger
         // Clear the segmentation canvas if needed
         // segmentationContext.clearRect(0, 0, segmentationCanvas.width, segmentationCanvas.height);
         
@@ -543,7 +537,6 @@ var monai_segmentation_app =new Vue({
       deleteAnnotation(index) {
         // Confirm with the user before deleting
         if (confirm(`Are you sure you want to delete annotation with ID ${this.coco_annotations[index].id}?`)) {
-          // debugger
           // Remove the annotation from the array
           this.coco_annotations.splice(index, 1);
           this.redrawAnnotations()
@@ -564,11 +557,9 @@ var monai_segmentation_app =new Vue({
 
         document.addEventListener('keydown', (event) => {
           if (event.key === 'Enter') {
-            // debugger
             // Enter key saves the current polygon (if one is being drawn)
             if (isDrawing && vertices.length > 0) {
               isDrawing = false;
-              // debugger      
               cocoAnnotations.push(currentSegmentation); // Store the current polygon
               console.log(cocoAnnotations)
               vertices.length = 0; // Clear the vertices
@@ -582,7 +573,6 @@ var monai_segmentation_app =new Vue({
 
           const x = event.clientX - canvas.getBoundingClientRect().left;
           const y = event.clientY - canvas.getBoundingClientRect().top;
-          // debugger
           // Check if a vertex was clicked (within a certain radius)
           const clickedVertex = vertices.find((vertex) => {
             const distance = Math.sqrt((vertex.x - x) ** 2 + (vertex.y - y) ** 2);
@@ -591,7 +581,6 @@ var monai_segmentation_app =new Vue({
 
           if (clickedVertex) {
             // Clicked on an existing vertex, make it draggable
-            //debugger;
             canvas.addEventListener('mousemove', onMouseMove);
             canvas.addEventListener('mouseup', onMouseUp);
 
@@ -600,7 +589,6 @@ var monai_segmentation_app =new Vue({
               const newY = event.clientY - canvas.getBoundingClientRect().top;
               clickedVertex.x = newX;
               clickedVertex.y = newY;
-              // debugger
               redrawAnnotations();
             }
 
@@ -712,7 +700,6 @@ var monai_segmentation_app =new Vue({
             acc.push(vertex.x, vertex.y);
             return acc;
           }, []);
-          // debugger
           const newSegmentation = {
             segmentation: flattenedSegmentation,
             area: calculateArea(segmentation),
@@ -732,7 +719,6 @@ var monai_segmentation_app =new Vue({
         // canvas.width = 800;
         // canvas.height = 800;
         const ctx = canvas.getContext('2d');
-        // debugger
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         // Load the annotations for the image
         var cocoAnnotations = this.coco_annotations;
@@ -771,11 +757,9 @@ var monai_segmentation_app =new Vue({
       },
       async getTask(app, user, list_name) {
           console.log("getTask")
-          //debugger
           await fetch(this.URLS.getTask)
           .then((response) => response.json())
           .then((data) => {
-            //debugger
             if (data.rows.length === 1){
               this.task = data.rows[0]
             }else{
@@ -806,7 +790,6 @@ var monai_segmentation_app =new Vue({
         MS = this;
         image.onload = () => {
           // Once the image is loaded, draw it onto the canvas
-          // debugger;
           MS.imageWidth = image.width;
           MS.imageHeight = image.height;
           this.aspectRatio = MS.imageWidth / MS.imageHeight;
@@ -833,12 +816,10 @@ var monai_segmentation_app =new Vue({
         if (this.image.base64 === null){
           this.image['base64'] = await this.getBase64DataOfImageFromCouch(this.image.image_id)
         }
-        // debugger
         image.src = `${this.image.base64}`;
         
         // green
         // extention_orig
-        debugger
         this.segmentation_image['image_id'] = this.images[current_image]
         if (!fromInference){
           this.segmentation_image['base64'] = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAIAAABEtEjdAAAC7UlEQVR4nO3BAQEAAACCIP+vbkhAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPwYdEkAAXvqzcMAAAAASUVORK5CYII="
@@ -851,7 +832,6 @@ var monai_segmentation_app =new Vue({
 
       changeImageChannel(value) {
         // This function will be called when the selected radio button changes.
-        // debugger
         console.log('Selected radio button:', value);
         // You can perform any additional actions you need here.
       },
@@ -871,7 +851,6 @@ var monai_segmentation_app =new Vue({
 
           // Get the color value based on the selected channel
           let colorValue = 0;
-          // debugger
           // console.log(this.result.radio_button_categories[0].selected)
           switch (this.result.radio_button_categories[0].selected) {
             case 'Erase':
@@ -1159,13 +1138,11 @@ var monai_segmentation_app =new Vue({
         if(variable instanceof PointerEvent){
           // if we clicked the Select Polygon Tool button
           if (this.polygons_z_index === 0){
-            // debugger
             this.polygons_z_index = 1
             this.segmentation_z_index = 0
             this.polygonDisplay = ""
             this.toggleBrushPolygonButtonText = 'Select Brush'
           } else {
-            // debugger
             this.polygons_z_index = 0
             this.segmentation_z_index = 1
             this.result.radio_button_categories[0]['selected'] = "Mark GA"
@@ -1174,7 +1151,6 @@ var monai_segmentation_app =new Vue({
           }
         } else {
           // if we clicked a radio button
-          // debugger
           this.polygons_z_index = 0
           this.segmentation_z_index = 1
           this.result.radio_button_categories[0]['selected'] = variable
@@ -1185,11 +1161,9 @@ var monai_segmentation_app =new Vue({
       },
       // For the submit form
       submit() {
-        debugger
         //this.$v.$touch() // for uswe with veulidate which you haven't setup for this app
         // this.$refs.form.$el.submit() // Normal submit but we want to send results in a better organized way
         // Define the URL and headers
-        // debugger
         segmentation_name = this.segmentation_image.image_id.split('.')[0] // sans extension, as shows up in datastore_v2.json
         const headers = {
             'Accept': 'application/json',
@@ -1200,7 +1174,6 @@ var monai_segmentation_app =new Vue({
         const formFileName = `${segmentation_name}.png`;
         // Save segmentation canvas to segmentation_image.base64
         var segmentationCanvas = this.$refs['segmentation'];
-        // debugger
         this.segmentation_image.base64 = segmentationCanvas.toDataURL('image/png')
         //
         const byteCharacters = atob(this.segmentation_image.base64.split(',')[1]);
@@ -1257,7 +1230,6 @@ var monai_segmentation_app =new Vue({
           value: this.task['value'],
           last_result_key: this.task.id+"-"+"result"+"-"+this.images[this.task.value.current_idx-1]
         }
-        debugger
         const headers = {
           'Content-Type': 'application/json',
         };

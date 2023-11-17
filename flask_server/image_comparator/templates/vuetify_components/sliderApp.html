@@ -430,7 +430,6 @@ var slider_app =new Vue({
         const response = await fetch(this.URLS.getToolSet + `/${app}/${tool_set}`);
         const data = await response.json();
         if (data.rows.length === 1){
-          //debugger
           // Store tool_set and make results object to match
           var tool_set = data.rows[0].value.tools
           var result = JSON.parse(JSON.stringify(data.rows[0].value.tools));
@@ -456,7 +455,6 @@ var slider_app =new Vue({
           })
       },
       respondToKeyboardInput(event){
-        // debugger
         if (event.key === 'ArrowLeft') {
           // Arrow Left key pressed and cycle right
           if(this.current_image_index === 0) {
@@ -515,7 +513,6 @@ var slider_app =new Vue({
           var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
           var pixels = imageData.data;
           avg_intensities = this.calculate_avg_intensities_by_pixels(pixels, ROI, canvas) 
-          //debugger
           // this is supposed to be all red or all green...fix
           // Vue2 needs special update so child component slider-chart updates
           rai = avg_intensities.r_ROI_avg_intensity
@@ -537,7 +534,6 @@ var slider_app =new Vue({
         var g_pixels = []
         var b_pixels = []
         var a_pixels = []
-        // debugger
           for(let x=ROI.x_min; x<ROI.x_max; x++){
             for(let y=ROI.y_min; y<ROI.y_max; y++){
               var red_pixel_value = pixels[(y * canvas.width + x) * 4];
@@ -556,7 +552,6 @@ var slider_app =new Vue({
           g_ROI_avg_intensity = average(g_pixels)
           b_ROI_avg_intensity = average(b_pixels)
           a_ROI_avg_intensity = average(a_pixels)
-          //debugger
           return {r_ROI_avg_intensity:r_ROI_avg_intensity,
                   g_ROI_avg_intensity:g_ROI_avg_intensity,
                   b_ROI_avg_intensity:b_ROI_avg_intensity,
@@ -600,7 +595,6 @@ var slider_app =new Vue({
         // var canvas = document.getElementById("imageROI");
         // // canvas.style.width = '100%';
         // var context = canvas.getContext('2d');
-        // // debugger
         // context.beginPath();
         // context.rect(128, 128, 256, 256);
         // context.fillStyle = "rgba(0, 0, 255, 0.25)";
@@ -634,7 +628,6 @@ var slider_app =new Vue({
         
         // Event listener for mouse down event
         canvas.addEventListener('mousedown', (event) => {
-          // debugger
           isDrawing = true;
           startX = event.offsetX //- canvas.offsetLeft;
           startY = event.offsetY //- canvas.offsetTop;
@@ -663,7 +656,6 @@ var slider_app =new Vue({
         // Event listener for mouse up event
         canvas.addEventListener('mouseup', (event) => {
           isDrawing = false;
-          // debugger
           endX = event.offsetX //- canvas.offsetLeft;
           endY = event.offsetY //- canvas.offsetTop;
 

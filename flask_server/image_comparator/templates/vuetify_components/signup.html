@@ -214,7 +214,6 @@ var signup_page =new Vue({
           })
           .then((response) => response.json())
           .then((data) => {
-            //debugger
             if(data === "User already exists. Try a new username."){
               signup_page.flask_message = data
             }else{
