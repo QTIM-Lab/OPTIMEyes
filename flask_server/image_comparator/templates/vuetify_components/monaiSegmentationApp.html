@@ -16,7 +16,16 @@
     position: relative;
     top: 0;
     left: 0;
-    background-color: black;
+    background-color: rgb(255, 255, 255);
+    width: 700px;
+    height: 700px;
+    border: 1px;
+    border-style: dashed;
+    /* new */
+    /* display: flex; */
+    /* align-items: center; */
+    /* justify-content: center; */
+    
   }
   
   .image {
@@ -24,18 +33,32 @@
     top: 0;
     left: 0;
     display: block;
+    max-width: 100%;
+    max-height: 100%;
+    width: 100%;
+    height: 100%;
+    /* Preserve aspect ratio while fitting */
+    /* object-fit: contain; */ /* or object-fit: cover; depending on your preference */
   }
   
   .segmentation {
     position: absolute;
     top: 0px;
     left: 0px;
+    max-width: 100%;
+    max-height: 100%;
+    width: 100%;
+    height: 100%;
   }
 
   .coco {
     position: absolute;
     top: 0px;
     left: 0px;
+    max-width: 100%;
+    max-height: 100%;
+    width: 100%;
+    height: 100%;
   }
 
   .spinner {
@@ -116,7 +139,7 @@
             </v-alert>
 
             <v-row no-gutters>
-              <v-col
+              <v-col ref="wtf"
                 cols="12"
                 lg="8"
               >
@@ -135,7 +158,7 @@
                     @mouseup="stopBrushing"
                     ref="segmentation"
                     class="segmentation"
-                    :style="{ border: borderSegmentation, opacity: 0.2, display: segmentation_image.display, 'z-index': segmentation_z_index}"
+                    :style="{ border: borderSegmentation, opacity: 0.5, display: segmentation_image.display, 'z-index': segmentation_z_index}"
                   ></canvas>
 
                   <canvas
@@ -203,6 +226,9 @@
                         </v-btn>
                         <v-btn @click="mergePolygonsToBrushCanvas">
                           Merge Canvases to Brush
+                        </v-btn>
+                        <v-btn @click="initCanvasZoomTools">
+                          Test
                         </v-btn>
 
 
@@ -340,6 +366,7 @@ var monai_segmentation_app =new Vue({
       monaiLabelPort: 8000,
       images: [],
       // Image
+      translatePos: {x:0,y:0},
       image: {
         image_id: null, 
         base64: null
@@ -347,9 +374,9 @@ var monai_segmentation_app =new Vue({
       },
       imageWidth: 0,
       imageHeight: 0,
-      canvasWidth: 0,
-      canvasHeight: 0,
-      aspectRatio: 1,
+      canvasWidth: 0, // These are the internal pixels; try to keep consistent with polygons and should match imageWidth
+      canvasHeight: 0, // These are the internal pixels; try to keep consistent with polygons and should match imageHeight
+      aspectRatio: null, // important for dependent canvases
       borderImage: "0px green solid", /* for debugging */
       // Segmentation
       segmentation_image: {image_id: null, base64: null, display:""},
@@ -401,7 +428,6 @@ var monai_segmentation_app =new Vue({
     //     handler: function (newValues, oldValues) {
     //       for (let i = 0; i < newValues.length; i++) {
     //         if (newValues[i].selected !== oldValues[i].selected) {
-    //           console.log(`Selection changed in category ${i}:`, newValues[i].selected);
     //           // Do something when a selection is made
     //           this.onSelectionChange(i, newValues[i].selected);
     //         }
@@ -427,25 +453,27 @@ var monai_segmentation_app =new Vue({
         }else{
           await this.getImageList();
           this.getTools(this.app, this.task.value.tool_set)
-          // Need to get image compare list so we can get pair to display based on current_idx
-          await this.displayCanvasImage(current_image=this.task.value.current_idx);
-          this.drawCoco();
-
-
-
+          // Get image
+          this.image.image_id = this.images[this.task.value.current_idx]
+          this.image['base64'] = await this.getBase64DataOfImageFromCouch(this.image.image_id)
+          this.displayCanvasImage(current_image=this.task.value.current_idx);
+          this.displayBrushImage(current_image=this.task.value.current_idx);
+          this.drawAnnotations();
+          this.initCoco();
+          this.initCanvasZoomTools();
 
           this.resizeObserver = new ResizeObserver(entries => {
             for (let entry of entries) {
               const {width} = entry.contentRect;
               const newHeight = width / this.aspectRatio; // Calculate the new height based on the aspect ratio
-              this.adjustCanvasSize(width, newHeight);
-              this.canvasWidth = width
-              this.canvasHeight = newHeight
+              // This is the trick right here.
+              // Aspect ratio is the secret weapon
+              current_working_width = this.$refs['canvases_parent_div'].parentElement.offsetWidth
+              this.$refs['canvases_parent_div'].style.width = `${current_working_width}px`
+              this.$refs['canvases_parent_div'].style.height = `${current_working_width/(this.aspectRatio === null ? 1 : this.aspectRatio)}px`
             }
           });
-          this.resizeObserver.observe(this.$refs['canvases_parent_div']); // Observe the size of the canvas parent div
-
-          
+          this.resizeObserver.observe(this.$refs['canvases_parent_div']); // Observe the size of the canvas parent div         
 
         }
     },
@@ -454,50 +482,63 @@ var monai_segmentation_app =new Vue({
       // General
       URLS() {
           return {
+              // old ${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}
               configuration: "/configuration",
-              monaiSegmentationApp: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/monaiSegmentationApp/${this.user}/${this.list_name}`,
-              getTask: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_task/${this.app}/${this.user}/${this.list_name}`,
-              taskList: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/tasksList`,
-              getToolSet: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_toolset`,
-              getImageList: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_image_monai_segmentation_lists`,
-              taskResult: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/task_result`,
-              resetToPreviousResult: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/reset_to_previous_result`,
+              monaiSegmentationApp: `/monaiSegmentationApp/${this.user}/${this.list_name}`,
+              getTask: `/get_task/${this.app}/${this.user}/${this.list_name}`,
+              taskList: `/tasksList`,
+              getToolSet: `/get_toolset`,
+              getImageList: `/get_image_monai_segmentation_lists`,
+              taskResult: `/task_result`,
+              resetToPreviousResult: `/reset_to_previous_result`,
               // MonaiLabel URLS
-              activeLearning: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.monaiLabelPort}/activelearning/last`,
-              performInference: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.monaiLabelPort}/infer/SegformerBundle`,
-              uploadImage: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.monaiLabelPort}/datastore/image`,
-              saveLabel: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.monaiLabelPort}/datastore/label`,
-              trainOnLables: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.monaiLabelPort}/train/SegformerBundle`,
-              trainStatus: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.monaiLabelPort}/train/?all=false&check_if_running=false`
+              // old ${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.monaiLabelPort}
+              activeLearning: `/activelearning/last`,
+              performInference: `/infer/SegformerBundle`,
+              uploadImage: `/datastore/image`,
+              saveLabel: `/datastore/label`,
+              trainOnLables: `/train/SegformerBundle`,
+              trainStatus: `/train/?all=false&check_if_running=false`
           }
       },
     },
 
     methods: {
-      adjustCanvasSize(width, height) {
-        // Adjust the intrinsic dimensions of the canvases
-        const canvasList = ['image', 'segmentation', 'coco'];
-        console.log('start')
-        canvasList.forEach(ref => {
-          var canvas = this.$refs[ref];
-          var dataURL = canvas.toDataURL(); // save state if needed...just a thought so far
-          canvas.width = width;
-          canvas.height = height;
-          console.log(canvas.width)
-          console.log(canvas.height)
-          // Restore the saved content
-          if (ref != 'image'){
-            var img = new Image();
-            img.onload = function() {
-                var ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-            };
-            img.src = dataURL;
-          } else {
-            this.displayCanvasImage(this.task.value.current_idx)
+      initCanvasZoomTools(){
+        MS = this;
+        var canvas = this.$refs.image;
+        var startDragOffset = {};
+        var mouseDown = false;
+        // add event listeners to handle screen drag
+        canvas.addEventListener("mousedown", function(evt) {
+          mouseDown = true;
+          startDragOffset.x = evt.clientX - MS.translatePos.x;
+          startDragOffset.y = evt.clientY - MS.translatePos.y;
+        });
+
+        canvas.addEventListener("mouseup", function(evt) {
+          mouseDown = false;
+        });
+
+        canvas.addEventListener("mouseover", function(evt) {
+          mouseDown = false;
+        });
+
+        canvas.addEventListener("mouseout", function(evt) {
+          mouseDown = false;
+        });
+
+        canvas.addEventListener("mousemove", function(evt) {
+          if (mouseDown) {
+            MS.translatePos.x = evt.clientX - startDragOffset.x;
+            MS.translatePos.y = evt.clientY - startDragOffset.y;
+            // add scale soon
+            MS.displayCanvasImage(MS.current_image, translatePos=MS.translatePos);
+            MS.displayBrushImage(MS.current_image, translatePos=MS.translatePos);
+            MS.drawAnnotations(MS.current_image, translatePos=MS.translatePos);
           }
         });
-        console.log('end')
+
       },
       mergePolygonsToBrushCanvas(){
         // Get the canvas elements
@@ -507,6 +548,7 @@ var monai_segmentation_app =new Vue({
         // Get the 2D contexts of the canvases
         var cocoContext = cocoCanvas.getContext('2d');
         var segmentationContext = segmentationCanvas.getContext('2d');
+        segmentationContext.globalCompositeOperation = "source-over";
         
         // Here, you need to access the polygons data from the 'coco' canvas.
         // This will depend on how you're storing the drawn polygons.
@@ -527,27 +569,28 @@ var monai_segmentation_app =new Vue({
             }
             segmentationContext.closePath();
             segmentationContext.fill(); // Or use .stroke() if you just want the outline
+            // Save to segmentation_image.base64
+            this.segmentation_image.base64 = segmentationCanvas.toDataURL('image/png')
             }
         });
 
         // Optionally clear the 'coco' canvas
         // cocoContext.clearRect(0, 0, cocoCanvas.width, cocoCanvas.height);
-        console.log(this.coco_annotations)
       },
       deleteAnnotation(index) {
         // Confirm with the user before deleting
         if (confirm(`Are you sure you want to delete annotation with ID ${this.coco_annotations[index].id}?`)) {
           // Remove the annotation from the array
           this.coco_annotations.splice(index, 1);
-          this.redrawAnnotations()
+          this.drawAnnotations()
         }
-        console.log(this.coco_annotations)
       },
-      drawCoco(){
+      initCoco(){
+        MS = this;
         const canvas = this.$refs['coco'];
         const ctx = canvas.getContext('2d');
         // Load the annotations for the image
-        var cocoAnnotations = this.coco_annotations;
+        // var cocoAnnotations = this.coco_annotations;
         let currentSegmentation = [];
         // Create an array to store draggable points (vertices)
         const vertices = [];
@@ -560,36 +603,45 @@ var monai_segmentation_app =new Vue({
             // Enter key saves the current polygon (if one is being drawn)
             if (isDrawing && vertices.length > 0) {
               isDrawing = false;
-              cocoAnnotations.push(currentSegmentation); // Store the current polygon
-              console.log(cocoAnnotations)
+              debugger
+              points = currentSegmentation.segmentation
+              for (let i = 0; i < points.length; i += 2) {
+                // points and data at this point should be real relative to full size image
+                currentSegmentation.segmentation[i] = points[i] - MS.translatePos.x
+                currentSegmentation.segmentation[i+1] = points[i+1] - MS.translatePos.y
+              }
+              this.coco_annotations.push(currentSegmentation); // Store the current polygon
               vertices.length = 0; // Clear the vertices
-              redrawAnnotations();
+              this.drawAnnotations(MS.current_image, translatePos=MS.translatePos);
             }
             event.preventDefault(); // Prevent the default behavior of the Enter key
           }
         });
 
         canvas.addEventListener('mousedown', (event) => {
-
+          const x_scaler = MS.imageWidth / parseFloat( MS.$refs.canvases_parent_div.style.width.replace("px","") ) // Adjust x point clicked
+          const y_scaler = MS.imageHeight / parseFloat( MS.$refs.canvases_parent_div.style.height.replace("px","") ) // Adjust y point clicked
           const x = event.clientX - canvas.getBoundingClientRect().left;
           const y = event.clientY - canvas.getBoundingClientRect().top;
           // Check if a vertex was clicked (within a certain radius)
           const clickedVertex = vertices.find((vertex) => {
-            const distance = Math.sqrt((vertex.x - x) ** 2 + (vertex.y - y) ** 2);
-            return distance < 5; // Adjust the radius as needed for your click detection
+            // const distance = Math.sqrt((vertex.x - x) ** 2 + (vertex.y - y) ** 2); // original
+            const distance = Math.sqrt((vertex.translatedX - x*x_scaler) ** 2 + (vertex.translatedY - y*y_scaler) ** 2);
+            return distance < 15; // Adjust the radius as needed for your click detection
           });
 
           if (clickedVertex) {
             // Clicked on an existing vertex, make it draggable
             canvas.addEventListener('mousemove', onMouseMove);
             canvas.addEventListener('mouseup', onMouseUp);
-
             function onMouseMove(event) {
               const newX = event.clientX - canvas.getBoundingClientRect().left;
               const newY = event.clientY - canvas.getBoundingClientRect().top;
-              clickedVertex.x = newX;
-              clickedVertex.y = newY;
-              redrawAnnotations();
+              // clickedVertex.x = newX; // original
+              clickedVertex.translatedX = newX*x_scaler;
+              // clickedVertex.y = newY; // original
+              clickedVertex.translatedY = newY*y_scaler;
+              drawVertices(translatePos=MS.translatePos);
             }
 
             function onMouseUp() {
@@ -597,17 +649,24 @@ var monai_segmentation_app =new Vue({
               canvas.removeEventListener('mouseup', onMouseUp);
             }
           } else {
+            newX = x*x_scaler
+            newY = y*y_scaler
             if (!isDrawing) {
               // Clicked outside existing vertices, add a new point
               isDrawing = true;
-              const newVertex = { x, y };
+              translatedX = newX
+              translatedY = newY
+              const newVertex = { translatedX, translatedY };
               vertices.push(newVertex);
             } else {
               // Continue adding vertices to the current polygon
-              vertices.push({ x, y });
+              translatedX = newX
+              translatedY = newY
+              const newVertex = { translatedX, translatedY };
+              vertices.push(newVertex);
             }
             // Redraw the entire canvas with updated points
-            redrawAnnotations();
+            drawVertices(translatePos=MS.translatePos);
           }
         });
 
@@ -619,7 +678,7 @@ var monai_segmentation_app =new Vue({
               // Remove the last vertex
               vertices.pop();
               // Redraw the annotations with the updated vertices
-              redrawAnnotations();
+              drawVertices(translatePos=MS.translatePos);
             }
           }
         });
@@ -645,47 +704,33 @@ var monai_segmentation_app =new Vue({
           return Date.now()
         }
 
-        function redrawAnnotations() {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-          // Draw existing segmentations
-          if (cocoAnnotations.length > 0){
-            cocoAnnotations.forEach((segmentation) => {
-              // const points = segmentation.segmentation[0];
-              const points = segmentation.segmentation;
-              if (points.length > 0) {
-                ctx.fillStyle = 'rgba(255, 0, 0, 0.10)';
-                ctx.strokeStyle = 'rgba(255, 0, 0, 1)'; // Set the line color
-                ctx.lineWidth = 1; // Set the line width
-                ctx.beginPath();
-                ctx.moveTo(points[0], points[1]);
-                for (let i = 2; i < points.length; i += 2) {
-                  ctx.lineTo(points[i], points[i + 1]);
-                }
-                ctx.closePath();
-                ctx.fill();
-                ctx.stroke();
-              }
-            });
-          }
-
+        function drawVertices(translatePos={x:0,y:0}) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height); // I'm concerned here
+          // ctx.translate(-translatePos.x, -translatePos.y)
+          MS.drawAnnotations(MS.current_image, translatePos=MS.translatePos)
+          const x_scaler = MS.imageWidth / parseFloat( MS.$refs.canvases_parent_div.style.width.replace("px","") ) // Adjust x point clicked
+          const y_scaler = MS.imageHeight / parseFloat( MS.$refs.canvases_parent_div.style.height.replace("px","") ) // Adjust y point clicked
           // Draw existing vertices
           ctx.fillStyle = 'blue'; // Set the vertex color
+          // ctx.beginPath(); ctx.arc(0,0, 5, 0, 2 * Math.PI); ctx.fill();
+          // ctx.beginPath(); ctx.arc(0,100, 5, 0, 2 * Math.PI); ctx.fill();
+          // ctx.beginPath(); ctx.arc(100,100, 5, 0, 2 * Math.PI); ctx.fill();
+          // ctx.beginPath(); ctx.arc(100,0, 5, 0, 2 * Math.PI); ctx.fill();
           vertices.forEach((vertex) => {
             ctx.beginPath();
-            ctx.arc(vertex.x, vertex.y, 5, 0, 2 * Math.PI);
+            ctx.arc(vertex.translatedX, vertex.translatedY, 5, 0, 2 * Math.PI);
             ctx.fill();
           });
 
           // Draw the polygon based on the vertices
-          ctx.fillStyle = 'rgba(0, 255, 0, 0.10)';
-          ctx.strokeStyle = 'rgba(0, 255, 0, 1)'; // Set the line color
+          ctx.fillStyle = 'rgba(0, 255, 0, 0.10)'; // Transparent (Green)
+          ctx.strokeStyle = 'rgba(0, 255, 0, 1)'; // Set the line color (Green)
           ctx.lineWidth = 1; // Set the line width
           ctx.beginPath();
           if (vertices.length > 0) {
-            ctx.moveTo(vertices[0].x, vertices[0].y);
+            ctx.moveTo(vertices[0].translatedX, vertices[0].translatedY);
             vertices.forEach((vertex) => {
-              ctx.lineTo(vertex.x, vertex.y);
+              ctx.lineTo(vertex.translatedX, vertex.translatedY);
             });
             ctx.closePath();
             ctx.fill();
@@ -694,54 +739,68 @@ var monai_segmentation_app =new Vue({
           ctx.stroke();
 
           // Update cocoAnnotations based on vertices
-          const segmentation = vertices.map((vertex) => [vertex.x, vertex.y]);
-          
+          const segmentation = vertices.map((vertex) => [vertex.translatedX, vertex.translatedY]);
           const flattenedSegmentation = vertices.reduce((acc, vertex) => {
-            acc.push(vertex.x, vertex.y);
+            acc.push(vertex.translatedX, vertex.translatedY);
             return acc;
           }, []);
           const newSegmentation = {
             segmentation: flattenedSegmentation,
             area: calculateArea(segmentation),
             iscrowd: 0,
-            image_id: 324158, // Set the image ID as needed
+            image_id: MS.image.image_id, // Set the image ID as needed
             bbox: calculateBoundingBox(segmentation),
             category_id: 1, // Set the category ID as needed
             id: generateUniqueId(), // Generate a unique ID for the segmentation
           };
-
           currentSegmentation = newSegmentation;
         }
-        console.log(this.coco_annotations)
       },
-      redrawAnnotations() {
-        const canvas = this.$refs['coco'];
-        // canvas.width = 800;
-        // canvas.height = 800;
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        // Load the annotations for the image
-        var cocoAnnotations = this.coco_annotations;
-
-        // Draw existing segmentations
-        if (cocoAnnotations.length > 0){
-          cocoAnnotations.forEach((segmentation) => {
-            // const points = segmentation.segmentation[0];
-            const points = segmentation.segmentation;
-            if (points.length > 0) {
-              ctx.fillStyle = 'rgba(255, 0, 0, 0.10)';
-              ctx.strokeStyle = 'rgba(255, 0, 0, 1)'; // Set the line color
-              ctx.lineWidth = 1; // Set the line width
-              ctx.beginPath();
-              ctx.moveTo(points[0], points[1]);
-              for (let i = 2; i < points.length; i += 2) {
-                ctx.lineTo(points[i], points[i + 1]);
-              }
-              ctx.closePath();
-              ctx.fill();
-              ctx.stroke();
+      drawAnnotations(recursion_base_case=0, translatePos={x:0,y:0}) {
+        const coco = this.$refs['coco'];
+        MS = this;
+        // recursive retry
+        if (recursion_base_case === 3){
+            if (this.aspectRatio === null){
+              this.alert_error = "On third retry to set size of coco canvas and am terminating. Check you are loading an image correctly as that sets aspectRatio which is what we don't have."
+              setTimeout(()=>{this.alert_error = null}, 2000)
             }
-          });
+        } else if (this.aspectRatio === null){
+          for (let i=1; i<=3; i++){
+            setTimeout(()=>{
+              this.drawAnnotations(recursion_base_case=i);
+            }, 100*(i))
+          }
+        } else {
+          coco.width = MS.imageWidth
+          coco.height = MS.imageHeight
+          const coco_ctx = coco.getContext('2d');
+          coco_ctx.save() // to preserve state for drawing verticies (live annotation object being created)
+          coco_ctx.translate(translatePos.x, translatePos.y)
+          // coco_ctx.clearRect(0, 0, MS.imageWidth, MS.imageHeight);
+          // Load the annotations for the image
+          var cocoAnnotations = this.coco_annotations;
+          // Draw existing segmentations
+          if (cocoAnnotations.length > 0){
+            cocoAnnotations.forEach((segmentation) => {
+              // const points = segmentation.segmentation[0];
+              const points = segmentation.segmentation;
+              if (points.length > 0) {
+                coco_ctx.fillStyle = 'rgba(255, 0, 0, 0.10)';
+                coco_ctx.strokeStyle = 'rgba(255, 0, 0, 1)'; // Set the line color
+                coco_ctx.lineWidth = 1; // Set the line width
+                coco_ctx.beginPath();
+                coco_ctx.moveTo(points[0], points[1]);
+                for (let i = 2; i < points.length; i += 2) {
+                  coco_ctx.lineTo(points[i], points[i + 1]);
+                }
+                coco_ctx.closePath();
+                coco_ctx.fill();
+                coco_ctx.stroke();
+              }
+            });
+          }
+          coco_ctx.restore()
         }
 
       },
@@ -756,7 +815,6 @@ var monai_segmentation_app =new Vue({
           return configuration;
       },
       async getTask(app, user, list_name) {
-          console.log("getTask")
           await fetch(this.URLS.getTask)
           .then((response) => response.json())
           .then((data) => {
@@ -768,7 +826,6 @@ var monai_segmentation_app =new Vue({
           })
       },
       async getImageList() {
-        console.log("getImageList")
         let CA = this; // Classify App Vue Object
         await fetch(this.URLS.getImageList+`?key=${this.list_name}`)
         .then((response) => response.json())
@@ -784,55 +841,79 @@ var monai_segmentation_app =new Vue({
           }
         })
       },
-      async displayCanvasImage(current_image, fromInference=false) {
+      async displayCanvasImage(current_image, translatePos={x:0,y:0}, fromInference=false) {
         const image = new Image();
-        const segmentation = new Image();
         MS = this;
         image.onload = () => {
           // Once the image is loaded, draw it onto the canvas
           MS.imageWidth = image.width;
           MS.imageHeight = image.height;
           this.aspectRatio = MS.imageWidth / MS.imageHeight;
+          // First time through image load
+          current_working_width = this.$refs['canvases_parent_div'].parentElement.offsetWidth
+          this.$refs['canvases_parent_div'].style.width = `${current_working_width}px`
+          this.$refs['canvases_parent_div'].style.height = `${current_working_width/this.aspectRatio}px`
+          
           const canvas = this.$refs['image'];
           const context = canvas.getContext('2d');
-
-          // context.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, destX, destY, destWidth, destHeight);
-          if(MS.canvasWidth === 0){
-            context.drawImage(image, 0, 0, MS.imageWidth, MS.imageHeight);
-          }else{
-            context.drawImage(image, 0, 0, MS.canvasWidth, MS.canvasHeight);
-          }
+          // Zoom practice
           
+          // context.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, destX, destY, destWidth, destHeight);
+          canvas.width = MS.imageWidth
+          canvas.height = MS.imageHeight
+          context.translate(translatePos.x, translatePos.y)
+          context.drawImage(image, 0, 0, MS.imageWidth, MS.imageHeight);
         };
+        // Set the base64 data as the source of the Image
+        image.src = `${this.image.base64}`;
+      },
+      async displayBrushImage(current_image, translatePos={x:0,y:0}, fromInference=false, recursion_base_case=0) {
+        
+        const segmentation = new Image();
+        MS = this;
         segmentation.onload = () => {
           // Once the image is loaded, draw it onto the canvas
           const canvas = this.$refs['segmentation'];
           const context = canvas.getContext('2d');
-          context.drawImage(segmentation, 0, 0, MS.canvasWidth, MS.canvasHeight);
-        };
-
-        // Set the base64 data as the source of the Image
-        this.image['image_id'] = this.images[current_image]
-        if (this.image.base64 === null){
-          this.image['base64'] = await this.getBase64DataOfImageFromCouch(this.image.image_id)
-        }
-        image.src = `${this.image.base64}`;
-        
-        // green
-        // extention_orig
+          canvas.width = MS.imageWidth
+          canvas.height = MS.imageHeight
+          context.translate(translatePos.x, translatePos.y)
+          console.log(translatePos.x, translatePos.y)
+          context.drawImage(segmentation, 0+55,0+50, MS.imageWidth, MS.imageHeight);
+          // context.drawImage(segmentation, 0 - translatePos.x, 0 - translatePos.y, MS.imageWidth, MS.imageHeight);
+        }; 
         this.segmentation_image['image_id'] = this.images[current_image]
-        if (!fromInference){
-          this.segmentation_image['base64'] = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAIAAABEtEjdAAAC7UlEQVR4nO3BAQEAAACCIP+vbkhAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPwYdEkAAXvqzcMAAAAASUVORK5CYII="
+        if (this.segmentation_image['base64'] === null){          
+          // recursive retry
+          if (recursion_base_case === 3){
+            if (this.aspectRatio === null){
+              this.alert_error = "On third retry to set size of brush canvas and am terminating. Check you are loading an image correctly as that sets aspectRatio which is what we don't have."
+              setTimeout(()=>{this.alert_error = null}, 2000)
+            }
+          } else if (this.aspectRatio === null){
+            for (let i=1; i<=3; i++){
+              setTimeout(()=>{
+                this.displayBrushImage(current_image=this.task.value.current_idx, recursion_base_case=i);
+              }, 100*(i))
+            }
+          } else {
+            // Create a canvas element with desired dimensions
+            image_canvas = this.$refs['image'];
+            // adjust parent 
+            var segmentation_canvas = document.createElement('canvas');
+            segmentation_canvas.width = image_canvas.width; // Set the width of the canvas
+            segmentation_canvas.height = image_canvas.height; // Set the height of the canvas
+            // Convert the new canvas to a base64 data URL (default format is PNG)
+            this.segmentation_image.base64 = segmentation_canvas.toDataURL();
+            // Send in image
+            segmentation.src = `${this.segmentation_image.base64}`;
+          }
+        } else {
+          segmentation.src = `${this.segmentation_image.base64}`;
         }
-        segmentation.src = `${this.segmentation_image.base64}`;
-
       },
-
-
-
       changeImageChannel(value) {
         // This function will be called when the selected radio button changes.
-        console.log('Selected radio button:', value);
         // You can perform any additional actions you need here.
       },
       startBrushing(event) {
@@ -841,17 +922,20 @@ var monai_segmentation_app =new Vue({
       },
       stopBrushing() {
         this.isBrushing = false;
+        const segmentationCanvas = this.$refs['segmentation'];
+        this.segmentation_image.base64 = segmentationCanvas.toDataURL('image/png')
       },
       brush(event) {
         if (this.isBrushing) {
-          const canvas = this.$refs['segmentation'];
-          const context = canvas.getContext('2d');
+          const segmentationCanvas = this.$refs['segmentation'];
+          const context = segmentationCanvas.getContext('2d');
+          const x_scaler = MS.imageWidth / parseFloat( MS.$refs.canvases_parent_div.style.width.replace("px","") ) // Adjust x point clicked
+          const y_scaler = MS.imageHeight / parseFloat( MS.$refs.canvases_parent_div.style.height.replace("px","") ) // Adjust y point clicked
           const x = event.offsetX;
           const y = event.offsetY;
 
           // Get the color value based on the selected channel
           let colorValue = 0;
-          // console.log(this.result.radio_button_categories[0].selected)
           switch (this.result.radio_button_categories[0].selected) {
             case 'Erase':
               // N: #000000
@@ -875,16 +959,23 @@ var monai_segmentation_app =new Vue({
               break;
           }
 
-          // Draw a circle on the canvas with the selected color and brush size
-          context.fillStyle = `#${colorValue.toString(16).padStart(6, '0')}`;
-          console.log(context.fillStyle)
+          // Draw a circle on the segmentationCanvas with the selected color and brush size
+          if(this.result.radio_button_categories[0].selected === "Erase"){
+            // Set this to "remove" versus add this fillstyle
+            context.globalCompositeOperation = "destination-out";
+            context.fillStyle = "rgba(0,0,0,1)";
+          } else {
+            context.globalCompositeOperation = "source-over";
+            context.fillStyle = `#${colorValue.toString(16).padStart(6, '0')}`;
+          }
           context.beginPath();
-          context.arc(x, y, this.brushSize / 2, 0, Math.PI * 2);
+          // context.arc(x*x_scaler, y*y_scaler, this.brushSize / 2, 0, Math.PI * 2);
+          context.arc(x*x_scaler - MS.translatePos.x, y*y_scaler - MS.translatePos.y, this.brushSize / 2, 0, Math.PI * 2);
           context.fill();
+          // this.segmentation_image.base64 = segmentationCanvas.toDataURL('image/png')
         }
       },
       getTools(app, tool_set) {
-        console.log("getTask")
         fetch(this.URLS.getToolSet + `/${app}/${tool_set}`)
         .then((response) => response.json())
         .then((data) => {
@@ -901,7 +992,8 @@ var monai_segmentation_app =new Vue({
         })
       },
       async getBase64DataOfImageFromCouch(image_id) {
-        const url = `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_image/${image_id}`;
+        // old ${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}
+        const url = `/get_image/${image_id}`;
 
         try {
           const response = await fetch(url);
@@ -912,13 +1004,11 @@ var monai_segmentation_app =new Vue({
           const data = await response.text();
           return `data:image/png;base64,${data}`;
         } catch (error) {
-          console.error('Error fetching image:', error);
           throw error; // Rethrow the error for handling in the calling function
         }
       },
       async performInference() {
         let MSA = this; // Classify App Vue Object
-        console.log('performInference')
         this.inferenceLoading = true;
         this.inferenceDoneTraining = false;
         await this.uploadImage();
@@ -948,7 +1038,6 @@ var monai_segmentation_app =new Vue({
           reader.onloadend = function() {
             // The result contains the Base64 string
             const base64String = reader.result;
-            console.log('Base64:', base64String);
             MSA.inferenceLoading = false;
             MSA.inferenceDoneTraining = true;
             // If you need to use the Base64 string elsewhere, do it here.
@@ -963,11 +1052,9 @@ var monai_segmentation_app =new Vue({
         .catch(error => {
           this.inferenceLoading = false;
           this.inferenceDoneTraining = false;
-          console.error('Error:', error);
         });
       },
       async uploadImage() {
-        console.log('uploadImage');
         // Define the URL and headers
         image_name = this.image.image_id.split('.')[0]; // Use const or let to declare the variable
         url = this.URLS.uploadImage + `?image=${image_name}`;
@@ -1001,11 +1088,9 @@ var monai_segmentation_app =new Vue({
             const file = await response.json();
             // Handle the response here if needed
         } catch (error) {
-            console.error('Error:', error);
         }
       },
       async saveLabel() {
-        console.log('saveLabel')
         this.saveLoading = true;
         this.saveDoneTraining = false;
         await this.uploadImage();
@@ -1048,11 +1133,9 @@ var monai_segmentation_app =new Vue({
             // setResponseData(file);
         })
         .catch(error => {
-            console.error('Error:', error);
         });
       },
       trainOnLabels() {
-        console.log('trainOnLabels')
         this.trainLoading = true; // Set loading to true
         this.trainDoneTraining = false;
         // Define the URL and headers
@@ -1073,12 +1156,10 @@ var monai_segmentation_app =new Vue({
         })
         .then(response => response.json())
         .then(data => {
-          console.log(data)
           // Start polling for job status using setInterval
           this.trainIntervalId = setInterval(this.checkJobStatus, 1000); // Adjust the interval as needed
         })
         .catch(error => {
-          console.error('Error:', error);
           setVariantName('danger')
         });
       },
@@ -1101,7 +1182,6 @@ var monai_segmentation_app =new Vue({
             }
             })
             .catch(error => {
-            console.error('Error fetching data:', error);
             });
         // When the job is completed or has a certain status, you can stop the interval
         if (jobCompleted) {
@@ -1110,7 +1190,6 @@ var monai_segmentation_app =new Vue({
         }
       },
       hideCanvas() {
-        console.log('hideCanvas')
         if(this.segmentation_image.display === ""){
           this.hideBrushButtonText = "Unhide Brush Canvas"
           this.segmentation_image.display = "none"
@@ -1119,11 +1198,8 @@ var monai_segmentation_app =new Vue({
           this.segmentation_image.display = ""
 
         }
-        console.log(this.polygons_z_index)
-        console.log(this.segmentation_z_index)
       },
       hidePolygon() {
-        console.log('hidePolygon')
         if(this.polygonDisplay === ""){
           this.hidePolygonButtonText = "Unhide Polygon"
           this.polygonDisplay = "none"
@@ -1131,8 +1207,6 @@ var monai_segmentation_app =new Vue({
           this.hidePolygonButtonText = "Hide Polygon"
           this.polygonDisplay = ""
         }
-        console.log(this.polygons_z_index)
-        console.log(this.segmentation_z_index)
       },
       toggleBrushPolygon(variable) {
         if(variable instanceof PointerEvent){

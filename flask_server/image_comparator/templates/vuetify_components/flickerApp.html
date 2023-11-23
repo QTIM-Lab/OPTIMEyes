@@ -299,13 +299,14 @@ var flicker_app =new Vue({
       // General
       URLS() {
           return {
+              // old ${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}
               configuration: "/configuration",
-              flickerApp: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/flickerApp/${this.user}/${this.list_name}`,
-              getTask: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_task/${this.app}/${this.user}/${this.list_name}`,
-              taskList: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/tasksList`,
-              getToolSet: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_toolset`,
-              getImageList: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_image_flicker_lists`,
-              taskResult: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/task_result`,
+              flickerApp: `/flickerApp/${this.user}/${this.list_name}`,
+              getTask: `/get_task/${this.app}/${this.user}/${this.list_name}`,
+              taskList: `/tasksList`,
+              getToolSet: `/get_toolset`,
+              getImageList: `/get_image_flicker_lists`,
+              taskResult: `/task_result`,
           }
       },
     },
@@ -378,7 +379,7 @@ var flicker_app =new Vue({
         })
       },
       getBase64DataOfImageFromCouch(image_id, pair_index) {
-        var url = `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_image/${image_id}`
+        var url = `/get_image/${image_id}`
         let CA = this; // flicker App Vue Object
         let I_ID = image_id;
         let P_INDEX = pair_index;

@@ -54,13 +54,13 @@ var tasksList = new Vue({
             return {
                 configuration: "/configuration",
                 getBase: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}`,
-                getClassifyTasks: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_tasks/classify?username=${this.USER_INFO.username}`,
-                getCompareTasks: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_tasks/compare?username=${this.USER_INFO.username}`,
-                getFlickerTasks: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_tasks/flicker?username=${this.USER_INFO.username}`,
-                getSliderTasks: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_tasks/slider?username=${this.USER_INFO.username}`,
-                getMonaiSegmentationTasks: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_tasks/monaiSegmentation?username=${this.USER_INFO.username}`,
-                goToImageSummary: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/image_set_summary`,
-                makeTask: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/make_task`,
+                getClassifyTasks: `/get_tasks/classify?username=${this.USER_INFO.username}`,
+                getCompareTasks: `/get_tasks/compare?username=${this.USER_INFO.username}`,
+                getFlickerTasks: `/get_tasks/flicker?username=${this.USER_INFO.username}`,
+                getSliderTasks: `/get_tasks/slider?username=${this.USER_INFO.username}`,
+                getMonaiSegmentationTasks: `/get_tasks/monaiSegmentation?username=${this.USER_INFO.username}`,
+                goToImageSummary: `/image_set_summary`,
+                makeTask: `/make_task`,
             }
         },
         // Right Column "Create Task"
@@ -156,7 +156,7 @@ var tasksList = new Vue({
         goToApp(task) {
           console.log(`goToApp(${task.value.user}, ${task.value.list_name})`)
           debugger
-          window.location.replace(this.URLS.getBase + `/${task.value.app}App/${task.value.user}/${task.value.list_name}`)
+          window.location.replace(`/${task.value.app}App/${task.value.user}/${task.value.list_name}`)
         },
         // Right Column
         submit() {

@@ -212,13 +212,14 @@ var classify_app =new Vue({
       // General
       URLS() {
           return {
+              // old ${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}
               configuration: "/configuration",
-              classifyApp: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/classifyApp/${this.user}/${this.list_name}`,
-              getTask: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_task/${this.app}/${this.user}/${this.list_name}`,
-              taskList: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/tasksList`,
-              getToolSet: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_toolset`,
-              getImageList: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_image_classify_lists`,
-              taskResult: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/task_result`,
+              classifyApp: `/classifyApp/${this.user}/${this.list_name}`,
+              getTask: `/get_task/${this.app}/${this.user}/${this.list_name}`,
+              taskList: `/tasksList`,
+              getToolSet: `/get_toolset`,
+              getImageList: `/get_image_classify_lists`,
+              taskResult: `/task_result`,
           }
       },
     },
@@ -285,7 +286,7 @@ var classify_app =new Vue({
         })
       },
       getBase64DataOfImageFromCouch(image_id) {
-        var url = `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_image/${image_id}`
+        var url = `/get_image/${image_id}`
         let CA = this; // Classify App Vue Object
         let I_ID = image_id;
         fetch(url)
