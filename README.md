@@ -88,6 +88,34 @@ You will need to deploy this Monai Label server implementation for a basic segme
 curl http://localhost:8000/info/
 ```
 
+## HTTPS
+### Certless
+In ```Image-Comparator-Dockerfiles/README.md``` (at the bottom) you can run flask with adhoc certs:
+```bash
+# ...docker run command...
+flask run --port $MACHINE_PORT --host 0.0.0.0 --cert=adhoc
+```
+
+### Self Signed
+[blog.miguelgrinberg.com](https://blog.miguelgrinberg.com/post/running-your-flask-application-over-https)
+
+```bash
+openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
+mv cert.pem flask_server/certs/
+mv key.pem flask_server/certs/
+```
+
+### Certbot
+[Certbot](https://certbot.eff.org/instructions?ws=other&os=ubuntufocal)
+```bash
+sudo snap install --classic certbot
+sudo certbot certonly --standalone
+DNS=
+
+sudo cp /etc/letsencrypt/live/$DNS/fullchain.pem flask_server/certs
+sudo cp /etc/letsencrypt/live/$DNS/privkey.pem flask_server/certs
+```
+
 ## Acknowledgements
 
 In the order they appear this project has been forked and added to. Yet again we fork to make a QTIM-Lab based project that will be adapted and maintained here.
