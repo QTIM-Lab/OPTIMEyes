@@ -168,6 +168,15 @@
                   ></canvas>
 
                 </div>
+                
+                <!-- Debugging with test canvas -->
+                <!-- <canvas
+                  ref="testcanvas"
+                  style="width: 772px; height: 671px; border: 1px; border-style: solid;"
+                  width="500"
+                  height="435"
+                ></canvas> -->
+
 
               </v-col>
 
@@ -186,7 +195,7 @@
                     >
                       <!-- Monai Label Buttons and Tools -->
                       <div>
-                        <!-- <v-btn @click="performInference">
+                        <v-btn @click="performInference">
                           Perform_Inference
                           <div v-if="inferenceLoading" class="spinner">
                             <div class="spinner-inner"></div>
@@ -208,7 +217,7 @@
                             <div class="spinner-inner"></div>
                           </div>
                           <div v-if="trainDoneTraining" class="check-mark">✔</div>
-                        </v-btn> -->
+                        </v-btn>
 
                         <v-btn @click="hideCanvas">
                           [[ hideBrushButtonText ]]
@@ -227,9 +236,9 @@
                         <v-btn @click="mergePolygonsToBrushCanvas">
                           Merge Canvases to Brush
                         </v-btn>
-                        <v-btn @click="initCanvasZoomTools">
+                        <!-- <v-btn @click="toggle_brushing">
                           Test
-                        </v-btn>
+                        </v-btn> -->
 
 
                       </div>
@@ -418,7 +427,8 @@ var monai_segmentation_app =new Vue({
       //// Training
       trainLoading: false,
       trainIntervalId: null,
-      trainDoneTraining: false
+      trainDoneTraining: false,
+      jobCompleted: false
     }),
 
     delimiters: ['[[',']]'],
@@ -460,7 +470,7 @@ var monai_segmentation_app =new Vue({
           this.displayBrushImage(current_image=this.task.value.current_idx);
           this.drawAnnotations();
           this.initCoco();
-          this.initCanvasZoomTools();
+          // this.initCanvasZoomTools();
 
           this.resizeObserver = new ResizeObserver(entries => {
             for (let entry of entries) {
@@ -493,17 +503,21 @@ var monai_segmentation_app =new Vue({
               resetToPreviousResult: `/reset_to_previous_result`,
               // MonaiLabel URLS
               // old ${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.monaiLabelPort}
-              activeLearning: `/activelearning/last`,
-              performInference: `/infer/SegformerBundle`,
-              uploadImage: `/datastore/image`,
-              saveLabel: `/datastore/label`,
-              trainOnLables: `/train/SegformerBundle`,
-              trainStatus: `/train/?all=false&check_if_running=false`
+              activeLearning: `http://${this.DNS}:${this.monaiLabelPort}/activelearning/last`,
+              performInference: `http://${this.DNS}:${this.monaiLabelPort}/infer/SegformerBundle`,
+              uploadImage: `http://${this.DNS}:${this.monaiLabelPort}/datastore/image`,
+              saveLabel: `http://${this.DNS}:${this.monaiLabelPort}/datastore/label`,
+              trainOnLables: `http://${this.DNS}:${this.monaiLabelPort}/train/SegformerBundle`,
+              trainStatus: `http://${this.DNS}:${this.monaiLabelPort}/train/?all=false&check_if_running=false`
           }
       },
     },
 
     methods: {
+      // toggle_brushing(){
+      //   this.isBrushing ? false : true
+
+      // },
       initCanvasZoomTools(){
         MS = this;
         var canvas = this.$refs.image;
@@ -872,15 +886,25 @@ var monai_segmentation_app =new Vue({
         const segmentation = new Image();
         MS = this;
         segmentation.onload = () => {
+          console.log("segmentation onload")
           // Once the image is loaded, draw it onto the canvas
           const canvas = this.$refs['segmentation'];
           const context = canvas.getContext('2d');
+          context.setTransform(1, 0, 0, 1, 0, 0);
+          transform = context.getTransform()
+          console.log(`${transform.e}, ${transform.f}`)
+          // debugger
           canvas.width = MS.imageWidth
           canvas.height = MS.imageHeight
           context.translate(translatePos.x, translatePos.y)
           console.log(translatePos.x, translatePos.y)
-          context.drawImage(segmentation, 0+55,0+50, MS.imageWidth, MS.imageHeight);
-          // context.drawImage(segmentation, 0 - translatePos.x, 0 - translatePos.y, MS.imageWidth, MS.imageHeight);
+          console.log(`${transform.e}, ${transform.f}`)
+          console.log("displayBrush64: "+this.segmentation_image.base64)
+          context.drawImage(segmentation, 0, 0, MS.imageWidth, MS.imageHeight);
+
+          const testcanvas = this.$refs['testcanvas'];
+          const tcontext = canvas.getContext('2d');
+          tcontext.drawImage(segmentation, 0, 0, MS.imageWidth, MS.imageHeight);
         }; 
         this.segmentation_image['image_id'] = this.images[current_image]
         if (this.segmentation_image['base64'] === null){          
@@ -923,12 +947,13 @@ var monai_segmentation_app =new Vue({
       stopBrushing() {
         this.isBrushing = false;
         const segmentationCanvas = this.$refs['segmentation'];
-        this.segmentation_image.base64 = segmentationCanvas.toDataURL('image/png')
       },
       brush(event) {
         if (this.isBrushing) {
           const segmentationCanvas = this.$refs['segmentation'];
           const context = segmentationCanvas.getContext('2d');
+          transform = context.getTransform()
+          console.log(`brush top${transform.e}, ${transform.f}`)
           const x_scaler = MS.imageWidth / parseFloat( MS.$refs.canvases_parent_div.style.width.replace("px","") ) // Adjust x point clicked
           const y_scaler = MS.imageHeight / parseFloat( MS.$refs.canvases_parent_div.style.height.replace("px","") ) // Adjust y point clicked
           const x = event.offsetX;
@@ -968,11 +993,21 @@ var monai_segmentation_app =new Vue({
             context.globalCompositeOperation = "source-over";
             context.fillStyle = `#${colorValue.toString(16).padStart(6, '0')}`;
           }
+          debugger
           context.beginPath();
-          // context.arc(x*x_scaler, y*y_scaler, this.brushSize / 2, 0, Math.PI * 2);
-          context.arc(x*x_scaler - MS.translatePos.x, y*y_scaler - MS.translatePos.y, this.brushSize / 2, 0, Math.PI * 2);
+          context.arc(x*x_scaler, y*y_scaler, this.brushSize / 2, 0, Math.PI * 2);
+          // context.arc(x*x_scaler - MS.translatePos.x, y*y_scaler - MS.translatePos.y, this.brushSize / 2, 0, Math.PI * 2);
           context.fill();
-          // this.segmentation_image.base64 = segmentationCanvas.toDataURL('image/png')
+          this.segmentation_image.base64 = segmentationCanvas.toDataURL('image/png')
+          // console.log("drawBrush64: "+this.segmentation_image.base64)
+          // const timage = new Image();
+          // timage.onload = () => {
+          //   tcanvas = this.$refs.testcanvas
+          //   tcontext = tcanvas.getContext('2d');
+          //   tcontext.clearRect(0, 0, MS.imageWidth, MS.imageHeight);
+          //   tcontext.drawImage(timage, 0, 0, MS.imageWidth, MS.imageHeight);
+          // }
+          // timage.src = this.segmentation_image.base64
         }
       },
       getTools(app, tool_set) {
@@ -1045,7 +1080,7 @@ var monai_segmentation_app =new Vue({
             // const imageElement = document.getElementById('myImage');
             // imageElement.src = base64String;
             MSA.segmentation_image['base64'] = base64String
-            MSA.displayCanvasImage(current_image=MSA.task.value.current_idx, fromInference=true); // fix later
+            MSA.displayBrushImage(current_image=MSA.task.value.current_idx, fromInference=true); // fix later
           };
           reader.readAsDataURL(imageBlob);
         })
@@ -1160,7 +1195,7 @@ var monai_segmentation_app =new Vue({
           this.trainIntervalId = setInterval(this.checkJobStatus, 1000); // Adjust the interval as needed
         })
         .catch(error => {
-          setVariantName('danger')
+          debugger
         });
       },
       checkJobStatus() {
@@ -1184,7 +1219,7 @@ var monai_segmentation_app =new Vue({
             .catch(error => {
             });
         // When the job is completed or has a certain status, you can stop the interval
-        if (jobCompleted) {
+        if (this.jobCompleted) {
           clearInterval(this.intervalId);
           this.trainLoading = false; // Set loading to false when the job is completed
         }
