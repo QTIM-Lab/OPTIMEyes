@@ -113,8 +113,9 @@ var imageSetSummary =new Vue({
       // General
       URLS() {
           return {
+              // old ${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}
               configuration: "/configuration",
-              getImagesBySet: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_images_by_set`
+              getImagesBySet: `/get_images_by_set`
           }
       },
       grid_cols() {
@@ -150,7 +151,8 @@ var imageSetSummary =new Vue({
             })
       },
       getBase64DataOfImageFromCouch(image_id) {
-        var url = `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_image/${image_id}`
+        // old ${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}
+        var url = `/get_image/${image_id}`
         let ILS = this; // Image Set Summary Vue Object
         let I_ID = image_id;
         fetch(url)

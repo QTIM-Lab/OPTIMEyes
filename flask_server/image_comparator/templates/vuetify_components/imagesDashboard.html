@@ -196,10 +196,11 @@ var template_app =new Vue({
     // General
     URLS() {
         return {
+            // old ${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}
             configuration: "/configuration",
-            getImageSets: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/get_image_sets`,
-            goToImageSummary: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/image_set_summary`,
-            deleteImageSet: `${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}/delete_image_set`,
+            getImageSets: `/get_image_sets`,
+            goToImageSummary: `/image_set_summary`,
+            deleteImageSet: `/delete_image_set`,
         }
     },
     // Right Column
