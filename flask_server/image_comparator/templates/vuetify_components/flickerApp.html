@@ -237,6 +237,9 @@
                   <v-btn @click="clear">
                     clear
                   </v-btn>
+                  <v-btn @click="resetToPreviousResult">
+                    Go Back One Image
+                  </v-btn>
 
 
                 </v-form>
@@ -329,6 +332,7 @@ var flicker_app =new Vue({
               getToolSet: `/get_toolset`,
               getImageList: `/get_image_flicker_lists`,
               taskResult: `/task_result`,
+              resetToPreviousResult: `/reset_to_previous_result`,
           }
       },
     },
@@ -461,6 +465,7 @@ var flicker_app =new Vue({
           this.result['app'] = "flicker"
           this.result['type'] = "result"
           this.result['taskid'] = this.task.id
+          this.result['current_idx'] = this.task.value.current_idx
           fetch(this.URLS.taskResult, {
             method: 'POST',
             headers: {
@@ -481,6 +486,39 @@ var flicker_app =new Vue({
         this.imageListName = ''
         this.imageListTypeSelect = ''
         this.taskOrder = ''
+      },
+      resetToPreviousResult() {
+        if(this.task['value']['current_idx'] === 0){
+          this.alert_error = "You're on the first image of list!"
+          setTimeout(()=>{this.alert_error = null}, 2000)
+          return
+        }
+        // debugger
+        Task = {
+          id: this.task['id'],
+          key: this.task['key'],
+          value: this.task['value'],
+          last_result_key: `${this.task.id}-result-image1_${this.current_deck[this.task.value.current_idx-1][0]}-image2_${this.current_deck[this.task.value.current_idx-1][1]}`
+        }
+        
+        const headers = {
+          'Content-Type': 'application/json',
+        };
+        fetch(this.URLS.resetToPreviousResult+"/"+`${this.app}`, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(Task)
+        })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data["deleted_result_id"] === null){
+              this.alert_error = "Can't find deleted_result_id"
+              setTimeout(()=>{this.alert_error = null}, 2000)
+          }else{
+            this.alert_info = `Deleted ${data["deleted_result_id"]}`
+            setTimeout(()=>{this.alert_info = null; location.reload();}, 2000)
+          }
+        })
       },
     },
 

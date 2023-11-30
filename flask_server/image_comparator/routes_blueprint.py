@@ -250,8 +250,8 @@ def reset_to_previous_result(app):
     # currentTask[image_list']
     base = "http://{}:{}/{}".format(
         current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
-    last_image_key=currentTask['last_result_key']
-    view = f'_design/{app}App/_view/results?key=%22{last_image_key}%22'
+    last_result_key=currentTask['last_result_key']
+    view = f'_design/{app}App/_view/results?key=%22{last_result_key}%22'
     url = f'{base}/{view}'
     print(url)
     response = check_if_admin_party_then_make_request(url)
@@ -439,19 +439,21 @@ def task_result():
     else:
         couch = couchdb.Server(
             f'http://{current_app.config["DB_ADMIN_USER"]}:{current_app.config["DB_ADMIN_PASS"]}@{current_app.config["DNS"]}:{current_app.config["DB_PORT"]}')
+    # pdb.set_trace()
     db = couch[current_app.config["IMAGES_DB"]]
-    if request.data != b'': # Super hacky
+    # Determine which app
+    app = None # Redundant...clean up
+    if isinstance(request.data, bytes):
         results = json.loads(request.data)
+        app = results['app']
         # 1 save results to db
         doc_id, doc_rev = db.save(results)
         doc = db.get(doc_id)  # the doc we saved if we need it
     else:
-        # Get the JSON data
-        json_data = request.form.get('json')
-        # Parse the JSON data
-        json_data = json.loads(json_data)
+        results = json.loads(request.form.get('json'))
+        app = results['app']
     # Determine task type
-    if json_data['app'] == "monaiSegmentation":
+    if results['app'] == "monaiSegmentation":
         # Get the image blob data
         results = json_data
         image_blob = request.files.get('image') 
