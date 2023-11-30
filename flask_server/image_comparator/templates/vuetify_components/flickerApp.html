@@ -44,14 +44,15 @@
         <navbar-tag></navbar-tag>
       <v-main>
           <v-container class="ma-0">
-            <h2>
-              flicker Task for Image List [[ list_name ]] | On Pair
-              <span
-                v-if="current_deck.length != 0"
-                >[[ this.task.value.current_idx + 1 ]] of [[ this.current_deck.length ]]
-              </span>
-            </h2>
-            <!-- <p>[[ time_point_message ]]</p> -->
+            <v-btn v-if="current_deck.length != 0">
+              <v-tooltip left>
+                <template v-slot:activator="{ on }">
+                  <v-icon v-on="on" style="font-style: normal; font-size: small;">Flicker Task | On Pair [[ task.value.current_idx + 1 ]] of [[ current_deck.length ]]
+                  </v-icon>
+                </template>
+                Image List Name: [[ list_name ]]
+              </v-tooltip>
+            </v-btn>
 
             <!-- Alert -->
             <v-alert
@@ -174,7 +175,21 @@
                         ></v-textarea>
     
                       </div>
-
+                      <br>
+                      <div
+                        v-for="(text_field_category, index_text_field_category) in tool_set.text_field_categories"
+                        :key="text_field_category['category_id']"
+                      >
+                        <p>[[ text_field_category.category_id ]]</p>
+                        <v-text-field
+                          v-for="(text_field, index_text_field) in text_field_category['text_fields']"
+                          :key="text_field['text_field_id']"
+                          :rules="rules"
+                          v-model="result.text_field_categories[index_text_field_category].text_fields[index_text_field].message"
+                          :label="`${result.text_field_categories[index_text_field_category].text_fields[index_text_field].text_field_id}`"
+                        ></v-text-field>
+    
+                      </div>
 
 
                     </v-col>
@@ -268,7 +283,14 @@ var flicker_app =new Vue({
       tool_set: null,
       result: null,
       alert_info: null,
-      alert_error: null
+      alert_error: null,
+      // text field input rules
+      rules: [
+        value => {
+          if ( !isNaN(Number(value)) ) return true;
+          return 'You must enter a number.'
+        },
+      ]
     }),
 
     delimiters: ['[[',']]'],
