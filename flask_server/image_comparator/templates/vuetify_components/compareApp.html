@@ -22,13 +22,15 @@
         <navbar-tag></navbar-tag>
       <v-main>
           <v-container class="ma-0">
-            <h2>
-              Compare Task for Image List [[ list_name ]] | On Pair
-              <span
-                v-if="pairs.length != 0"
-                >[[ this.task.value.current_idx + 1 ]] of [[ this.pairs.length ]]
-              </span>
-            </h2>
+            <v-btn v-if="pairs.length != 0">
+              <v-tooltip left>
+                <template v-slot:activator="{ on }">
+                  <v-icon v-on="on" style="font-style: normal; font-size: small;">Compare Task | On Pair [[ task.value.current_idx + 1 ]] of [[ pairs.length ]]
+                  </v-icon>
+                </template>
+                Image List Name: [[ list_name ]]
+              </v-tooltip>
+            </v-btn>
 
             <!-- Alert -->
             <v-alert

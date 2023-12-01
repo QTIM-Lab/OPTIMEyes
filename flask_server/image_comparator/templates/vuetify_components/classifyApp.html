@@ -22,14 +22,17 @@
         <navbar-tag></navbar-tag>
       <v-main>
           <v-container>
-            <h1>
-              Classify Task for Image List [[ list_name ]] | On Image
-              <span
-                v-if="images.length != 0"
-                >[[ this.task.value.current_idx + 1 ]] of [[ this.images.length ]]
-              </span>
-            </h1>
-            
+
+            <v-btn v-if="images.length != 0">
+              <v-tooltip left>
+                <template v-slot:activator="{ on }">
+                  <v-icon v-on="on" style="font-style: normal; font-size: small;">Classify Task | On Image [[ task.value.current_idx + 1 ]] of [[ images.length ]]
+                  </v-icon>
+                </template>
+                Image List Name: [[ list_name ]]
+              </v-tooltip>
+            </v-btn>          
+
             <!-- Alert -->
             <v-alert
               title="Info"
