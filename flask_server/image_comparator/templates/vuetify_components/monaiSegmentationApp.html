@@ -617,7 +617,6 @@ var monai_segmentation_app =new Vue({
             // Enter key saves the current polygon (if one is being drawn)
             if (isDrawing && vertices.length > 0) {
               isDrawing = false;
-              debugger
               points = currentSegmentation.segmentation
               for (let i = 0; i < points.length; i += 2) {
                 // points and data at this point should be real relative to full size image
@@ -893,7 +892,6 @@ var monai_segmentation_app =new Vue({
           context.setTransform(1, 0, 0, 1, 0, 0);
           transform = context.getTransform()
           console.log(`${transform.e}, ${transform.f}`)
-          // debugger
           canvas.width = MS.imageWidth
           canvas.height = MS.imageHeight
           context.translate(translatePos.x, translatePos.y)
@@ -993,7 +991,6 @@ var monai_segmentation_app =new Vue({
             context.globalCompositeOperation = "source-over";
             context.fillStyle = `#${colorValue.toString(16).padStart(6, '0')}`;
           }
-          debugger
           context.beginPath();
           context.arc(x*x_scaler, y*y_scaler, this.brushSize / 2, 0, Math.PI * 2);
           // context.arc(x*x_scaler - MS.translatePos.x, y*y_scaler - MS.translatePos.y, this.brushSize / 2, 0, Math.PI * 2);
@@ -1195,7 +1192,6 @@ var monai_segmentation_app =new Vue({
           this.trainIntervalId = setInterval(this.checkJobStatus, 1000); // Adjust the interval as needed
         })
         .catch(error => {
-          debugger
         });
       },
       checkJobStatus() {
@@ -1273,46 +1269,56 @@ var monai_segmentation_app =new Vue({
         //this.$v.$touch() // for uswe with veulidate which you haven't setup for this app
         // this.$refs.form.$el.submit() // Normal submit but we want to send results in a better organized way
         // Define the URL and headers
+        let error = null;
+        this.result['radio_button_categories'].forEach((v, i, a) => {
+          if (v['selected'] === null){
+            error = true
+            this.alert_error = "You must make a selection for the radio buttons."
+            setTimeout(()=>{this.alert_error = null}, 2000)
+          }
+        })
         segmentation_name = this.segmentation_image.image_id.split('.')[0] // sans extension, as shows up in datastore_v2.json
         const headers = {
             'Accept': 'application/json',
         };
-        // Create a new FormData object to handle multipart/form-data
-        const formData = new FormData();
-        // Add the image data as a blob with a "image/png" type
-        const formFileName = `${segmentation_name}.png`;
-        // Save segmentation canvas to segmentation_image.base64
-        var segmentationCanvas = this.$refs['segmentation'];
-        this.segmentation_image.base64 = segmentationCanvas.toDataURL('image/png')
-        //
-        const byteCharacters = atob(this.segmentation_image.base64.split(',')[1]);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        if (!error){
+          // Create a new FormData object to handle multipart/form-data
+          const formData = new FormData();
+          // Add the image data as a blob with a "image/png" type
+          const formFileName = `${segmentation_name}.png`;
+          // Save segmentation canvas to segmentation_image.base64
+          var segmentationCanvas = this.$refs['segmentation'];
+          this.segmentation_image.base64 = segmentationCanvas.toDataURL('image/png')
+          //
+          const byteCharacters = atob(this.segmentation_image.base64.split(',')[1]);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const imageBlob = new Blob([byteArray], { type: 'image/png' });
+          formData.append('image', imageBlob, formFileName);
+          // Add metadata
+          this.result['_id'] = `${this.task.id}-result-${this.image.image_id}`
+          this.result['user'] = this.user
+          this.result['list_name'] = this.task.value.list_name
+          this.result['app'] = "monaiSegmentation"
+          this.result['type'] = "result"
+          this.result['coco_annotation'] = this.coco_annotations
+          this.result['taskid'] = this.task.id
+          formData.append('json', JSON.stringify(this.result));
+          fetch(this.URLS.taskResult, {
+            method: 'POST',
+            // headers: {
+            //     'Content-Type': 'application/json'
+            // },
+            body: formData
+          })
+          .then((response) => response.json())
+          .then((data) => {
+            window.location.replace(this.URLS.monaiSegmentationApp);
+          })
         }
-        const byteArray = new Uint8Array(byteNumbers);
-        const imageBlob = new Blob([byteArray], { type: 'image/png' });
-        formData.append('image', imageBlob, formFileName);
-        // Add metadata
-        this.result['_id'] = `${this.task.id}-result-${this.image.image_id}`
-        this.result['user'] = this.user
-        this.result['list_name'] = this.task.value.list_name
-        this.result['app'] = "monaiSegmentation"
-        this.result['type'] = "result"
-        this.result['coco_annotation'] = this.coco_annotations
-        this.result['taskid'] = this.task.id
-        formData.append('json', JSON.stringify(this.result));
-        fetch(this.URLS.taskResult, {
-          method: 'POST',
-          // headers: {
-          //     'Content-Type': 'application/json'
-          // },
-          body: formData
-        })
-        .then((response) => response.json())
-        .then((data) => {
-          window.location.replace(this.URLS.monaiSegmentationApp);
-        })
       },
       // This might be a relect of a copy and paste...don't think this is used
       clear() {

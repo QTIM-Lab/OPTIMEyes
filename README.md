@@ -77,7 +77,6 @@ curl -X POST http://$COUCHDB_USER:$COUCHDB_PASSWORD@0.0.0.0:$DB_PORT/$DB_NAME \
 curl -X POST http://$COUCHDB_USER:$COUCHDB_PASSWORD@0.0.0.0:$DB_PORT/$DB_NAME \
   -H 'Content-Type: application/json' \
   -d @flask_server/image_comparator/static/js/views/tool_set_monaiSegmentation_template.json
-
 ```
 
 ## Monai Label Integration (Optional):
@@ -101,9 +100,11 @@ flask run --port $MACHINE_PORT --host 0.0.0.0 --cert=adhoc
 
 ```bash
 openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
+mkdir flask_server/certs/
 mv cert.pem flask_server/certs/
 mv key.pem flask_server/certs/
 ```
+
 
 ### Certbot
 [Certbot](https://certbot.eff.org/instructions?ws=other&os=ubuntufocal)

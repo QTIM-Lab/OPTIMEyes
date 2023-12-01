@@ -56,8 +56,8 @@
                 lg="9"
               >
                 <v-img
-                  style="border: 5px solid #555;"
-                  width="70%"
+                  style="border: 5px solid #555; margin-right: 5px;"
+                  width="95%"
                   v-if="image.base64"
                   :lazy-src="image.base64"
                   :src="image.base64"
@@ -69,70 +69,86 @@
               cols="12"
               lg="3"
               >
-
                 <!-- Tools -->
                 <!--https://codepen.io/zed_at_home/pen/LYpWyEM-->
                 <v-form v-if="tool_set" action="/task_result" method="post" ref="form">
 
                   <v-row no-gutters>
-                    <v-col
-                    cols="12"
-                    lg="6"
-                    >
-                      <div
-                        v-for="(checkbox_category, index_checkbox_category) in tool_set.checkbox_categories"
-                        :key="checkbox_category['category_id']"
+                    <v-row no-gutters>
+                      <v-col
+                      cols="12"
+                      lg="12"
                       >
-                      <p>[[ checkbox_category['category_id'] ]]</p>
+                        <div
+                          v-for="(checkbox_category, index_checkbox_category) in tool_set.checkbox_categories"
+                          :key="checkbox_category['category_id']"
+                        >
+                        <p>[[ checkbox_category['category_id'] ]]</p>
 
-                      <v-checkbox
-                        
-                        v-for="(checkbox, indexCheckbox) in checkbox_category['checkboxes']"
-                        :key="checkbox['checkbox_id']"
-                        v-model="result.checkbox_categories[index_checkbox_category].checkboxes[indexCheckbox].checked"
-                        :label="`${result.checkbox_categories[index_checkbox_category].checkboxes[indexCheckbox].checked.toString()}`"
-                        color="red"
-                        hide-details
-                      ></v-checkbox>
-
-                      </div>
-
-                      <v-radio-group
-                        v-for="(radio_button_category, index_radio_category) in tool_set.radio_button_categories"
-                        :key="radio_button_category['category_id']"
-                        v-model="result.radio_button_categories[index_radio_category].selected"
-                      >
-                        <p>[[ radio_button_category['category_id'] ]]</p>
-                        <v-radio
+                        <v-checkbox
                           
-                          v-for="(radio_button, index_radio_button) in radio_button_category['buttons']"
-                          :key="radio_button['button_id']"
-                          :label="`${result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id}`"
-                          :value="`${result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id}`"
-                        ></v-radio>
+                          v-for="(checkbox, indexCheckbox) in checkbox_category['checkboxes']"
+                          :key="checkbox['checkbox_id']"
+                          v-model="result.checkbox_categories[index_checkbox_category].checkboxes[indexCheckbox].checked"
+                          :label="`${result.checkbox_categories[index_checkbox_category].checkboxes[indexCheckbox].checked.toString()}`"
+                          color="red"
+                          hide-details
+                        ></v-checkbox>
 
-                      </v-radio-group>
-                    </v-col>
-                    <v-col
-                    cols="12"
-                    lg="6"
-                    >
-  
-                      <div
-                        v-for="(text_input_category, index_text_input_category) in tool_set.text_input_categories"
-                        :key="text_input_category['category_id']"
+                        </div>
+
+                        <v-radio-group
+                          v-for="(radio_button_category, index_radio_category) in tool_set.radio_button_categories"
+                          :key="radio_button_category['category_id']"
+                          v-model="result.radio_button_categories[index_radio_category].selected"
+                        >
+                          <p>[[ radio_button_category['category_id'] ]]</p>
+                          <v-radio
+                            
+                            v-for="(radio_button, index_radio_button) in radio_button_category['buttons']"
+                            :key="radio_button['button_id']"
+                            :label="`${result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id}`"
+                            :value="`${result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id}`"
+                          ></v-radio>
+
+                        </v-radio-group>
+                      </v-col>
+                    </v-row>
+                    
+                    <v-row no-gutters>
+                      <v-col
+                      cols="12"
+                      lg="12"
                       >
-                        <p>[[ text_input_category.category_id ]]</p>
-                        <v-textarea
-                          v-for="(text_input, index_text_input) in text_input_category['text_inputs']"
-                          :key="text_input['text_input_id']"
-                          v-model="result.text_input_categories[index_text_input_category].text_inputs[index_text_input].message"
-                          :label="`${result.text_input_categories[index_text_input_category].text_inputs[index_text_input].text_input_id}`"
-                        ></v-textarea>
-    
-                      </div>
+                        <div
+                          v-for="(text_input_category, index_text_input_category) in tool_set.text_input_categories"
+                          :key="text_input_category['category_id']"
+                        >
+                          <p>[[ text_input_category.category_id ]]</p>
+                          <v-textarea
+                            v-for="(text_input, index_text_input) in text_input_category['text_inputs']"
+                            :key="text_input['text_input_id']"
+                            v-model="result.text_input_categories[index_text_input_category].text_inputs[index_text_input].message"
+                            :label="`${result.text_input_categories[index_text_input_category].text_inputs[index_text_input].text_input_id}`"
+                          ></v-textarea>
+                        </div>
+                        <br>
+                        <div
+                          v-for="(text_field_category, index_text_field_category) in tool_set.text_field_categories"
+                          :key="text_field_category['category_id']"
+                        >
+                          <p>[[ text_field_category.category_id ]]</p>
+                          <v-text-field
+                            v-for="(text_field, index_text_field) in text_field_category['text_fields']"
+                            :key="text_field['text_field_id']"
+                            :rules="rules"
+                            v-model="result.text_field_categories[index_text_field_category].text_fields[index_text_field].message"
+                            :label="`${result.text_field_categories[index_text_field_category].text_fields[index_text_field].text_field_id}`"
+                          ></v-text-field>
+                        </div>
 
-                    </v-col>
+                      </v-col>
+                    </v-row>
 
                   </v-row>
                   <!--  -->
@@ -146,6 +162,10 @@
                   <v-btn @click="clear">
                     clear
                   </v-btn>
+                  <v-btn @click="resetToPreviousResult">
+                    Go Back One Image
+                  </v-btn>
+
 
 
                 </v-form>
@@ -181,7 +201,14 @@ var classify_app =new Vue({
       tool_set: null,
       result: null,
       alert_info: null,
-      alert_error: null
+      alert_error: null,
+      // text field input rules
+      rules: [
+        value => {
+          if ( !isNaN(Number(value)) ) return true;
+          return 'You must enter a number.'
+        },
+      ]
     }),
 
     delimiters: ['[[',']]'],
@@ -220,6 +247,7 @@ var classify_app =new Vue({
               getToolSet: `/get_toolset`,
               getImageList: `/get_image_classify_lists`,
               taskResult: `/task_result`,
+              resetToPreviousResult: `/reset_to_previous_result`,
           }
       },
     },
@@ -302,23 +330,33 @@ var classify_app =new Vue({
       submit() {
         //this.$v.$touch() // for uswe with veulidate which you haven't setup for this app
         // this.$refs.form.$el.submit() // Normal submit but we want to send results in a better organized way
-        this.result['_id'] = `${this.task.id}-result-${this.image.image_id}`
-        this.result['user'] = this.user
-        this.result['list_name'] = this.task.value.list_name
-        this.result['app'] = "classify"
-        this.result['type'] = "result"
-        this.result['taskid'] = this.task.id
-        fetch(this.URLS.taskResult, {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(this.result)
+        let error = null;
+        this.result['radio_button_categories'].forEach((v, i, a) => {
+        if (v['selected'] === null){
+            error = true
+            this.alert_error = "You must make a selection for the radio buttons."
+            setTimeout(()=>{this.alert_error = null}, 2000)
+          }
         })
-        .then((response) => response.json())
-        .then((data) => {
-          window.location.replace(this.URLS.classifyApp);
-        })
+        if (!error){
+          this.result['_id'] = `${this.task.id}-result-${this.image.image_id}`
+          this.result['user'] = this.user
+          this.result['list_name'] = this.task.value.list_name
+          this.result['app'] = "classify"
+          this.result['type'] = "result"
+          this.result['taskid'] = this.task.id
+          fetch(this.URLS.taskResult, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(this.result)
+          })
+          .then((response) => response.json())
+          .then((data) => {
+            window.location.replace(this.URLS.classifyApp);
+          })
+        }
 
       },
       // This might be a relect of a copy and paste...don't think this is used
@@ -328,6 +366,39 @@ var classify_app =new Vue({
         this.imageListName = ''
         this.imageListTypeSelect = ''
         this.taskOrder = ''
+      },
+      resetToPreviousResult() {
+        if(this.task['value']['current_idx'] === 0){
+          this.alert_error = "You're on the first image of list!"
+          setTimeout(()=>{this.alert_error = null}, 2000)
+          return
+        }
+        // debugger
+        Task = {
+          id: this.task['id'],
+          key: this.task['key'],
+          value: this.task['value'],
+          last_result_key: `${this.task.id}-result-image1_${this.current_deck[this.task.value.current_idx-1][0]}-image2_${this.current_deck[this.task.value.current_idx-1][1]}`
+        }
+        
+        const headers = {
+          'Content-Type': 'application/json',
+        };
+        fetch(this.URLS.resetToPreviousResult+"/"+`${this.app}`, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(Task)
+        })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data["deleted_result_id"] === null){
+              this.alert_error = "Can't find deleted_result_id"
+              setTimeout(()=>{this.alert_error = null}, 2000)
+          }else{
+            this.alert_info = `Deleted ${data["deleted_result_id"]}`
+            setTimeout(()=>{this.alert_info = null; location.reload();}, 2000)
+          }
+        })
       },
     },
 
