@@ -256,7 +256,6 @@ def reset_to_previous_result(app):
     print(url)
     response = check_if_admin_party_then_make_request(url)
     all_results = json.loads(response.content.decode('utf-8'))
-    # pdb.set_trace()
     row = all_results['rows'][0]
     if len(all_results['rows']) > 1:
         print("We have a problem! len(all_results['rows']) > 1 ")

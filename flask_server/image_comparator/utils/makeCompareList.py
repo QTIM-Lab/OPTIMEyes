@@ -4,9 +4,9 @@ import requests
 import json
 import couchdb
 import uuid
-import pdb
 import random
 import math
+import pandas as pd
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
 from itertools import combinations
@@ -43,17 +43,19 @@ def getURL(imageSet: str) -> str:
 
 
 def getImageIDs(url: str) -> list:
-    # pdb.set_trace()
     if ADMIN_PARTY:
         response = requests.get(url)
     else:
         response = requests.get(url, auth=(DB_ADMIN_USER, DB_ADMIN_PASS))
     response = response.content.decode('utf-8')
-    # pdb.set_trace()
     response = json.loads(response)
-    imageIDs = [row['id'] for row in response['rows']]
+    # imageIDs = [row['id'] for row in response['rows']]
+    rows = []
+    for row in response['rows']:
+        row['value'].pop('_attachments')
+        rows.append(row['value'])
 
-    return imageIDs
+    return rows
 
 def checkIfListExists(compareListName):
     db = couch[IMAGES_DB]
@@ -68,11 +70,12 @@ def checkIfListExists(compareListName):
 
 def makeCompareList(imageSet: str, compareListName: str, pctRepeat: int, combos: bool = False) -> None:
     listExists = checkIfListExists(compareListName)
-    # pdb.set_trace()
     if not listExists:
         url = getURL(imageSet)
         imageIDs = getImageIDs(url)
         # create all unique combinations
+        imageIDs = pd.DataFrame(imageIDs)
+        imageIDs = imageIDs.sort_values('index')
         if combos:
             unique_pairs = [list(comb) for comb in combinations(imageIDs, 2)]
             random.shuffle(unique_pairs)
@@ -80,9 +83,8 @@ def makeCompareList(imageSet: str, compareListName: str, pctRepeat: int, combos:
             repeats = random.sample(unique_pairs, amountRepeat)
             pairs = unique_pairs + repeats
         else:
-            # pdb.set_trace()
             group_size = 2
-            pairs = list(zip(*(iter(imageIDs),) * group_size))
+            pairs = list(zip(*(iter(imageIDs['_id']),) * group_size))
             pairs = [[i,j] for i,j in pairs]
         
         uid = uuid.uuid1()
@@ -96,13 +98,11 @@ def makeCompareList(imageSet: str, compareListName: str, pctRepeat: int, combos:
             "list": pairs,
             "time_added": t.strftime('%Y-%m-%d %H:%M:%S')}
         db = couch[IMAGES_DB]
-        # pdb.set_trace()
         print(f"Created Compare List: {compareListName}")
         doc_id, doc_rev = db.save(obj)
 
 
 def main(imageSet: str, compareListName: str, pctRepeat: int = 0):
-    # pdb.set_trace()
     makeCompareList(imageSet, compareListName, pctRepeat)
 
 

@@ -68,7 +68,6 @@ def checkIfListExists(classifyListName):
 #def makeClassifyList(classifyListName: str, images: list) -> None:
 def makeClassifyList(imageSet: str, classifyListName: str, pctRepeat: int = 0) -> None:
     listExists = checkIfListExists(classifyListName)
-    # pdb.set_trace()
     if not listExists:
         url = getURL(imageSet)
         # pdb.set_trace()

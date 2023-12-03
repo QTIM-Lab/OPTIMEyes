@@ -4,7 +4,6 @@ import requests
 import json
 import couchdb
 import uuid
-import pdb
 import random
 import math
 import pandas as pd
@@ -44,13 +43,11 @@ def getURL(imageSet: str) -> str:
 
 
 def getImageIDs(url: str) -> list:
-    # pdb.set_trace()
     if ADMIN_PARTY:
         response = requests.get(url)
     else:
         response = requests.get(url, auth=(DB_ADMIN_USER, DB_ADMIN_PASS))
     response = response.content.decode('utf-8')
-    # pdb.set_trace()
     response = json.loads(response)
     rows = []
     for row in response['rows']:
@@ -73,7 +70,6 @@ def checkIfListExists(flickerListName):
 
 def makeFlickerList(imageSet: str, flickerListName: str, pctRepeat: int) -> None:
     listExists = checkIfListExists(flickerListName)
-    # pdb.set_trace()
     if not listExists:
         url = getURL(imageSet)
         imageIDs = getImageIDs(url)
@@ -93,13 +89,11 @@ def makeFlickerList(imageSet: str, flickerListName: str, pctRepeat: int) -> None
             "list": pairs,
             "time_added": t.strftime('%Y-%m-%d %H:%M:%S')}
         db = couch[IMAGES_DB]
-        # pdb.set_trace()
         print(f"Created Flicker List: {flickerListName}")
         doc_id, doc_rev = db.save(obj)
 
 
 def main(imageSet: str, flickerListName: str, pctRepeat: int = 0):
-    # pdb.set_trace()
     makeFlickerList(imageSet, flickerListName, pctRepeat)
 
 
