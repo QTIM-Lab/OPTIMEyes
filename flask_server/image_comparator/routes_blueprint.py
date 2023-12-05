@@ -442,7 +442,7 @@ def task_result():
     db = couch[current_app.config["IMAGES_DB"]]
     # Determine which app
     app = None # Redundant...clean up
-    if isinstance(request.data, bytes):
+    if isinstance(request.data, bytes) and request.data != b'': # broken!
         results = json.loads(request.data)
         app = results['app']
         # 1 save results to db
