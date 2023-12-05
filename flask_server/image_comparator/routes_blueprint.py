@@ -454,7 +454,6 @@ def task_result():
     # Determine task type
     if results['app'] == "monaiSegmentation":
         # Get the image blob data
-        results = json_data
         image_blob = request.files.get('image') 
         # Save doc
         # pdb.set_trace()
