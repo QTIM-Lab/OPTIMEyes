@@ -27,6 +27,21 @@
     /* justify-content: center; */
     
   }
+  #buttonWrapper {
+      position: absolute;
+      width: 20px;
+      top: 5px;
+      right: 15px;
+    }
+  input[type="button"] {
+    padding: 0px;
+    width: 30px;
+    height: 30px;
+    margin: 0px;
+    background-color: rgba(0, 255, 213, 0.264);
+    border: 1px;
+    border-style: solid;
+  }
   
   .image {
     position: relative;
@@ -153,6 +168,10 @@
                     class="image"
                     :style="{ border: borderImage }"
                   ></canvas>
+                  <div id="buttonWrapper">
+                    <input type="button" id="plus" value="+">
+                    <input type="button" id="minus" value="-">
+                  </div>
 
                   <canvas
                     @mousedown="startBrushing"
@@ -172,12 +191,12 @@
                 </div>
                 
                 <!-- Debugging with test canvas -->
-                <!-- <canvas
+                <canvas
                   ref="testcanvas"
                   style="width: 772px; height: 671px; border: 1px; border-style: solid;"
                   width="500"
                   height="435"
-                ></canvas> -->
+                ></canvas>
 
 
               </v-col>
@@ -198,7 +217,7 @@
                       <!-- Monai Label Buttons and Tools -->
                       <div>
                         <v-btn @click="performInference">
-                          Perform_Inference
+                          Perform Inference
                           <div v-if="inferenceLoading" class="spinner">
                             <div class="spinner-inner"></div>
                           </div>
@@ -378,6 +397,8 @@ var monai_segmentation_app =new Vue({
       images: [],
       // Image
       translatePos: {x:0,y:0},
+      scale : 1.0,
+      scaleMultiplier : 0.9,
       image: {
         image_id: null, 
         base64: null
@@ -472,7 +493,7 @@ var monai_segmentation_app =new Vue({
           this.displayBrushImage(current_image=this.task.value.current_idx);
           this.drawAnnotations();
           this.initCoco();
-          // this.initCanvasZoomTools();
+          this.initCanvasZoomTools();
 
           this.resizeObserver = new ResizeObserver(entries => {
             for (let entry of entries) {
@@ -525,6 +546,20 @@ var monai_segmentation_app =new Vue({
         var canvas = this.$refs.image;
         var startDragOffset = {};
         var mouseDown = false;
+
+        // add button event listeners
+        document.getElementById("plus").addEventListener("click", function() {
+          MS.scale /= MS.scaleMultiplier;
+          MS.displayCanvasImage(MS.current_image, translatePos=MS.translatePos, scale=MS.scale);
+        }, false);
+
+        document.getElementById("minus").addEventListener("click", function() {
+          if(MS.scale != 1.0){
+            MS.scale *= MS.scaleMultiplier;
+            MS.displayCanvasImage(MS.current_image, translatePos=MS.translatePos, scale=MS.scale);
+          }
+        }, false);
+
         // add event listeners to handle screen drag
         canvas.addEventListener("mousedown", function(evt) {
           mouseDown = true;
@@ -546,12 +581,22 @@ var monai_segmentation_app =new Vue({
 
         canvas.addEventListener("mousemove", function(evt) {
           if (mouseDown) {
-            MS.translatePos.x = evt.clientX - startDragOffset.x;
-            MS.translatePos.y = evt.clientY - startDragOffset.y;
+            // debugger
+            const canvas = MS.$refs['image'];
+            current_working_width = MS.$refs['canvases_parent_div'].parentElement.offsetWidth
+            current_working_height = current_working_width/MS.aspectRatio
+            max_x_pixels_you_can_shift_image = MS.imageWidth * (1 - (1 / scale)) * ( current_working_width / canvas.width )
+            max_y_pixels_you_can_shift_image = MS.imageHeight * (1 - (1 / scale)) * ( current_working_height / canvas.height )
+
+            MS.translatePos.x = Math.max(0, Math.min(evt.clientX - startDragOffset.x, max_x_pixels_you_can_shift_image))
+            MS.translatePos.y = Math.max(0, Math.min(evt.clientY - startDragOffset.y, max_y_pixels_you_can_shift_image))
+
             // add scale soon
-            MS.displayCanvasImage(MS.current_image, translatePos=MS.translatePos);
-            MS.displayBrushImage(MS.current_image, translatePos=MS.translatePos);
-            MS.drawAnnotations(MS.current_image, translatePos=MS.translatePos);
+            if(MS.scale > 1.0){
+              MS.displayCanvasImage(MS.current_image, translatePos=MS.translatePos, scale=MS.scale);
+              MS.displayBrushImage(MS.current_image, translatePos=MS.translatePos, scale=MS.scale);
+              MS.drawAnnotations(MS.current_image, translatePos=MS.translatePos, scale=MS.scale);
+            }
           }
         });
 
@@ -771,7 +816,7 @@ var monai_segmentation_app =new Vue({
           currentSegmentation = newSegmentation;
         }
       },
-      drawAnnotations(recursion_base_case=0, translatePos={x:0,y:0}) {
+      drawAnnotations(recursion_base_case=0, translatePos={x:0,y:0}, scale=1.0) {
         const coco = this.$refs['coco'];
         MS = this;
         // recursive retry
@@ -856,7 +901,7 @@ var monai_segmentation_app =new Vue({
           }
         })
       },
-      async displayCanvasImage(current_image, translatePos={x:0,y:0}, fromInference=false) {
+      async displayCanvasImage(current_image, translatePos={x:0,y:0}, scale=1.0, fromInference=false) {
         const image = new Image();
         MS = this;
         image.onload = () => {
@@ -866,8 +911,9 @@ var monai_segmentation_app =new Vue({
           this.aspectRatio = MS.imageWidth / MS.imageHeight;
           // First time through image load
           current_working_width = this.$refs['canvases_parent_div'].parentElement.offsetWidth
+          current_working_height = current_working_width/this.aspectRatio
           this.$refs['canvases_parent_div'].style.width = `${current_working_width}px`
-          this.$refs['canvases_parent_div'].style.height = `${current_working_width/this.aspectRatio}px`
+          this.$refs['canvases_parent_div'].style.height = `${current_working_height}px`
           
           const canvas = this.$refs['image'];
           const context = canvas.getContext('2d');
@@ -876,13 +922,34 @@ var monai_segmentation_app =new Vue({
           // context.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, destX, destY, destWidth, destHeight);
           canvas.width = MS.imageWidth
           canvas.height = MS.imageHeight
-          context.translate(translatePos.x, translatePos.y)
-          context.drawImage(image, 0, 0, MS.imageWidth, MS.imageHeight);
+          max_x_pixels_you_can_shift_image = MS.imageWidth * (1 - (1 / scale)) * ( current_working_width / canvas.width )
+          max_y_pixels_you_can_shift_image = MS.imageHeight * (1 - (1 / scale)) * ( current_working_height / canvas.height )
+          console.log(`scale: ${scale}`)
+          console.log(`MS.translatePos.x max_x_pixels_you_can_shift_image MS.translatePos.y max_y_pixels_you_can_shift_image`)
+          console.log(`${MS.translatePos.x} ${max_x_pixels_you_can_shift_image} ${MS.translatePos.y} ${max_y_pixels_you_can_shift_image}`)
+          if( MS.translatePos.x <= max_x_pixels_you_can_shift_image && MS.translatePos.y <= max_y_pixels_you_can_shift_image &&
+              MS.translatePos.x >= 0                                && MS.translatePos.y >= 0){
+            sX = MS.translatePos.x * (canvas.width / current_working_width)
+            sY = MS.translatePos.y * (canvas.height / current_working_height)
+          } 
+          sX = Math.max(Math.min(MS.translatePos.x, max_x_pixels_you_can_shift_image), 0) * (canvas.width / current_working_width)
+          sY = Math.max(Math.min(MS.translatePos.y, max_y_pixels_you_can_shift_image), 0) * (canvas.height / current_working_height)
+          sW = MS.imageWidth / (scale)
+          sH = MS.imageHeight / (scale)
+          dX = 0
+          dY = 0
+          dW = canvas.width
+          dH = canvas.height
+
+          context.drawImage(image, sX, sY, sW, sH, dX, dY, dW, dH);
+          // context.MS.translate(MS.translatePos.x, MS.translatePos.y)
+          // context.drawImage(image, MS.translatePos.x, MS.translatePos.y, MS.imageWidth * (scale), MS.imageHeight * (scale));
+          
         };
         // Set the base64 data as the source of the Image
         image.src = `${this.image.base64}`;
       },
-      async displayBrushImage(current_image, translatePos={x:0,y:0}, fromInference=false, recursion_base_case=0) {
+      async displayBrushImage(current_image, translatePos={x:0,y:0}, scale=1.0, fromInference=false, recursion_base_case=0) {
         
         const segmentation = new Image();
         MS = this;
