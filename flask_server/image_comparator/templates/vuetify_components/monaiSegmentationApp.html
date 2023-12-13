@@ -198,7 +198,7 @@
                       <!-- Monai Label Buttons and Tools -->
                       <div>
                         <v-btn @click="performInference">
-                          Perform_Inference
+                          Perform Inference
                           <div v-if="inferenceLoading" class="spinner">
                             <div class="spinner-inner"></div>
                           </div>
@@ -206,7 +206,7 @@
                         </v-btn>
 
                         <v-btn @click="saveLabel">
-                          Save_To_MonaiLabel
+                          Save Current Annotation
                           <div v-if="saveLoading" class="spinner">
                             <div class="spinner-inner"></div>
                           </div>
@@ -214,7 +214,7 @@
                         </v-btn>
                         
                         <v-btn @click="trainOnLabels">
-                          Train_On_Labels
+                          Train on Saved Annotations
                           <div v-if="trainLoading" class="spinner">
                             <div class="spinner-inner"></div>
                           </div>
@@ -236,7 +236,7 @@
                           [[ toggleBrushPolygonButtonText ]]
                         </v-btn>
                         <v-btn @click="mergePolygonsToBrushCanvas">
-                          Merge Canvases to Brush
+                          Finalize Annotation
                         </v-btn>
                         <!-- <v-btn @click="toggle_brushing">
                           Test
@@ -337,13 +337,13 @@
                     class="mr-4"
                     @click="submit"
                   >
-                    submit
+                    Next Image
                   </v-btn>
                   <v-btn @click="clear">
                     clear
                   </v-btn>
                   <v-btn @click="resetToPreviousResult">
-                    Go Back One Image
+                    Previous Image
                   </v-btn>
 
 
@@ -408,17 +408,17 @@ var monai_segmentation_app =new Vue({
       // }],
       coco_annotations: [],
       borderCoco: "1px red solid", /* for debugging */
-      hidePolygonButtonText: "Hide Polygon Canvas",
+      hidePolygonButtonText: "Hide Shape",
       polygonDisplay: "",
       polygons_z_index: 1,
       // Hide Button
-      hideBrushButtonText: "Hide Brush Canvas",
+      hideBrushButtonText: "Hide Brush",
       task: null,
       tool_set: null,
       result: null,
       alert_info: null,
       alert_error: null,
-      toggleBrushPolygonButtonText: "Select Brush",
+      toggleBrushPolygonButtonText: "Paint Brush",
       // Spinners
       //// Inference
       inferenceLoading: false,
