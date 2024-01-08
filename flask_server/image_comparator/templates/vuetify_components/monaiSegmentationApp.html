@@ -32,6 +32,7 @@
       width: 20px;
       top: 5px;
       right: 15px;
+      z-index: 4;
     }
   input[type="button"] {
     padding: 0px;
@@ -193,7 +194,13 @@
                 <!-- Debugging with test canvas -->
                 <canvas
                   ref="testcanvas"
-                  style="width: 772px; height: 671px; border: 1px; border-style: solid;"
+                  style="border: 1px; border-style: solid; display: none;"
+                  width="500"
+                  height="435"
+                ></canvas>
+                <canvas
+                  ref="patchCanvas"
+                  style="border: 1px; border-style: solid; display: none;"
                   width="500"
                   height="435"
                 ></canvas>
@@ -397,8 +404,8 @@ var monai_segmentation_app =new Vue({
       images: [],
       // Image
       translatePos: {x:0,y:0},
-      scale : 1.0,
-      scaleMultiplier : 0.9,
+      scale : 1.0, // Current zoom
+      scaleMultiplier : 0.90, // increment for +/- operations
       image: {
         image_id: null, 
         base64: null
@@ -502,8 +509,17 @@ var monai_segmentation_app =new Vue({
               // This is the trick right here.
               // Aspect ratio is the secret weapon
               current_working_width = this.$refs['canvases_parent_div'].parentElement.offsetWidth
+              current_working_height = current_working_width/MS.aspectRatio // NOT SURE ON THIS
               this.$refs['canvases_parent_div'].style.width = `${current_working_width}px`
               this.$refs['canvases_parent_div'].style.height = `${current_working_width/(this.aspectRatio === null ? 1 : this.aspectRatio)}px`
+              // Dumped here just to calc MS.translatePos.x and MS.translatePos.y
+              const imageCanvas = MS.$refs['image'];
+              // debugger
+              current_working_height = current_working_width/MS.aspectRatio
+              max_x_pixels_you_can_shift_image = MS.imageWidth * (1 - (1 / MS.scale)) * ( current_working_width / imageCanvas.width )
+              max_y_pixels_you_can_shift_image = MS.imageHeight * (1 - (1 / MS.scale)) * ( current_working_height / imageCanvas.height )
+              MS.translatePos.x = Math.max(Math.min(MS.translatePos.x, max_x_pixels_you_can_shift_image), 0)
+              MS.translatePos.y = Math.max(Math.min(MS.translatePos.y, max_y_pixels_you_can_shift_image), 0)
             }
           });
           this.resizeObserver.observe(this.$refs['canvases_parent_div']); // Observe the size of the canvas parent div         
@@ -539,7 +555,6 @@ var monai_segmentation_app =new Vue({
     methods: {
       // toggle_brushing(){
       //   this.isBrushing ? false : true
-
       // },
       initCanvasZoomTools(){
         MS = this;
@@ -548,23 +563,34 @@ var monai_segmentation_app =new Vue({
         var mouseDown = false;
 
         // add button event listeners
-        document.getElementById("plus").addEventListener("click", function() {
+        document.getElementById("plus").addEventListener("click", async function() {
           MS.scale /= MS.scaleMultiplier;
-          MS.displayCanvasImage(MS.current_image, translatePos=MS.translatePos, scale=MS.scale);
+          await MS.displayCanvasImage(MS.current_image, translatePos=MS.translatePos, scale=MS.scale);
+          MS.drawAnnotations(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale);
+          MS.displayBrushImage(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale);
         }, false);
 
-        document.getElementById("minus").addEventListener("click", function() {
-          if(MS.scale != 1.0){
+        document.getElementById("minus").addEventListener("click", async function() {
+          if(MS.scale * MS.scaleMultiplier >= 1.0){
             MS.scale *= MS.scaleMultiplier;
-            MS.displayCanvasImage(MS.current_image, translatePos=MS.translatePos, scale=MS.scale);
+            // const cocoCanvas = MS.$refs['coco'];
+            // const cocoCtx = cocoCanvas.getContext('2d');
+            // const currentTransform = cocoCtx.getTransform();
+            // console.log(`currentTransform (minus): ${currentTransform}`)
+            // debugger
+            await MS.displayCanvasImage(MS.current_image, translatePos=MS.translatePos, scale=MS.scale);
+            MS.drawAnnotations(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale);
+            MS.displayBrushImage(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale);
           }
         }, false);
 
         // add event listeners to handle screen drag
         canvas.addEventListener("mousedown", function(evt) {
           mouseDown = true;
-          startDragOffset.x = evt.clientX - MS.translatePos.x;
-          startDragOffset.y = evt.clientY - MS.translatePos.y;
+          startDragOffset.x = evt.clientX + MS.translatePos.x; // forward (mouse slides image around)
+          startDragOffset.y = evt.clientY + MS.translatePos.y; // forward (mouse slides image around)
+          // startDragOffset.x = evt.clientX - MS.translatePos.x; // reverse (mouse is moving across image)
+          // startDragOffset.y = evt.clientY - MS.translatePos.y; // reverse (mouse is moving across image)
         });
 
         canvas.addEventListener("mouseup", function(evt) {
@@ -581,21 +607,22 @@ var monai_segmentation_app =new Vue({
 
         canvas.addEventListener("mousemove", function(evt) {
           if (mouseDown) {
-            // debugger
-            const canvas = MS.$refs['image'];
+            const imageCanvas = MS.$refs['image'];
             current_working_width = MS.$refs['canvases_parent_div'].parentElement.offsetWidth
             current_working_height = current_working_width/MS.aspectRatio
-            max_x_pixels_you_can_shift_image = MS.imageWidth * (1 - (1 / scale)) * ( current_working_width / canvas.width )
-            max_y_pixels_you_can_shift_image = MS.imageHeight * (1 - (1 / scale)) * ( current_working_height / canvas.height )
-
-            MS.translatePos.x = Math.max(0, Math.min(evt.clientX - startDragOffset.x, max_x_pixels_you_can_shift_image))
-            MS.translatePos.y = Math.max(0, Math.min(evt.clientY - startDragOffset.y, max_y_pixels_you_can_shift_image))
+            max_x_pixels_you_can_shift_image = MS.imageWidth * (1 - (1 / MS.scale)) * ( current_working_width / imageCanvas.width )
+            max_y_pixels_you_can_shift_image = MS.imageHeight * (1 - (1 / MS.scale)) * ( current_working_height / imageCanvas.height )
+            // debugger
+            MS.translatePos.x = Math.max(0, Math.min(startDragOffset.x - evt.clientX, max_x_pixels_you_can_shift_image)) // forward (mouse slides image around)
+            MS.translatePos.y = Math.max(0, Math.min(startDragOffset.y - evt.clientY, max_y_pixels_you_can_shift_image)) // forward (mouse slides image around)
+            // MS.translatePos.x = Math.max(0, Math.min(evt.clientX - startDragOffset.x, max_x_pixels_you_can_shift_image)) // reverse (mouse is moving across image)
+            // MS.translatePos.y = Math.max(0, Math.min(evt.clientY - startDragOffset.y, max_y_pixels_you_can_shift_image)) // reverse (mouse is moving across image)
 
             // add scale soon
             if(MS.scale > 1.0){
               MS.displayCanvasImage(MS.current_image, translatePos=MS.translatePos, scale=MS.scale);
               MS.displayBrushImage(MS.current_image, translatePos=MS.translatePos, scale=MS.scale);
-              MS.drawAnnotations(MS.current_image, translatePos=MS.translatePos, scale=MS.scale);
+              MS.drawAnnotations(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale);
             }
           }
         });
@@ -643,7 +670,7 @@ var monai_segmentation_app =new Vue({
         if (confirm(`Are you sure you want to delete annotation with ID ${this.coco_annotations[index].id}?`)) {
           // Remove the annotation from the array
           this.coco_annotations.splice(index, 1);
-          this.drawAnnotations()
+          this.drawAnnotations(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale);
         }
       },
       initCoco(){
@@ -667,12 +694,12 @@ var monai_segmentation_app =new Vue({
               points = currentSegmentation.segmentation
               for (let i = 0; i < points.length; i += 2) {
                 // points and data at this point should be real relative to full size image
-                currentSegmentation.segmentation[i] = points[i] - MS.translatePos.x
-                currentSegmentation.segmentation[i+1] = points[i+1] - MS.translatePos.y
+                currentSegmentation.segmentation[i] = points[i] //- MS.translatePos.x
+                currentSegmentation.segmentation[i+1] = points[i+1] //- MS.translatePos.y
               }
               this.coco_annotations.push(currentSegmentation); // Store the current polygon
               vertices.length = 0; // Clear the vertices
-              this.drawAnnotations(MS.current_image, translatePos=MS.translatePos);
+              this.drawAnnotations(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale);
             }
             event.preventDefault(); // Prevent the default behavior of the Enter key
           }
@@ -681,13 +708,13 @@ var monai_segmentation_app =new Vue({
         canvas.addEventListener('mousedown', (event) => {
           const x_scaler = MS.imageWidth / parseFloat( MS.$refs.canvases_parent_div.style.width.replace("px","") ) // Adjust x point clicked
           const y_scaler = MS.imageHeight / parseFloat( MS.$refs.canvases_parent_div.style.height.replace("px","") ) // Adjust y point clicked
-          const x = event.clientX - canvas.getBoundingClientRect().left;
-          const y = event.clientY - canvas.getBoundingClientRect().top;
+          const x = event.clientX - canvas.getBoundingClientRect().left; // literal pixels on screen\browser
+          const y = event.clientY - canvas.getBoundingClientRect().top; // literal pixels on screen\browser
           // Check if a vertex was clicked (within a certain radius)
           const clickedVertex = vertices.find((vertex) => {
             // const distance = Math.sqrt((vertex.x - x) ** 2 + (vertex.y - y) ** 2); // original
             const distance = Math.sqrt((vertex.translatedX - x*x_scaler) ** 2 + (vertex.translatedY - y*y_scaler) ** 2);
-            return distance < 15; // Adjust the radius as needed for your click detection
+            return distance < 8; // Adjust the radius as needed for your click detection
           });
 
           if (clickedVertex) {
@@ -701,7 +728,7 @@ var monai_segmentation_app =new Vue({
               clickedVertex.translatedX = newX*x_scaler;
               // clickedVertex.y = newY; // original
               clickedVertex.translatedY = newY*y_scaler;
-              drawVertices(translatePos=MS.translatePos);
+              drawVertices(translatePos=MS.translatePos, scale=MS.scale);
             }
 
             function onMouseUp() {
@@ -709,8 +736,8 @@ var monai_segmentation_app =new Vue({
               canvas.removeEventListener('mouseup', onMouseUp);
             }
           } else {
-            newX = x*x_scaler
-            newY = y*y_scaler
+            newX = x*x_scaler/MS.scale + MS.translatePos.x * x_scaler
+            newY = y*y_scaler/MS.scale + MS.translatePos.y * y_scaler
             if (!isDrawing) {
               // Clicked outside existing vertices, add a new point
               isDrawing = true;
@@ -726,7 +753,7 @@ var monai_segmentation_app =new Vue({
               vertices.push(newVertex);
             }
             // Redraw the entire canvas with updated points
-            drawVertices(translatePos=MS.translatePos);
+            drawVertices(translatePos=MS.translatePos, scale=MS.scale);
           }
         });
 
@@ -738,7 +765,7 @@ var monai_segmentation_app =new Vue({
               // Remove the last vertex
               vertices.pop();
               // Redraw the annotations with the updated vertices
-              drawVertices(translatePos=MS.translatePos);
+              drawVertices(translatePos=MS.translatePos, scale=MS.scale);
             }
           }
         });
@@ -764,13 +791,24 @@ var monai_segmentation_app =new Vue({
           return Date.now()
         }
 
-        function drawVertices(translatePos={x:0,y:0}) {
+        function drawVertices(translatePos={x:0,y:0}, scale=1.0) {
           ctx.clearRect(0, 0, canvas.width, canvas.height); // I'm concerned here
-          // ctx.translate(-translatePos.x, -translatePos.y)
-          MS.drawAnnotations(MS.current_image, translatePos=MS.translatePos)
-          const x_scaler = MS.imageWidth / parseFloat( MS.$refs.canvases_parent_div.style.width.replace("px","") ) // Adjust x point clicked
-          const y_scaler = MS.imageHeight / parseFloat( MS.$refs.canvases_parent_div.style.height.replace("px","") ) // Adjust y point clicked
+          // fingers crossed
+          const imageCanvas = MS.$refs['image'];
+          current_working_width = MS.$refs['canvases_parent_div'].parentElement.offsetWidth
+          current_working_height = current_working_width/MS.aspectRatio
+          max_x_pixels_you_can_shift_image = MS.imageWidth * (1 - (1 / MS.scale)) * ( current_working_width / imageCanvas.width )
+          max_y_pixels_you_can_shift_image = MS.imageHeight * (1 - (1 / MS.scale)) * ( current_working_height / imageCanvas.height )
+          MS.translatePos.x = Math.max(Math.min(MS.translatePos.x, max_x_pixels_you_can_shift_image), 0)
+          MS.translatePos.y = Math.max(Math.min(MS.translatePos.y, max_y_pixels_you_can_shift_image), 0)
+          MS.drawAnnotations(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale)
+          
+          // const x_scaler = MS.imageWidth / parseFloat( MS.$refs.canvases_parent_div.style.width.replace("px","") ) // Adjust x point clicked
+          // const y_scaler = MS.imageHeight / parseFloat( MS.$refs.canvases_parent_div.style.height.replace("px","") ) // Adjust y point clicked
           // Draw existing vertices
+          ctx.save() // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+          ctx.scale(scale, scale)
+          ctx.translate( -translatePos.x * (canvas.width/current_working_width), -translatePos.y * (canvas.height/current_working_width) )
           ctx.fillStyle = 'blue'; // Set the vertex color
           // ctx.beginPath(); ctx.arc(0,0, 5, 0, 2 * Math.PI); ctx.fill();
           // ctx.beginPath(); ctx.arc(0,100, 5, 0, 2 * Math.PI); ctx.fill();
@@ -778,7 +816,8 @@ var monai_segmentation_app =new Vue({
           // ctx.beginPath(); ctx.arc(100,0, 5, 0, 2 * Math.PI); ctx.fill();
           vertices.forEach((vertex) => {
             ctx.beginPath();
-            ctx.arc(vertex.translatedX, vertex.translatedY, 5, 0, 2 * Math.PI);
+            // ctx.arc(vertex.translatedX*MS.scale, vertex.translatedY*MS.scale, 2, 0, 2 * Math.PI);
+            ctx.arc(vertex.translatedX, vertex.translatedY, 1, 0, 2 * Math.PI);
             ctx.fill();
           });
 
@@ -788,8 +827,10 @@ var monai_segmentation_app =new Vue({
           ctx.lineWidth = 1; // Set the line width
           ctx.beginPath();
           if (vertices.length > 0) {
+            // ctx.moveTo(vertices[0].translatedX*MS.scale, vertices[0].translatedY*MS.scale);
             ctx.moveTo(vertices[0].translatedX, vertices[0].translatedY);
             vertices.forEach((vertex) => {
+              // ctx.lineTo(vertex.translatedX*MS.scale, vertex.translatedY*MS.scale);
               ctx.lineTo(vertex.translatedX, vertex.translatedY);
             });
             ctx.closePath();
@@ -797,6 +838,7 @@ var monai_segmentation_app =new Vue({
             ctx.stroke();
           }
           ctx.stroke();
+          ctx.restore();
 
           // Update cocoAnnotations based on vertices
           const segmentation = vertices.map((vertex) => [vertex.translatedX, vertex.translatedY]);
@@ -828,15 +870,23 @@ var monai_segmentation_app =new Vue({
         } else if (this.aspectRatio === null){
           for (let i=1; i<=3; i++){
             setTimeout(()=>{
-              this.drawAnnotations(recursion_base_case=i);
+              // this.drawAnnotations(recursion_base_case=i); // DELETE ?
+              MS.drawAnnotations(recursion_base_case=i, translatePos=MS.translatePos, scale=MS.scale)
             }, 100*(i))
           }
         } else {
-          coco.width = MS.imageWidth
-          coco.height = MS.imageHeight
+          coco.width = MS.imageWidth // clears canvas
+          coco.height = MS.imageHeight // clears canvas
           const coco_ctx = coco.getContext('2d');
+          const currentTransform = coco_ctx.getTransform();
+          // console.log(`currentTransform (drawAnnotations): ${currentTransform}`)
           coco_ctx.save() // to preserve state for drawing verticies (live annotation object being created)
-          coco_ctx.translate(translatePos.x, translatePos.y)
+          coco_ctx.scale(scale, scale)
+          // console.log(`current_working_width: ${current_working_width}`)
+          // console.log(`current_working_height: ${current_working_height}`)
+          // console.log(`translatePos.x: ${translatePos.x}`)
+          // console.log(`translatePos.y: ${translatePos.y}`)
+          coco_ctx.translate( -translatePos.x * (coco.width/current_working_width), -translatePos.y * (coco.height/current_working_width) )
           // coco_ctx.clearRect(0, 0, MS.imageWidth, MS.imageHeight);
           // Load the annotations for the image
           var cocoAnnotations = this.coco_annotations;
@@ -850,8 +900,10 @@ var monai_segmentation_app =new Vue({
                 coco_ctx.strokeStyle = 'rgba(255, 0, 0, 1)'; // Set the line color
                 coco_ctx.lineWidth = 1; // Set the line width
                 coco_ctx.beginPath();
+                // coco_ctx.moveTo(points[0]*MS.scale, points[1]*MS.scale);
                 coco_ctx.moveTo(points[0], points[1]);
                 for (let i = 2; i < points.length; i += 2) {
+                  // coco_ctx.lineTo(points[i]*MS.scale, points[i + 1]*MS.scale);
                   coco_ctx.lineTo(points[i], points[i + 1]);
                 }
                 coco_ctx.closePath();
@@ -901,77 +953,158 @@ var monai_segmentation_app =new Vue({
           }
         })
       },
-      async displayCanvasImage(current_image, translatePos={x:0,y:0}, scale=1.0, fromInference=false) {
-        const image = new Image();
-        MS = this;
-        image.onload = () => {
-          // Once the image is loaded, draw it onto the canvas
-          MS.imageWidth = image.width;
-          MS.imageHeight = image.height;
-          this.aspectRatio = MS.imageWidth / MS.imageHeight;
-          // First time through image load
-          current_working_width = this.$refs['canvases_parent_div'].parentElement.offsetWidth
-          current_working_height = current_working_width/this.aspectRatio
-          this.$refs['canvases_parent_div'].style.width = `${current_working_width}px`
-          this.$refs['canvases_parent_div'].style.height = `${current_working_height}px`
-          
-          const canvas = this.$refs['image'];
-          const context = canvas.getContext('2d');
-          // Zoom practice
-          
-          // context.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, destX, destY, destWidth, destHeight);
-          canvas.width = MS.imageWidth
-          canvas.height = MS.imageHeight
-          max_x_pixels_you_can_shift_image = MS.imageWidth * (1 - (1 / scale)) * ( current_working_width / canvas.width )
-          max_y_pixels_you_can_shift_image = MS.imageHeight * (1 - (1 / scale)) * ( current_working_height / canvas.height )
-          console.log(`scale: ${scale}`)
-          console.log(`MS.translatePos.x max_x_pixels_you_can_shift_image MS.translatePos.y max_y_pixels_you_can_shift_image`)
-          console.log(`${MS.translatePos.x} ${max_x_pixels_you_can_shift_image} ${MS.translatePos.y} ${max_y_pixels_you_can_shift_image}`)
-          if( MS.translatePos.x <= max_x_pixels_you_can_shift_image && MS.translatePos.y <= max_y_pixels_you_can_shift_image &&
-              MS.translatePos.x >= 0                                && MS.translatePos.y >= 0){
-            sX = MS.translatePos.x * (canvas.width / current_working_width)
-            sY = MS.translatePos.y * (canvas.height / current_working_height)
-          } 
-          sX = Math.max(Math.min(MS.translatePos.x, max_x_pixels_you_can_shift_image), 0) * (canvas.width / current_working_width)
-          sY = Math.max(Math.min(MS.translatePos.y, max_y_pixels_you_can_shift_image), 0) * (canvas.height / current_working_height)
-          sW = MS.imageWidth / (scale)
-          sH = MS.imageHeight / (scale)
-          dX = 0
-          dY = 0
-          dW = canvas.width
-          dH = canvas.height
+      displayCanvasImage(current_image, translatePos={x:0,y:0}, scale=1.0, fromInference=false) {
+        return new Promise((resolve, reject) => {
+          const image = new Image();
+          MS = this;
+          image.onload = () => {
+            // Once the image is loaded, draw it onto the canvas
+            MS.imageWidth = image.width;
+            MS.imageHeight = image.height;
+            this.aspectRatio = MS.imageWidth / MS.imageHeight;
+            // First time through image load
+            current_working_width = this.$refs['canvases_parent_div'].parentElement.offsetWidth
+            current_working_height = current_working_width/this.aspectRatio
+            this.$refs['canvases_parent_div'].style.width = `${current_working_width}px`
+            this.$refs['canvases_parent_div'].style.height = `${current_working_height}px`
+            
+            const canvas = this.$refs['image'];
+            const context = canvas.getContext('2d');
+            // Zoom practice
+            
+            // context.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, destX, destY, destWidth, destHeight);
+            canvas.width = MS.imageWidth
+            canvas.height = MS.imageHeight
+            max_x_pixels_you_can_shift_image = MS.imageWidth * (1 - (1 / scale)) * ( current_working_width / canvas.width )
+            max_y_pixels_you_can_shift_image = MS.imageHeight * (1 - (1 / scale)) * ( current_working_height / canvas.height )
+  
+            // debugger;
 
-          context.drawImage(image, sX, sY, sW, sH, dX, dY, dW, dH);
-          // context.MS.translate(MS.translatePos.x, MS.translatePos.y)
-          // context.drawImage(image, MS.translatePos.x, MS.translatePos.y, MS.imageWidth * (scale), MS.imageHeight * (scale));
-          
-        };
-        // Set the base64 data as the source of the Image
-        image.src = `${this.image.base64}`;
+            MS.translatePos.x = Math.max(Math.min(MS.translatePos.x, max_x_pixels_you_can_shift_image), 0)
+            MS.translatePos.y = Math.max(Math.min(MS.translatePos.y, max_y_pixels_you_can_shift_image), 0)
+            sX = Math.max(Math.min(MS.translatePos.x, max_x_pixels_you_can_shift_image), 0) * (canvas.width / current_working_width)
+            sY = Math.max(Math.min(MS.translatePos.y, max_y_pixels_you_can_shift_image), 0) * (canvas.height / current_working_height)
+            sW = MS.imageWidth / (scale)
+            sH = MS.imageHeight / (scale)
+            dX = 0
+            dY = 0
+            dW = canvas.width
+            dH = canvas.height
+  
+            context.drawImage(image, sX, sY, sW, sH, dX, dY, dW, dH);
+            // context.MS.translate(MS.translatePos.x, MS.translatePos.y)
+            // context.drawImage(image, MS.translatePos.x, MS.translatePos.y, MS.imageWidth * (scale), MS.imageHeight * (scale));
+            
+            resolve();
+          };
+          image.onerror = (error) => {
+            reject(error);
+          }
+          // Set the base64 data as the source of the Image
+          image.src = `${this.image.base64}`;
+        })
       },
+      // async displayCanvasImage(current_image, translatePos={x:0,y:0}, scale=1.0, fromInference=false) {
+      //   const image = new Image();
+      //   MS = this;
+      //   image.onload = () => {
+      //     // Once the image is loaded, draw it onto the canvas
+      //     MS.imageWidth = image.width;
+      //     MS.imageHeight = image.height;
+      //     this.aspectRatio = MS.imageWidth / MS.imageHeight;
+      //     // First time through image load
+      //     current_working_width = this.$refs['canvases_parent_div'].parentElement.offsetWidth
+      //     current_working_height = current_working_width/this.aspectRatio
+      //     this.$refs['canvases_parent_div'].style.width = `${current_working_width}px`
+      //     this.$refs['canvases_parent_div'].style.height = `${current_working_height}px`
+          
+      //     const canvas = this.$refs['image'];
+      //     const context = canvas.getContext('2d');
+      //     // Zoom practice
+          
+      //     // context.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, destX, destY, destWidth, destHeight);
+      //     canvas.width = MS.imageWidth
+      //     canvas.height = MS.imageHeight
+      //     max_x_pixels_you_can_shift_image = MS.imageWidth * (1 - (1 / scale)) * ( current_working_width / canvas.width )
+      //     max_y_pixels_you_can_shift_image = MS.imageHeight * (1 - (1 / scale)) * ( current_working_height / canvas.height )
+
+      //     sX = Math.max(Math.min(MS.translatePos.x, max_x_pixels_you_can_shift_image), 0) * (canvas.width / current_working_width)
+      //     sY = Math.max(Math.min(MS.translatePos.y, max_y_pixels_you_can_shift_image), 0) * (canvas.height / current_working_height)
+      //     sW = MS.imageWidth / (scale)
+      //     sH = MS.imageHeight / (scale)
+      //     dX = 0
+      //     dY = 0
+      //     dW = canvas.width
+      //     dH = canvas.height
+
+      //     context.drawImage(image, sX, sY, sW, sH, dX, dY, dW, dH);
+      //     // context.MS.translate(MS.translatePos.x, MS.translatePos.y)
+      //     // context.drawImage(image, MS.translatePos.x, MS.translatePos.y, MS.imageWidth * (scale), MS.imageHeight * (scale));
+          
+      //   };
+      //   // Set the base64 data as the source of the Image
+      //   image.src = `${this.image.base64}`;
+      // },
       async displayBrushImage(current_image, translatePos={x:0,y:0}, scale=1.0, fromInference=false, recursion_base_case=0) {
         
         const segmentation = new Image();
         MS = this;
         segmentation.onload = () => {
-          console.log("segmentation onload")
           // Once the image is loaded, draw it onto the canvas
-          const canvas = this.$refs['segmentation'];
-          const context = canvas.getContext('2d');
-          context.setTransform(1, 0, 0, 1, 0, 0);
-          transform = context.getTransform()
-          console.log(`${transform.e}, ${transform.f}`)
-          canvas.width = MS.imageWidth
-          canvas.height = MS.imageHeight
-          context.translate(translatePos.x, translatePos.y)
-          console.log(translatePos.x, translatePos.y)
-          console.log(`${transform.e}, ${transform.f}`)
-          console.log("displayBrush64: "+this.segmentation_image.base64)
-          context.drawImage(segmentation, 0, 0, MS.imageWidth, MS.imageHeight);
+          const segmentationCanvas = this.$refs['segmentation'];
+          const segmentationContext = segmentationCanvas.getContext('2d');
+          // segmentationContext.setTransform(1, 0, 0, 1, 0, 0); // DO WE NEED THIS?
+          current_working_width = this.$refs['canvases_parent_div'].parentElement.offsetWidth
+          current_working_height = current_working_width/this.aspectRatio
+          segmentationCanvas.width = MS.imageWidth // clears canvas
+          segmentationCanvas.height = MS.imageHeight // clears canvas
+          max_x_pixels_you_can_shift_image = MS.imageWidth * (1 - (1 / scale)) * ( current_working_width / segmentationCanvas.width )
+          max_y_pixels_you_can_shift_image = MS.imageHeight * (1 - (1 / scale)) * ( current_working_height / segmentationCanvas.height )
+          // transform = segmentationContext.getTransform()
+          // segmentationContext.translate(translatePos.x, translatePos.y) // DO WE NEED THIS?
+          sX = Math.max(Math.min(MS.translatePos.x, max_x_pixels_you_can_shift_image), 0) * (segmentationCanvas.width / current_working_width)
+          sY = Math.max(Math.min(MS.translatePos.y, max_y_pixels_you_can_shift_image), 0) * (segmentationCanvas.height / current_working_height)
+          sW = MS.imageWidth / (scale)
+          sH = MS.imageHeight / (scale)
+          dX = 0
+          dY = 0
+          dW = segmentationCanvas.width
+          dH = segmentationCanvas.height
+          segmentationContext.drawImage(segmentation, sX, sY, sW, sH, dX, dY, dW, dH);
 
-          const testcanvas = this.$refs['testcanvas'];
-          const tcontext = canvas.getContext('2d');
-          tcontext.drawImage(segmentation, 0, 0, MS.imageWidth, MS.imageHeight);
+          // All of this is inefficient;
+          // This is all to set the tCanvas width and height;
+          // What we need is to set this once when the image is loaded. 
+          // Why should this ever need to get redrawn?
+          // brush() is updating this canvas patch by patch...
+          // It is always ready....tech debt!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+          const tCanvas = this.$refs['testcanvas'];
+          const tContext = tCanvas.getContext('2d');
+          tCanvas.width = MS.imageWidth // clears canvas; this is the issue...by setting this we clear the canvas so we waste time redrawing below because we erased it!
+          tCanvas.height = MS.imageHeight // clears canvas; this is the issue...by setting this we clear the canvas so we waste time redrawing below because we erased it!
+          sX = 0
+          sY = 0
+          sW = MS.imageWidth
+          sH = MS.imageHeight
+          dX = 0
+          dY = 0
+          dW = tCanvas.width
+          dH = tCanvas.height
+          tContext.drawImage(segmentation, sX, sY, sW, sH, dX, dY, dW, dH); // redraw because we erased above
+
+          const patchCanvas = this.$refs['patchCanvas'];
+          const patchContext = patchCanvas.getContext('2d');
+          patchCanvas.width = MS.imageWidth // clears canvas; this is the issue...by setting this we clear the canvas so we waste time redrawing below because we erased it!
+          patchCanvas.height = MS.imageHeight // clears canvas; this is the issue...by setting this we clear the canvas so we waste time redrawing below because we erased it!
+          sX = Math.max(Math.min(MS.translatePos.x, max_x_pixels_you_can_shift_image), 0) * (segmentationCanvas.width / current_working_width)
+          sY = Math.max(Math.min(MS.translatePos.y, max_y_pixels_you_can_shift_image), 0) * (segmentationCanvas.height / current_working_height)
+          sW = MS.imageWidth / (scale)
+          sH = MS.imageHeight / (scale)
+          dX = 0
+          dY = 0
+          dW = segmentationCanvas.width
+          dH = segmentationCanvas.height
+          patchContext.drawImage(segmentation, sX, sY, sW, sH, dX, dY, dW, dH); // redraw because we erased above
         }; 
         this.segmentation_image['image_id'] = this.images[current_image]
         if (this.segmentation_image['base64'] === null){          
@@ -1018,14 +1151,14 @@ var monai_segmentation_app =new Vue({
       brush(event) {
         if (this.isBrushing) {
           const segmentationCanvas = this.$refs['segmentation'];
-          const context = segmentationCanvas.getContext('2d');
-          transform = context.getTransform()
-          console.log(`brush top${transform.e}, ${transform.f}`)
-          const x_scaler = MS.imageWidth / parseFloat( MS.$refs.canvases_parent_div.style.width.replace("px","") ) // Adjust x point clicked
-          const y_scaler = MS.imageHeight / parseFloat( MS.$refs.canvases_parent_div.style.height.replace("px","") ) // Adjust y point clicked
+          const segmentationContext = segmentationCanvas.getContext('2d');
+          segmentationCanvas.style.width = this.$refs.canvases_parent_div.style.width;
+          segmentationCanvas.style.height = this.$refs.canvases_parent_div.style.height;
+          const x_scaler = this.imageWidth / parseFloat( this.$refs.canvases_parent_div.style.width.replace("px","") ) // Adjust x point clicked
+          const y_scaler = this.imageHeight / parseFloat( this.$refs.canvases_parent_div.style.height.replace("px","") ) // Adjust y point clicked
+          
           const x = event.offsetX;
           const y = event.offsetY;
-
           // Get the color value based on the selected channel
           let colorValue = 0;
           switch (this.result.radio_button_categories[0].selected) {
@@ -1054,26 +1187,71 @@ var monai_segmentation_app =new Vue({
           // Draw a circle on the segmentationCanvas with the selected color and brush size
           if(this.result.radio_button_categories[0].selected === "Erase"){
             // Set this to "remove" versus add this fillstyle
-            context.globalCompositeOperation = "destination-out";
-            context.fillStyle = "rgba(0,0,0,1)";
+            segmentationContext.globalCompositeOperation = "destination-out";
+            segmentationContext.fillStyle = "rgba(0,0,0,1)";
           } else {
-            context.globalCompositeOperation = "source-over";
-            context.fillStyle = `#${colorValue.toString(16).padStart(6, '0')}`;
+            segmentationContext.globalCompositeOperation = "source-over";
+            segmentationContext.fillStyle = `#${colorValue.toString(16).padStart(6, '0')}`;
           }
-          context.beginPath();
-          context.arc(x*x_scaler, y*y_scaler, this.brushSize / 2, 0, Math.PI * 2);
-          // context.arc(x*x_scaler - MS.translatePos.x, y*y_scaler - MS.translatePos.y, this.brushSize / 2, 0, Math.PI * 2);
-          context.fill();
-          this.segmentation_image.base64 = segmentationCanvas.toDataURL('image/png')
-          // console.log("drawBrush64: "+this.segmentation_image.base64)
-          // const timage = new Image();
-          // timage.onload = () => {
-          //   tcanvas = this.$refs.testcanvas
-          //   tcontext = tcanvas.getContext('2d');
-          //   tcontext.clearRect(0, 0, MS.imageWidth, MS.imageHeight);
-          //   tcontext.drawImage(timage, 0, 0, MS.imageWidth, MS.imageHeight);
-          // }
-          // timage.src = this.segmentation_image.base64
+          segmentationContext.beginPath();
+          segmentationContext.arc(x*x_scaler, y*y_scaler, this.brushSize / 2, 0, Math.PI * 2);
+          // segmentationContext.arc(x*x_scaler - MS.translatePos.x, y*y_scaler - MS.translatePos.y, this.brushSize / 2, 0, Math.PI * 2);
+          segmentationContext.fill();
+          
+          // Get Patch
+          //// Borrowed over from displayCanvas as that is essentially what we are doing for the seg mask
+          current_working_width = this.$refs['canvases_parent_div'].parentElement.offsetWidth
+          current_working_height = current_working_width/this.aspectRatio
+          max_x_pixels_you_can_shift_image = this.imageWidth * (1 - (1 / this.scale)) * ( current_working_width / segmentationCanvas.width )
+          max_y_pixels_you_can_shift_image = this.imageHeight * (1 - (1 / this.scale)) * ( current_working_height / segmentationCanvas.height )
+          // Define the coordinates and dimensions of the patch you want to capture
+          const x_patch = Math.max(Math.min(this.translatePos.x, max_x_pixels_you_can_shift_image), 0) * (segmentationCanvas.width / current_working_width); // X-coordinate of the top-left corner of the patch
+          const y_patch = Math.max(Math.min(this.translatePos.y, max_y_pixels_you_can_shift_image), 0) * (segmentationCanvas.height / current_working_height); // Y-coordinate of the top-left corner of the patch
+          const width_patch = Math.floor(this.imageWidth / (this.scale)); // Width of the patch
+          const height_patch = Math.floor(this.imageHeight / (this.scale)); // Height of the patch
+          // // Create a new canvas element to hold the captured patch
+          const patchCanvas = this.$refs.patchCanvas
+          // const patchCanvas = document.createElement('canvas');
+          // Get a 2D rendering context for the new canvas
+          const patchContext = patchCanvas.getContext('2d');
+          patchCanvas.width = width_patch
+          patchCanvas.height = height_patch
+          // Draw the specified region from the source canvas onto the new canvas
+          sX = 0
+          sY = 0
+          sW = segmentationCanvas.width// width_patch
+          sH = segmentationCanvas.height// height_patch
+          dX = 0
+          dY = 0
+          dW = patchCanvas.width
+          dH = patchCanvas.height
+          patchContext.drawImage(segmentationCanvas, sX, sY, sW, sH, dX, dY, dW, dH);
+
+          tcanvas = this.$refs.testcanvas
+          // tcanvas.width = this.imageWidth // BAD: CLEARS CANVAS
+          // tcanvas.height = this.imageHeight // BAD: CLEARS CANVAS
+          tcanvas.style.width = parseFloat( this.$refs.canvases_parent_div.style.width.replace("px","") )// DO WE NEED?
+          tcanvas.style.height = parseFloat( this.$refs.canvases_parent_div.style.height.replace("px","") )// DO WE NEED?
+          tcontext = tcanvas.getContext('2d');
+          // Draw patch on testcanvas or preview of mask canvas
+          console.log(`this.translatePos.x ${this.translatePos.x} | this.translatePos.y ${this.translatePos.y}`)
+          console.log(`x_patch ${x_patch} | y_patch ${y_patch}`)
+          console.log(`patchCanvas.width ${patchCanvas.width} | patchCanvas.height ${patchCanvas.height}`)
+          console.log(`tcanvas.width ${tcanvas.width} | tcanvas.height ${tcanvas.height}`)
+          console.log(`width_patch ${width_patch} | height_patch ${height_patch}`)
+          console.log(`segmentationCanvas.width ${segmentationCanvas.width} | segmentationCanvas.height ${segmentationCanvas.height}`)
+          sX = 0
+          sY = 0
+          sW = width_patch
+          sH = height_patch
+          dX = x_patch
+          dY = y_patch
+          dW = width_patch
+          dH = height_patch
+          tcontext.clearRect(dX, dY, dW, dH);
+          tcontext.drawImage(patchCanvas, sX, sY, sW, sH, dX, dY, dW, dH);
+          this.segmentation_image.base64 = tcanvas.toDataURL();
+
         }
       },
       getTools(app, tool_set) {
