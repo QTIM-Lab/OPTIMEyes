@@ -10,11 +10,18 @@
         >
         <v-app-bar-nav-icon @click="drawer = true"> </v-app-bar-nav-icon>
 
-            <v-toolbar-title
+          <v-toolbar-title
             color="blue"
             v-if=config.USER_INFO.logged_in
             >
-            Welcome [[ config.USER_INFO.username ]]</v-toolbar-title>
+            Welcome [[ config.USER_INFO.username ]]
+          </v-toolbar-title>
+            <!-- <v-toolbar-title
+            color="blue"
+            v-if=config.USER_INFO.logged_in
+            >
+            (DEV ENVIRONMENT) Welcome [[ config.USER_INFO.username ]]
+          </v-toolbar-title> -->
         
             <v-spacer></v-spacer>
             <v-btn elevation="2" 
