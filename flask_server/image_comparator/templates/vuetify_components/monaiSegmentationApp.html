@@ -496,9 +496,10 @@ var monai_segmentation_app =new Vue({
           // Get image
           this.image.image_id = this.images[this.task.value.current_idx]
           this.image['base64'] = await this.getBase64DataOfImageFromCouch(this.image.image_id)
-          this.displayCanvasImage(current_image=this.task.value.current_idx);
+          // debugger
+          await this.displayCanvasImage(current_image=this.task.value.current_idx);
           this.displayBrushImage(current_image=this.task.value.current_idx);
-          this.drawAnnotations();
+          this.drawAnnotations(); //
           this.initCoco();
           this.initCanvasZoomTools();
 
@@ -659,6 +660,7 @@ var monai_segmentation_app =new Vue({
             segmentationContext.fill(); // Or use .stroke() if you just want the outline
             // Save to segmentation_image.base64
             this.segmentation_image.base64 = segmentationCanvas.toDataURL('image/png')
+            // MS.displayBrushImage(MS.current_image, translatePos=MS.translatePos, scale=MS.scale);
             }
         });
 
@@ -861,59 +863,97 @@ var monai_segmentation_app =new Vue({
       drawAnnotations(recursion_base_case=0, translatePos={x:0,y:0}, scale=1.0) {
         const coco = this.$refs['coco'];
         MS = this;
-        // recursive retry
-        if (recursion_base_case === 3){
-            if (this.aspectRatio === null){
-              this.alert_error = "On third retry to set size of coco canvas and am terminating. Check you are loading an image correctly as that sets aspectRatio which is what we don't have."
-              setTimeout(()=>{this.alert_error = null}, 2000)
-            }
-        } else if (this.aspectRatio === null){
-          for (let i=1; i<=3; i++){
-            setTimeout(()=>{
-              // this.drawAnnotations(recursion_base_case=i); // DELETE ?
-              MS.drawAnnotations(recursion_base_case=i, translatePos=MS.translatePos, scale=MS.scale)
-            }, 100*(i))
-          }
-        } else {
-          coco.width = MS.imageWidth // clears canvas
-          coco.height = MS.imageHeight // clears canvas
-          const coco_ctx = coco.getContext('2d');
-          const currentTransform = coco_ctx.getTransform();
-          // console.log(`currentTransform (drawAnnotations): ${currentTransform}`)
-          coco_ctx.save() // to preserve state for drawing verticies (live annotation object being created)
-          coco_ctx.scale(scale, scale)
-          // console.log(`current_working_width: ${current_working_width}`)
-          // console.log(`current_working_height: ${current_working_height}`)
-          // console.log(`translatePos.x: ${translatePos.x}`)
-          // console.log(`translatePos.y: ${translatePos.y}`)
-          coco_ctx.translate( -translatePos.x * (coco.width/current_working_width), -translatePos.y * (coco.height/current_working_width) )
-          // coco_ctx.clearRect(0, 0, MS.imageWidth, MS.imageHeight);
-          // Load the annotations for the image
-          var cocoAnnotations = this.coco_annotations;
-          // Draw existing segmentations
-          if (cocoAnnotations.length > 0){
-            cocoAnnotations.forEach((segmentation) => {
-              // const points = segmentation.segmentation[0];
-              const points = segmentation.segmentation;
-              if (points.length > 0) {
-                coco_ctx.fillStyle = 'rgba(255, 0, 0, 0.10)';
-                coco_ctx.strokeStyle = 'rgba(255, 0, 0, 1)'; // Set the line color
-                coco_ctx.lineWidth = 1; // Set the line width
-                coco_ctx.beginPath();
-                // coco_ctx.moveTo(points[0]*MS.scale, points[1]*MS.scale);
-                coco_ctx.moveTo(points[0], points[1]);
-                for (let i = 2; i < points.length; i += 2) {
-                  // coco_ctx.lineTo(points[i]*MS.scale, points[i + 1]*MS.scale);
-                  coco_ctx.lineTo(points[i], points[i + 1]);
-                }
-                coco_ctx.closePath();
-                coco_ctx.fill();
-                coco_ctx.stroke();
+        coco.width = MS.imageWidth // clears canvas
+        coco.height = MS.imageHeight // clears canvas
+        const coco_ctx = coco.getContext('2d');
+        const currentTransform = coco_ctx.getTransform();
+        // console.log(`currentTransform (drawAnnotations): ${currentTransform}`)
+        coco_ctx.save() // to preserve state for drawing verticies (live annotation object being created)
+        coco_ctx.scale(scale, scale)
+        // console.log(`current_working_width: ${current_working_width}`)
+        // console.log(`current_working_height: ${current_working_height}`)
+        // console.log(`translatePos.x: ${translatePos.x}`)
+        // console.log(`translatePos.y: ${translatePos.y}`)
+        coco_ctx.translate( -translatePos.x * (coco.width/current_working_width), -translatePos.y * (coco.height/current_working_width) )
+        // coco_ctx.clearRect(0, 0, MS.imageWidth, MS.imageHeight);
+        // Load the annotations for the image
+        var cocoAnnotations = this.coco_annotations;
+        // Draw existing segmentations
+        if (cocoAnnotations.length > 0){
+          cocoAnnotations.forEach((segmentation) => {
+            // const points = segmentation.segmentation[0];
+            const points = segmentation.segmentation;
+            if (points.length > 0) {
+              coco_ctx.fillStyle = 'rgba(255, 0, 0, 0.10)';
+              coco_ctx.strokeStyle = 'rgba(255, 0, 0, 1)'; // Set the line color
+              coco_ctx.lineWidth = 1; // Set the line width
+              coco_ctx.beginPath();
+              // coco_ctx.moveTo(points[0]*MS.scale, points[1]*MS.scale);
+              coco_ctx.moveTo(points[0], points[1]);
+              for (let i = 2; i < points.length; i += 2) {
+                // coco_ctx.lineTo(points[i]*MS.scale, points[i + 1]*MS.scale);
+                coco_ctx.lineTo(points[i], points[i + 1]);
               }
-            });
-          }
-          coco_ctx.restore()
+              coco_ctx.closePath();
+              coco_ctx.fill();
+              coco_ctx.stroke();
+            }
+          });
         }
+        coco_ctx.restore()
+        // recursive retry
+        // if (recursion_base_case === 3){
+        //     if (this.aspectRatio === null){
+        //       this.alert_error = "On third retry to set size of coco canvas and am terminating. Check you are loading an image correctly as that sets aspectRatio which is what we don't have."
+        //       setTimeout(()=>{this.alert_error = null}, 2000)
+        //     }
+        // } else if (this.aspectRatio === null){
+        //   for (let i=1; i<=3; i++){
+        //     setTimeout(()=>{
+        //       // this.drawAnnotations(recursion_base_case=i); // DELETE ?
+        //       MS.drawAnnotations(recursion_base_case=i, translatePos=MS.translatePos, scale=MS.scale)
+        //     }, 100*(i))
+        //   }
+        // } else {
+        //   coco.width = MS.imageWidth // clears canvas
+        //   coco.height = MS.imageHeight // clears canvas
+        //   const coco_ctx = coco.getContext('2d');
+        //   const currentTransform = coco_ctx.getTransform();
+        //   // console.log(`currentTransform (drawAnnotations): ${currentTransform}`)
+        //   coco_ctx.save() // to preserve state for drawing verticies (live annotation object being created)
+        //   coco_ctx.scale(scale, scale)
+        //   // console.log(`current_working_width: ${current_working_width}`)
+        //   // console.log(`current_working_height: ${current_working_height}`)
+        //   // console.log(`translatePos.x: ${translatePos.x}`)
+        //   // console.log(`translatePos.y: ${translatePos.y}`)
+        //   coco_ctx.translate( -translatePos.x * (coco.width/current_working_width), -translatePos.y * (coco.height/current_working_width) )
+        //   // coco_ctx.clearRect(0, 0, MS.imageWidth, MS.imageHeight);
+        //   // Load the annotations for the image
+        //   var cocoAnnotations = this.coco_annotations;
+        //   // Draw existing segmentations
+        //   if (cocoAnnotations.length > 0){
+        //     cocoAnnotations.forEach((segmentation) => {
+        //       // const points = segmentation.segmentation[0];
+        //       const points = segmentation.segmentation;
+        //       if (points.length > 0) {
+        //         coco_ctx.fillStyle = 'rgba(255, 0, 0, 0.10)';
+        //         coco_ctx.strokeStyle = 'rgba(255, 0, 0, 1)'; // Set the line color
+        //         coco_ctx.lineWidth = 1; // Set the line width
+        //         coco_ctx.beginPath();
+        //         // coco_ctx.moveTo(points[0]*MS.scale, points[1]*MS.scale);
+        //         coco_ctx.moveTo(points[0], points[1]);
+        //         for (let i = 2; i < points.length; i += 2) {
+        //           // coco_ctx.lineTo(points[i]*MS.scale, points[i + 1]*MS.scale);
+        //           coco_ctx.lineTo(points[i], points[i + 1]);
+        //         }
+        //         coco_ctx.closePath();
+        //         coco_ctx.fill();
+        //         coco_ctx.stroke();
+        //       }
+        //     });
+        //   }
+        //   coco_ctx.restore()
+        // }
 
       },
       async getConfiguration() {
@@ -979,7 +1019,6 @@ var monai_segmentation_app =new Vue({
             max_y_pixels_you_can_shift_image = MS.imageHeight * (1 - (1 / scale)) * ( current_working_height / canvas.height )
   
             // debugger;
-
             MS.translatePos.x = Math.max(Math.min(MS.translatePos.x, max_x_pixels_you_can_shift_image), 0)
             MS.translatePos.y = Math.max(Math.min(MS.translatePos.y, max_y_pixels_you_can_shift_image), 0)
             sX = Math.max(Math.min(MS.translatePos.x, max_x_pixels_you_can_shift_image), 0) * (canvas.width / current_working_width)
@@ -1107,31 +1146,17 @@ var monai_segmentation_app =new Vue({
           patchContext.drawImage(segmentation, sX, sY, sW, sH, dX, dY, dW, dH); // redraw because we erased above
         }; 
         this.segmentation_image['image_id'] = this.images[current_image]
-        if (this.segmentation_image['base64'] === null){          
-          // recursive retry
-          if (recursion_base_case === 3){
-            if (this.aspectRatio === null){
-              this.alert_error = "On third retry to set size of brush canvas and am terminating. Check you are loading an image correctly as that sets aspectRatio which is what we don't have."
-              setTimeout(()=>{this.alert_error = null}, 2000)
-            }
-          } else if (this.aspectRatio === null){
-            for (let i=1; i<=3; i++){
-              setTimeout(()=>{
-                this.displayBrushImage(current_image=this.task.value.current_idx, recursion_base_case=i);
-              }, 100*(i))
-            }
-          } else {
-            // Create a canvas element with desired dimensions
-            image_canvas = this.$refs['image'];
-            // adjust parent 
-            var segmentation_canvas = document.createElement('canvas');
-            segmentation_canvas.width = image_canvas.width; // Set the width of the canvas
-            segmentation_canvas.height = image_canvas.height; // Set the height of the canvas
-            // Convert the new canvas to a base64 data URL (default format is PNG)
-            this.segmentation_image.base64 = segmentation_canvas.toDataURL();
-            // Send in image
-            segmentation.src = `${this.segmentation_image.base64}`;
-          }
+        if (this.segmentation_image['base64'] === null){       
+          // Create a canvas element with desired dimensions
+          image_canvas = this.$refs['image'];
+          // adjust parent 
+          var segmentation_canvas = document.createElement('canvas');
+          segmentation_canvas.width = image_canvas.width; // Set the width of the canvas
+          segmentation_canvas.height = image_canvas.height; // Set the height of the canvas
+          // Convert the new canvas to a base64 data URL (default format is PNG)
+          this.segmentation_image.base64 = segmentation_canvas.toDataURL();
+          // Send in image
+          segmentation.src = `${this.segmentation_image.base64}`;
         } else {
           segmentation.src = `${this.segmentation_image.base64}`;
         }
