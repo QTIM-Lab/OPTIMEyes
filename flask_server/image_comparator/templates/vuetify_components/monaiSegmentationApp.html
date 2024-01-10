@@ -194,13 +194,13 @@
                 <!-- Debugging with test canvas -->
                 <canvas
                   ref="testcanvas"
-                  style="border: 1px; border-style: solid; display: none;"
+                  style="border: 1px; border-style: solid"
                   width="500"
                   height="435"
                 ></canvas>
                 <canvas
                   ref="patchCanvas"
-                  style="border: 1px; border-style: solid; display: none;"
+                  style="border: 1px; border-style: solid"
                   width="500"
                   height="435"
                 ></canvas>
@@ -633,11 +633,15 @@ var monai_segmentation_app =new Vue({
         // Get the canvas elements
         var cocoCanvas = this.$refs['coco'];
         var segmentationCanvas = this.$refs['segmentation'];
+        var testCanvas = this.$refs['testcanvas'];
+        var patchCanvas = this.$refs['patchCanvas'];
 
         // Get the 2D contexts of the canvases
         var cocoContext = cocoCanvas.getContext('2d');
         var segmentationContext = segmentationCanvas.getContext('2d');
-        segmentationContext.globalCompositeOperation = "source-over";
+        var testContext = testCanvas.getContext('2d');
+        var patchContext = patchCanvas.getContext('2d');
+        segmentationContext.globalCompositeOperation = "source-over"; // unsure about this...01_09_2024
         
         // Here, you need to access the polygons data from the 'coco' canvas.
         // This will depend on how you're storing the drawn polygons.
@@ -645,23 +649,48 @@ var monai_segmentation_app =new Vue({
         var coco_annotations = this.coco_annotations; // Your polygons data structure
         // Clear the segmentation canvas if needed
         // segmentationContext.clearRect(0, 0, segmentationCanvas.width, segmentationCanvas.height);
-        
+        current_working_width = this.$refs['canvases_parent_div'].parentElement.offsetWidth
+        current_working_height = current_working_width/this.aspectRatio
         // Iterate over the polygons and draw them on the segmentation canvas
         coco_annotations.forEach(segmentation => {
           const points = segmentation.segmentation;
           if (points.length > 0) {
-            segmentationContext.beginPath();
-            segmentationContext.fillStyle = `#ff0000`;
-            segmentationContext.moveTo(points[0], points[1]);
+            // Draw on segmentationCanvas scaled
+            // segmentationContext.beginPath();
+            // segmentationContext.fillStyle = `#ff0000`;
+            // x_new_origin = points[0]*(segmentationCanvas.width / current_working_width)
+            // y_new_origin = points[1]*(segmentationCanvas.height / current_working_height)
+            // segmentationContext.moveTo(x_new_origin, y_new_origin);
+            // for (let i = 2; i < points.length; i += 2) {
+            //   x_new = points[i]*(segmentationCanvas.width / current_working_width)
+            //   y_new = points[i+1]*(segmentationCanvas.height / current_working_height)
+            //   segmentationContext.lineTo(x_new, y_new);
+            // }
+            // segmentationContext.closePath();
+            // segmentationContext.fill(); // Or use .stroke() if you just want the outline
+            // Draw on testCanvas
+            testContext.beginPath();
+            testContext.fillStyle = `#ff0000`;
+            testContext.moveTo(points[0], points[1]);
             for (let i = 2; i < points.length; i += 2) {
-              segmentationContext.lineTo(points[i], points[i + 1]);
+              testContext.lineTo(points[i], points[i + 1]);
             }
-            segmentationContext.closePath();
-            segmentationContext.fill(); // Or use .stroke() if you just want the outline
-            // Save to segmentation_image.base64
-            this.segmentation_image.base64 = segmentationCanvas.toDataURL('image/png')
-            // MS.displayBrushImage(MS.current_image, translatePos=MS.translatePos, scale=MS.scale);
-            }
+            testContext.closePath();
+            testContext.fill(); // Or use .stroke() if you just want the outline
+          }
+          this.segmentation_image.base64 = testCanvas.toDataURL('image/png')
+          // Draw back on segmentation canvas from test canvas
+          sX = MS.translatePos.x * (segmentationCanvas.width / current_working_width)
+          sY = MS.translatePos.y * (segmentationCanvas.height / current_working_height)
+          sW = MS.imageWidth / (scale)
+          sH = MS.imageHeight / (scale)
+          dX = 0
+          dY = 0
+          dW = segmentationCanvas.width
+          dH = segmentationCanvas.height
+          segmentationContext.drawImage(testCanvas, sX, sY, sW, sH, dX, dY, dW, dH);
+          // Draw back on patch canvas from test canvas
+          patchContext.drawImage(testCanvas, sX, sY, sW, sH, dX, dY, dW, dH);
         });
 
         // Optionally clear the 'coco' canvas
@@ -810,7 +839,7 @@ var monai_segmentation_app =new Vue({
           // Draw existing vertices
           ctx.save() // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
           ctx.scale(scale, scale)
-          ctx.translate( -translatePos.x * (canvas.width/current_working_width), -translatePos.y * (canvas.height/current_working_width) )
+          ctx.translate( -translatePos.x * (canvas.width/current_working_width), -translatePos.y * (canvas.height/current_working_height) )
           ctx.fillStyle = 'blue'; // Set the vertex color
           // ctx.beginPath(); ctx.arc(0,0, 5, 0, 2 * Math.PI); ctx.fill();
           // ctx.beginPath(); ctx.arc(0,100, 5, 0, 2 * Math.PI); ctx.fill();
@@ -866,15 +895,14 @@ var monai_segmentation_app =new Vue({
         coco.width = MS.imageWidth // clears canvas
         coco.height = MS.imageHeight // clears canvas
         const coco_ctx = coco.getContext('2d');
-        const currentTransform = coco_ctx.getTransform();
+        const currentTransform = coco_ctx.getTransform(); // unsure about this...01_09_2024
         // console.log(`currentTransform (drawAnnotations): ${currentTransform}`)
         coco_ctx.save() // to preserve state for drawing verticies (live annotation object being created)
         coco_ctx.scale(scale, scale)
-        // console.log(`current_working_width: ${current_working_width}`)
-        // console.log(`current_working_height: ${current_working_height}`)
-        // console.log(`translatePos.x: ${translatePos.x}`)
-        // console.log(`translatePos.y: ${translatePos.y}`)
-        coco_ctx.translate( -translatePos.x * (coco.width/current_working_width), -translatePos.y * (coco.height/current_working_width) )
+        current_working_width = this.$refs['canvases_parent_div'].parentElement.offsetWidth
+        current_working_height = current_working_width/this.aspectRatio
+        // debugger
+        coco_ctx.translate( -translatePos.x * (coco.width/current_working_width), -translatePos.y * (coco.height/current_working_height) )
         // coco_ctx.clearRect(0, 0, MS.imageWidth, MS.imageHeight);
         // Load the annotations for the image
         var cocoAnnotations = this.coco_annotations;
@@ -901,59 +929,6 @@ var monai_segmentation_app =new Vue({
           });
         }
         coco_ctx.restore()
-        // recursive retry
-        // if (recursion_base_case === 3){
-        //     if (this.aspectRatio === null){
-        //       this.alert_error = "On third retry to set size of coco canvas and am terminating. Check you are loading an image correctly as that sets aspectRatio which is what we don't have."
-        //       setTimeout(()=>{this.alert_error = null}, 2000)
-        //     }
-        // } else if (this.aspectRatio === null){
-        //   for (let i=1; i<=3; i++){
-        //     setTimeout(()=>{
-        //       // this.drawAnnotations(recursion_base_case=i); // DELETE ?
-        //       MS.drawAnnotations(recursion_base_case=i, translatePos=MS.translatePos, scale=MS.scale)
-        //     }, 100*(i))
-        //   }
-        // } else {
-        //   coco.width = MS.imageWidth // clears canvas
-        //   coco.height = MS.imageHeight // clears canvas
-        //   const coco_ctx = coco.getContext('2d');
-        //   const currentTransform = coco_ctx.getTransform();
-        //   // console.log(`currentTransform (drawAnnotations): ${currentTransform}`)
-        //   coco_ctx.save() // to preserve state for drawing verticies (live annotation object being created)
-        //   coco_ctx.scale(scale, scale)
-        //   // console.log(`current_working_width: ${current_working_width}`)
-        //   // console.log(`current_working_height: ${current_working_height}`)
-        //   // console.log(`translatePos.x: ${translatePos.x}`)
-        //   // console.log(`translatePos.y: ${translatePos.y}`)
-        //   coco_ctx.translate( -translatePos.x * (coco.width/current_working_width), -translatePos.y * (coco.height/current_working_width) )
-        //   // coco_ctx.clearRect(0, 0, MS.imageWidth, MS.imageHeight);
-        //   // Load the annotations for the image
-        //   var cocoAnnotations = this.coco_annotations;
-        //   // Draw existing segmentations
-        //   if (cocoAnnotations.length > 0){
-        //     cocoAnnotations.forEach((segmentation) => {
-        //       // const points = segmentation.segmentation[0];
-        //       const points = segmentation.segmentation;
-        //       if (points.length > 0) {
-        //         coco_ctx.fillStyle = 'rgba(255, 0, 0, 0.10)';
-        //         coco_ctx.strokeStyle = 'rgba(255, 0, 0, 1)'; // Set the line color
-        //         coco_ctx.lineWidth = 1; // Set the line width
-        //         coco_ctx.beginPath();
-        //         // coco_ctx.moveTo(points[0]*MS.scale, points[1]*MS.scale);
-        //         coco_ctx.moveTo(points[0], points[1]);
-        //         for (let i = 2; i < points.length; i += 2) {
-        //           // coco_ctx.lineTo(points[i]*MS.scale, points[i + 1]*MS.scale);
-        //           coco_ctx.lineTo(points[i], points[i + 1]);
-        //         }
-        //         coco_ctx.closePath();
-        //         coco_ctx.fill();
-        //         coco_ctx.stroke();
-        //       }
-        //     });
-        //   }
-        //   coco_ctx.restore()
-        // }
 
       },
       async getConfiguration() {
@@ -1092,11 +1067,10 @@ var monai_segmentation_app =new Vue({
           // Once the image is loaded, draw it onto the canvas
           const segmentationCanvas = this.$refs['segmentation'];
           const segmentationContext = segmentationCanvas.getContext('2d');
-          // segmentationContext.setTransform(1, 0, 0, 1, 0, 0); // DO WE NEED THIS?
           current_working_width = this.$refs['canvases_parent_div'].parentElement.offsetWidth
           current_working_height = current_working_width/this.aspectRatio
-          segmentationCanvas.width = MS.imageWidth // clears canvas
-          segmentationCanvas.height = MS.imageHeight // clears canvas
+          segmentationCanvas.width = MS.imageWidth // clears canvas; Also I think this could be anything as whatever it is, the s square of segmentation will be drawn on it.
+          segmentationCanvas.height = MS.imageHeight // clears canvas; Also I think this could be anything as whatever it is, the s square of segmentation will be drawn on it.
           max_x_pixels_you_can_shift_image = MS.imageWidth * (1 - (1 / scale)) * ( current_working_width / segmentationCanvas.width )
           max_y_pixels_you_can_shift_image = MS.imageHeight * (1 - (1 / scale)) * ( current_working_height / segmentationCanvas.height )
           // transform = segmentationContext.getTransform()
