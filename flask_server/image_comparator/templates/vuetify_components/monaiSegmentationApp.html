@@ -20,12 +20,7 @@
     width: 700px;
     height: 700px;
     border: 1px;
-    border-style: dashed;
-    /* new */
-    /* display: flex; */
-    /* align-items: center; */
-    /* justify-content: center; */
-    
+    border-style: dashed;    
   }
   #buttonWrapper {
       position: absolute;
@@ -43,7 +38,6 @@
     border: 1px;
     border-style: solid;
   }
-  
   .image {
     position: relative;
     top: 0;
@@ -56,7 +50,6 @@
     /* Preserve aspect ratio while fitting */
     /* object-fit: contain; */ /* or object-fit: cover; depending on your preference */
   }
-  
   .segmentation {
     position: absolute;
     top: 0px;
@@ -66,7 +59,6 @@
     width: 100%;
     height: 100%;
   }
-
   .coco {
     position: absolute;
     top: 0px;
@@ -76,7 +68,6 @@
     width: 100%;
     height: 100%;
   }
-
   .spinner {
     display: inline-block; /* Add this line */
     border: 4px solid rgba(255, 255, 255, 0.3);
@@ -86,7 +77,6 @@
     height: 16px;
     animation: spin 1s linear infinite;
   }
-
   .spinner-inner {
     width: 8px;
     height: 8px;
@@ -98,12 +88,10 @@
     left: 0px;
     animation: spin 1s linear infinite;
   }
-
   @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
   }
-
   .check-mark {
     display: inline-block; /* Add this line */
     font-size: 16px;
@@ -111,8 +99,6 @@
   }
 </style>
 {% endblock %}
-
-
 
 <!-- BODY -->
 {% block content %}
@@ -167,7 +153,7 @@
                   <canvas
                     ref="image"
                     class="image"
-                    :style="{ border: borderImage }"
+                    :style="{ border: borderImage, 'z-index': image_z_index, opacity: image_opacity}"
                   ></canvas>
                   <div id="buttonWrapper">
                     <input type="button" id="plus" value="+">
@@ -219,11 +205,73 @@
                   <v-row no-gutters>
                     <v-col
                     cols="12"
-                    lg="6"
+                    lg="12"
                     >
+                      <!-- Segmentation Tools -->
+                      <h4>Segmentation Tools:</h4>
+                      <!-- Simple button example if needed for later -->
+                      <!-- <v-btn @click="toggleBrushPolygon('brush')"> 
+                        <v-icon>[[ 'mdi-brush-outline' ]]</v-icon>
+                        [[ BrushButtonText ]]
+                      </v-btn> -->
+
+                      <!-- Image Tools -->
+                      <h4>Image Tools:</h4>
+                      <v-btn :outlined="image_selected" @click="toggleBrushPolygon('image')">
+                        <v-tooltip left>
+                          <template v-slot:activator="{ on }">
+                            <v-icon v-on="on">[[ 'mdi-cursor-move' ]]</v-icon>
+                          </template>
+                          Move Image (Only if zoomed in)
+                        </v-tooltip>
+                      </v-btn>
+
+                      <!-- Brush Options -->
+                      <h5>Brush Options:</h5>
+                      <v-btn :outlined="segmentation_selected" @click="toggleBrushPolygon('brush')"> 
+                        <v-tooltip left>
+                          <template v-slot:activator="{ on }">
+                            <v-icon v-on="on">[[ 'mdi-brush-outline' ]]</v-icon>
+                          </template>
+                        [[ BrushButtonText ]]
+                        </v-tooltip>
+                      </v-btn>
+                      <v-btn @click="hideCanvas">
+                        <v-icon>[[ segmentation_image.display === '' ? 'mdi-eye-outline' : 'mdi-eye-off' ]]</v-icon>
+                        [[ hideBrushButtonText ]]
+                      </v-btn>
+                      <!-- Brush size adjustment -->
+                      <label>Size:</label>
+                      <input type="range" v-model="brushSize" min="1" :max="brushSizeMax" />
+
+                      <!-- Coco Polygon Options -->
+                      <h4>Coco Polygon Options:</h4>
+                      <v-btn :outlined="polygon_selected" @click="toggleBrushPolygon('polygon')"> 
+                        <v-tooltip left>
+                          <template v-slot:activator="{ on }">
+                            <v-icon v-on="on">[[ 'mdi-vector-polygon' ]]</v-icon>
+                          </template>
+                        [[ PolygonButtonText ]]
+                        </v-tooltip>
+                      </v-btn>
+                      <v-btn @click="mergePolygonsToBrushCanvas">
+                        <v-tooltip left>
+                          <template v-slot:activator="{ on }">
+                            <v-icon v-on="on">[[ 'mdi-stamper' ]]</v-icon>
+                          </template>
+                          (Stamp committed polygons onto brush canvas as brush pixels)
+                        </v-tooltip>
+                      </v-btn>
+                      <v-btn @click="hidePolygon">
+                        <v-icon>[[ polygonDisplay === '' ? 'mdi-eye-outline' : 'mdi-eye-off' ]]</v-icon>
+                        [[ hidePolygonButtonText ]]
+                      </v-btn>
+
                       <!-- Monai Label Buttons and Tools -->
+                      <h4>Monai Label Tools:</h4>
                       <div>
                         <v-btn @click="performInference">
+                          <v-icon>[[ 'mdi-lightbulb-outline' ]]</v-icon>
                           Perform Inference
                           <div v-if="inferenceLoading" class="spinner">
                             <div class="spinner-inner"></div>
@@ -232,6 +280,7 @@
                         </v-btn>
 
                         <v-btn @click="saveLabel">
+                          <v-icon>[[ 'mdi-content-save' ]]</v-icon>
                           Save Current Annotation
                           <div v-if="saveLoading" class="spinner">
                             <div class="spinner-inner"></div>
@@ -240,34 +289,13 @@
                         </v-btn>
                         
                         <v-btn @click="trainOnLabels">
+                          <v-icon>[[ 'mdi-brain' ]]</v-icon>
                           Train on Saved Annotations
                           <div v-if="trainLoading" class="spinner">
                             <div class="spinner-inner"></div>
                           </div>
                           <div v-if="trainDoneTraining" class="check-mark">✔</div>
                         </v-btn>
-
-                        <v-btn @click="hideCanvas">
-                          [[ hideBrushButtonText ]]
-                          <v-icon>[[ segmentation_image.display === '' ? 'mdi-eye-outline' : 'mdi-eye-off' ]]</v-icon>
-                        </v-btn>
-                        <!-- Brush size adjustment -->
-                        <label>Brush Size:</label>
-                        <input type="range" v-model="brushSize" min="1" max="50" />
-                        <v-btn @click="hidePolygon">
-                          [[ hidePolygonButtonText ]]
-                          <v-icon>[[ polygonDisplay === '' ? 'mdi-eye-outline' : 'mdi-eye-off' ]]</v-icon>
-                        </v-btn>
-                        <v-btn ref="toggleBrushPolygonButton" @click="toggleBrushPolygon">
-                          [[ toggleBrushPolygonButtonText ]]
-                        </v-btn>
-                        <v-btn @click="mergePolygonsToBrushCanvas">
-                          Finalize Annotation
-                        </v-btn>
-                        <!-- <v-btn @click="toggle_brushing">
-                          Test
-                        </v-btn> -->
-
 
                       </div>
 
@@ -276,7 +304,7 @@
                   <v-row no-gutters>
                     <v-col
                     cols="12"
-                    lg="6"
+                    lg="12"
                     >
                       <!-- Monai Label Buttons and Tools -->
                       <div
@@ -286,7 +314,6 @@
                         <p>[[ checkbox_category['category_id'] ]]</p>
 
                         <v-checkbox
-                          
                           v-for="(checkbox, indexCheckbox) in checkbox_category['checkboxes']"
                           :key="checkbox['checkbox_id']"
                           v-model="result.checkbox_categories[index_checkbox_category].checkboxes[indexCheckbox].checked"
@@ -365,13 +392,21 @@
                   >
                     Next Image
                   </v-btn>
+                  <v-alert
+                  title="Error"
+                  color="red"
+                  elevation="4"
+                  type="error"
+                  v-if="alert_error != null"
+                >
+                  [[ alert_error ]]
+                </v-alert>
                   <v-btn @click="clear">
                     clear
                   </v-btn>
                   <v-btn @click="resetToPreviousResult">
                     Previous Image
                   </v-btn>
-
 
                 </v-form>
 
@@ -386,12 +421,9 @@
 
 {% endblock %}
 
-
-
 {% block js_scripts %}
 
 <script>
-
 var monai_segmentation_app =new Vue({
     el: '#monai_segmentation_app',
     vuetify: new Vuetify(),
@@ -415,15 +447,20 @@ var monai_segmentation_app =new Vue({
       imageHeight: 0,
       canvasWidth: 0, // These are the internal pixels; try to keep consistent with polygons and should match imageWidth
       canvasHeight: 0, // These are the internal pixels; try to keep consistent with polygons and should match imageHeight
+      image_z_index: 0,
+      image_opacity: 1,
+      image_selected: false,
       aspectRatio: null, // important for dependent canvases
       borderImage: "0px green solid", /* for debugging */
       // Segmentation
       segmentation_image: {image_id: null, base64: null, display:""},
       borderSegmentation: "0px green solid", /* for debugging */
-      segmentation_z_index: 0,
+      segmentation_z_index: 2,
+      segmentation_selected: true,
       //// Edit Segmentation
       isBrushing: false,
       brushSize: 10, // Default brush size
+      
       // Coco polygons
       // coco_annotations: [{
       //   "segmentation": [[150.0,100.0, 150.0,250.0, 300.0,250.0, 400.0,175.0, 300.0,100.0]],
@@ -436,17 +473,19 @@ var monai_segmentation_app =new Vue({
       // }],
       coco_annotations: [],
       borderCoco: "1px red solid", /* for debugging */
-      hidePolygonButtonText: "Hide Shape",
+      hidePolygonButtonText: "Hide",
       polygonDisplay: "",
       polygons_z_index: 1,
+      polygon_selected: false,
       // Hide Button
-      hideBrushButtonText: "Hide Brush",
+      hideBrushButtonText: "Hide",
       task: null,
       tool_set: null,
       result: null,
       alert_info: null,
       alert_error: null,
-      toggleBrushPolygonButtonText: "Paint Brush",
+      BrushButtonText: "Brush (Selected)",
+      PolygonButtonText: "Shape",
       // Spinners
       //// Inference
       inferenceLoading: false,
@@ -496,7 +535,7 @@ var monai_segmentation_app =new Vue({
           // Get image
           this.image.image_id = this.images[this.task.value.current_idx]
           this.image['base64'] = await this.getBase64DataOfImageFromCouch(this.image.image_id)
-          // debugger
+          
           await this.displayCanvasImage(current_image=this.task.value.current_idx);
           this.displayBrushImage(current_image=this.task.value.current_idx);
           this.drawAnnotations(); //
@@ -510,12 +549,11 @@ var monai_segmentation_app =new Vue({
               // This is the trick right here.
               // Aspect ratio is the secret weapon
               current_working_width = this.$refs['canvases_parent_div'].parentElement.offsetWidth
-              current_working_height = current_working_width/MS.aspectRatio // NOT SURE ON THIS
+              current_working_height = current_working_width/MS.aspectRatio
               this.$refs['canvases_parent_div'].style.width = `${current_working_width}px`
               this.$refs['canvases_parent_div'].style.height = `${current_working_width/(this.aspectRatio === null ? 1 : this.aspectRatio)}px`
               // Dumped here just to calc MS.translatePos.x and MS.translatePos.y
               const imageCanvas = MS.$refs['image'];
-              // debugger
               current_working_height = current_working_width/MS.aspectRatio
               max_x_pixels_you_can_shift_image = MS.imageWidth * (1 - (1 / MS.scale)) * ( current_working_width / imageCanvas.width )
               max_y_pixels_you_can_shift_image = MS.imageHeight * (1 - (1 / MS.scale)) * ( current_working_height / imageCanvas.height )
@@ -532,7 +570,6 @@ var monai_segmentation_app =new Vue({
       // General
       URLS() {
           return {
-              // old ${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}
               configuration: "/configuration",
               monaiSegmentationApp: `/monaiSegmentationApp/${this.user}/${this.list_name}`,
               getTask: `/get_task/${this.app}/${this.user}/${this.list_name}`,
@@ -542,7 +579,6 @@ var monai_segmentation_app =new Vue({
               taskResult: `/task_result`,
               resetToPreviousResult: `/reset_to_previous_result`,
               // MonaiLabel URLS
-              // old ${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.monaiLabelPort}
               activeLearning: `http://${this.DNS}:${this.monaiLabelPort}/activelearning/last`,
               performInference: `http://${this.DNS}:${this.monaiLabelPort}/infer/SegformerBundle`,
               uploadImage: `http://${this.DNS}:${this.monaiLabelPort}/datastore/image`,
@@ -551,12 +587,17 @@ var monai_segmentation_app =new Vue({
               trainStatus: `http://${this.DNS}:${this.monaiLabelPort}/train/?all=false&check_if_running=false`
           }
       },
+      brushSizeMax(){
+        current_working_width = this.$refs['canvases_parent_div'].parentElement.offsetWidth
+        let tmp_scale = this.imageWidth / current_working_width
+        let brushSizeMax = 100*tmp_scale
+        // Set brush size
+        this.brushSize = brushSizeMax / 4
+        return brushSizeMax
+      }
     },
 
     methods: {
-      // toggle_brushing(){
-      //   this.isBrushing ? false : true
-      // },
       initCanvasZoomTools(){
         MS = this;
         var canvas = this.$refs.image;
@@ -573,12 +614,7 @@ var monai_segmentation_app =new Vue({
 
         document.getElementById("minus").addEventListener("click", async function() {
           if(MS.scale * MS.scaleMultiplier >= 1.0){
-            MS.scale *= MS.scaleMultiplier;
-            // const cocoCanvas = MS.$refs['coco'];
-            // const cocoCtx = cocoCanvas.getContext('2d');
-            // const currentTransform = cocoCtx.getTransform();
-            // console.log(`currentTransform (minus): ${currentTransform}`)
-            // debugger
+            MS.scale *= MS.scaleMultiplier;          
             await MS.displayCanvasImage(MS.current_image, translatePos=MS.translatePos, scale=MS.scale);
             MS.drawAnnotations(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale);
             MS.displayBrushImage(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale);
@@ -613,7 +649,7 @@ var monai_segmentation_app =new Vue({
             current_working_height = current_working_width/MS.aspectRatio
             max_x_pixels_you_can_shift_image = MS.imageWidth * (1 - (1 / MS.scale)) * ( current_working_width / imageCanvas.width )
             max_y_pixels_you_can_shift_image = MS.imageHeight * (1 - (1 / MS.scale)) * ( current_working_height / imageCanvas.height )
-            // debugger
+            
             MS.translatePos.x = Math.max(0, Math.min(startDragOffset.x - evt.clientX, max_x_pixels_you_can_shift_image)) // forward (mouse slides image around)
             MS.translatePos.y = Math.max(0, Math.min(startDragOffset.y - evt.clientY, max_y_pixels_you_can_shift_image)) // forward (mouse slides image around)
             // MS.translatePos.x = Math.max(0, Math.min(evt.clientX - startDragOffset.x, max_x_pixels_you_can_shift_image)) // reverse (mouse is moving across image)
@@ -655,19 +691,6 @@ var monai_segmentation_app =new Vue({
         coco_annotations.forEach(segmentation => {
           const points = segmentation.segmentation;
           if (points.length > 0) {
-            // Draw on segmentationCanvas scaled
-            // segmentationContext.beginPath();
-            // segmentationContext.fillStyle = `#ff0000`;
-            // x_new_origin = points[0]*(segmentationCanvas.width / current_working_width)
-            // y_new_origin = points[1]*(segmentationCanvas.height / current_working_height)
-            // segmentationContext.moveTo(x_new_origin, y_new_origin);
-            // for (let i = 2; i < points.length; i += 2) {
-            //   x_new = points[i]*(segmentationCanvas.width / current_working_width)
-            //   y_new = points[i+1]*(segmentationCanvas.height / current_working_height)
-            //   segmentationContext.lineTo(x_new, y_new);
-            // }
-            // segmentationContext.closePath();
-            // segmentationContext.fill(); // Or use .stroke() if you just want the outline
             // Draw on testCanvas
             testContext.beginPath();
             testContext.fillStyle = `#ff0000`;
@@ -693,8 +716,6 @@ var monai_segmentation_app =new Vue({
           patchContext.drawImage(testCanvas, sX, sY, sW, sH, dX, dY, dW, dH);
         });
 
-        // Optionally clear the 'coco' canvas
-        // cocoContext.clearRect(0, 0, cocoCanvas.width, cocoCanvas.height);
       },
       deleteAnnotation(index) {
         // Confirm with the user before deleting
@@ -709,7 +730,6 @@ var monai_segmentation_app =new Vue({
         const canvas = this.$refs['coco'];
         const ctx = canvas.getContext('2d');
         // Load the annotations for the image
-        // var cocoAnnotations = this.coco_annotations;
         let currentSegmentation = [];
         // Create an array to store draggable points (vertices)
         const vertices = [];
@@ -743,9 +763,10 @@ var monai_segmentation_app =new Vue({
           const y = event.clientY - canvas.getBoundingClientRect().top; // literal pixels on screen\browser
           // Check if a vertex was clicked (within a certain radius)
           const clickedVertex = vertices.find((vertex) => {
-            // const distance = Math.sqrt((vertex.x - x) ** 2 + (vertex.y - y) ** 2); // original
             const distance = Math.sqrt((vertex.translatedX - x*x_scaler) ** 2 + (vertex.translatedY - y*y_scaler) ** 2);
-            return distance < 8; // Adjust the radius as needed for your click detection
+            // threshold = x_scaler*y_scaler // before
+            threshold = 2 * MS.imageWidth / current_working_width
+            return distance < threshold; // Adjust the radius as needed for your click detection
           });
 
           if (clickedVertex) {
@@ -834,34 +855,33 @@ var monai_segmentation_app =new Vue({
           MS.translatePos.y = Math.max(Math.min(MS.translatePos.y, max_y_pixels_you_can_shift_image), 0)
           MS.drawAnnotations(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale)
           
-          // const x_scaler = MS.imageWidth / parseFloat( MS.$refs.canvases_parent_div.style.width.replace("px","") ) // Adjust x point clicked
-          // const y_scaler = MS.imageHeight / parseFloat( MS.$refs.canvases_parent_div.style.height.replace("px","") ) // Adjust y point clicked
           // Draw existing vertices
-          ctx.save() // AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+          ctx.save()
           ctx.scale(scale, scale)
           ctx.translate( -translatePos.x * (canvas.width/current_working_width), -translatePos.y * (canvas.height/current_working_height) )
           ctx.fillStyle = 'blue'; // Set the vertex color
-          // ctx.beginPath(); ctx.arc(0,0, 5, 0, 2 * Math.PI); ctx.fill();
-          // ctx.beginPath(); ctx.arc(0,100, 5, 0, 2 * Math.PI); ctx.fill();
-          // ctx.beginPath(); ctx.arc(100,100, 5, 0, 2 * Math.PI); ctx.fill();
-          // ctx.beginPath(); ctx.arc(100,0, 5, 0, 2 * Math.PI); ctx.fill();
           vertices.forEach((vertex) => {
             ctx.beginPath();
-            // ctx.arc(vertex.translatedX*MS.scale, vertex.translatedY*MS.scale, 2, 0, 2 * Math.PI);
-            ctx.arc(vertex.translatedX, vertex.translatedY, 1, 0, 2 * Math.PI);
+            // Retrieve to scale vertexes
+            current_working_width = MS.$refs['canvases_parent_div'].parentElement.offsetWidth
+            let arc_x = vertex.translatedX
+            let arc_y = vertex.translatedY
+            let arc_radius = 2 * MS.imageWidth / current_working_width // arbitrary sizing based on canvas div and image width then again scaled by 2, arbitrarily
+            console.log(`arc_radius: ${arc_radius}`)
+            let arc_startAngle = 0
+            let arc_endAngle = 2 * Math.PI
+            ctx.arc(arc_x, arc_y, arc_radius, arc_startAngle, arc_endAngle);
             ctx.fill();
           });
 
           // Draw the polygon based on the vertices
           ctx.fillStyle = 'rgba(0, 255, 0, 0.10)'; // Transparent (Green)
           ctx.strokeStyle = 'rgba(0, 255, 0, 1)'; // Set the line color (Green)
-          ctx.lineWidth = 1; // Set the line width
+          ctx.lineWidth = MS.imageWidth / current_working_width; // Set the line width
           ctx.beginPath();
-          if (vertices.length > 0) {
-            // ctx.moveTo(vertices[0].translatedX*MS.scale, vertices[0].translatedY*MS.scale);
+          if (vertices.length > 0){
             ctx.moveTo(vertices[0].translatedX, vertices[0].translatedY);
             vertices.forEach((vertex) => {
-              // ctx.lineTo(vertex.translatedX*MS.scale, vertex.translatedY*MS.scale);
               ctx.lineTo(vertex.translatedX, vertex.translatedY);
             });
             ctx.closePath();
@@ -870,7 +890,6 @@ var monai_segmentation_app =new Vue({
           }
           ctx.stroke();
           ctx.restore();
-
           // Update cocoAnnotations based on vertices
           const segmentation = vertices.map((vertex) => [vertex.translatedX, vertex.translatedY]);
           const flattenedSegmentation = vertices.reduce((acc, vertex) => {
@@ -895,31 +914,25 @@ var monai_segmentation_app =new Vue({
         coco.width = MS.imageWidth // clears canvas
         coco.height = MS.imageHeight // clears canvas
         const coco_ctx = coco.getContext('2d');
-        const currentTransform = coco_ctx.getTransform(); // unsure about this...01_09_2024
-        // console.log(`currentTransform (drawAnnotations): ${currentTransform}`)
         coco_ctx.save() // to preserve state for drawing verticies (live annotation object being created)
         coco_ctx.scale(scale, scale)
         current_working_width = this.$refs['canvases_parent_div'].parentElement.offsetWidth
         current_working_height = current_working_width/this.aspectRatio
-        // debugger
+        
         coco_ctx.translate( -translatePos.x * (coco.width/current_working_width), -translatePos.y * (coco.height/current_working_height) )
-        // coco_ctx.clearRect(0, 0, MS.imageWidth, MS.imageHeight);
         // Load the annotations for the image
         var cocoAnnotations = this.coco_annotations;
         // Draw existing segmentations
         if (cocoAnnotations.length > 0){
           cocoAnnotations.forEach((segmentation) => {
-            // const points = segmentation.segmentation[0];
             const points = segmentation.segmentation;
             if (points.length > 0) {
               coco_ctx.fillStyle = 'rgba(255, 0, 0, 0.10)';
               coco_ctx.strokeStyle = 'rgba(255, 0, 0, 1)'; // Set the line color
-              coco_ctx.lineWidth = 1; // Set the line width
+              coco_ctx.lineWidth = MS.imageWidth / current_working_width; // Set the line width
               coco_ctx.beginPath();
-              // coco_ctx.moveTo(points[0]*MS.scale, points[1]*MS.scale);
               coco_ctx.moveTo(points[0], points[1]);
               for (let i = 2; i < points.length; i += 2) {
-                // coco_ctx.lineTo(points[i]*MS.scale, points[i + 1]*MS.scale);
                 coco_ctx.lineTo(points[i], points[i + 1]);
               }
               coco_ctx.closePath();
@@ -929,10 +942,8 @@ var monai_segmentation_app =new Vue({
           });
         }
         coco_ctx.restore()
-
       },
       async getConfiguration() {
-          // https://dmitripavlutin.com/javascript-fetch-async-await/
           const response = await fetch('/configuration');
           if (!response.ok) {
               const message = `An error has occured: ${response.status}`;
@@ -982,18 +993,12 @@ var monai_segmentation_app =new Vue({
             current_working_height = current_working_width/this.aspectRatio
             this.$refs['canvases_parent_div'].style.width = `${current_working_width}px`
             this.$refs['canvases_parent_div'].style.height = `${current_working_height}px`
-            
             const canvas = this.$refs['image'];
-            const context = canvas.getContext('2d');
-            // Zoom practice
-            
-            // context.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, destX, destY, destWidth, destHeight);
+            const context = canvas.getContext('2d');            
             canvas.width = MS.imageWidth
             canvas.height = MS.imageHeight
             max_x_pixels_you_can_shift_image = MS.imageWidth * (1 - (1 / scale)) * ( current_working_width / canvas.width )
             max_y_pixels_you_can_shift_image = MS.imageHeight * (1 - (1 / scale)) * ( current_working_height / canvas.height )
-  
-            // debugger;
             MS.translatePos.x = Math.max(Math.min(MS.translatePos.x, max_x_pixels_you_can_shift_image), 0)
             MS.translatePos.y = Math.max(Math.min(MS.translatePos.y, max_y_pixels_you_can_shift_image), 0)
             sX = Math.max(Math.min(MS.translatePos.x, max_x_pixels_you_can_shift_image), 0) * (canvas.width / current_working_width)
@@ -1004,11 +1009,7 @@ var monai_segmentation_app =new Vue({
             dY = 0
             dW = canvas.width
             dH = canvas.height
-  
             context.drawImage(image, sX, sY, sW, sH, dX, dY, dW, dH);
-            // context.MS.translate(MS.translatePos.x, MS.translatePos.y)
-            // context.drawImage(image, MS.translatePos.x, MS.translatePos.y, MS.imageWidth * (scale), MS.imageHeight * (scale));
-            
             resolve();
           };
           image.onerror = (error) => {
@@ -1018,49 +1019,7 @@ var monai_segmentation_app =new Vue({
           image.src = `${this.image.base64}`;
         })
       },
-      // async displayCanvasImage(current_image, translatePos={x:0,y:0}, scale=1.0, fromInference=false) {
-      //   const image = new Image();
-      //   MS = this;
-      //   image.onload = () => {
-      //     // Once the image is loaded, draw it onto the canvas
-      //     MS.imageWidth = image.width;
-      //     MS.imageHeight = image.height;
-      //     this.aspectRatio = MS.imageWidth / MS.imageHeight;
-      //     // First time through image load
-      //     current_working_width = this.$refs['canvases_parent_div'].parentElement.offsetWidth
-      //     current_working_height = current_working_width/this.aspectRatio
-      //     this.$refs['canvases_parent_div'].style.width = `${current_working_width}px`
-      //     this.$refs['canvases_parent_div'].style.height = `${current_working_height}px`
-          
-      //     const canvas = this.$refs['image'];
-      //     const context = canvas.getContext('2d');
-      //     // Zoom practice
-          
-      //     // context.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, destX, destY, destWidth, destHeight);
-      //     canvas.width = MS.imageWidth
-      //     canvas.height = MS.imageHeight
-      //     max_x_pixels_you_can_shift_image = MS.imageWidth * (1 - (1 / scale)) * ( current_working_width / canvas.width )
-      //     max_y_pixels_you_can_shift_image = MS.imageHeight * (1 - (1 / scale)) * ( current_working_height / canvas.height )
-
-      //     sX = Math.max(Math.min(MS.translatePos.x, max_x_pixels_you_can_shift_image), 0) * (canvas.width / current_working_width)
-      //     sY = Math.max(Math.min(MS.translatePos.y, max_y_pixels_you_can_shift_image), 0) * (canvas.height / current_working_height)
-      //     sW = MS.imageWidth / (scale)
-      //     sH = MS.imageHeight / (scale)
-      //     dX = 0
-      //     dY = 0
-      //     dW = canvas.width
-      //     dH = canvas.height
-
-      //     context.drawImage(image, sX, sY, sW, sH, dX, dY, dW, dH);
-      //     // context.MS.translate(MS.translatePos.x, MS.translatePos.y)
-      //     // context.drawImage(image, MS.translatePos.x, MS.translatePos.y, MS.imageWidth * (scale), MS.imageHeight * (scale));
-          
-      //   };
-      //   // Set the base64 data as the source of the Image
-      //   image.src = `${this.image.base64}`;
-      // },
       async displayBrushImage(current_image, translatePos={x:0,y:0}, scale=1.0, fromInference=false, recursion_base_case=0) {
-        
         const segmentation = new Image();
         MS = this;
         segmentation.onload = () => {
@@ -1073,8 +1032,6 @@ var monai_segmentation_app =new Vue({
           segmentationCanvas.height = MS.imageHeight // clears canvas; Also I think this could be anything as whatever it is, the s square of segmentation will be drawn on it.
           max_x_pixels_you_can_shift_image = MS.imageWidth * (1 - (1 / scale)) * ( current_working_width / segmentationCanvas.width )
           max_y_pixels_you_can_shift_image = MS.imageHeight * (1 - (1 / scale)) * ( current_working_height / segmentationCanvas.height )
-          // transform = segmentationContext.getTransform()
-          // segmentationContext.translate(translatePos.x, translatePos.y) // DO WE NEED THIS?
           sX = Math.max(Math.min(MS.translatePos.x, max_x_pixels_you_can_shift_image), 0) * (segmentationCanvas.width / current_working_width)
           sY = Math.max(Math.min(MS.translatePos.y, max_y_pixels_you_can_shift_image), 0) * (segmentationCanvas.height / current_working_height)
           sW = MS.imageWidth / (scale)
@@ -1085,7 +1042,7 @@ var monai_segmentation_app =new Vue({
           dH = segmentationCanvas.height
           segmentationContext.drawImage(segmentation, sX, sY, sW, sH, dX, dY, dW, dH);
 
-          // All of this is inefficient;
+          // All of this below is inefficient;
           // This is all to set the tCanvas width and height;
           // What we need is to set this once when the image is loaded. 
           // Why should this ever need to get redrawn?
@@ -1155,7 +1112,6 @@ var monai_segmentation_app =new Vue({
           segmentationCanvas.style.height = this.$refs.canvases_parent_div.style.height;
           const x_scaler = this.imageWidth / parseFloat( this.$refs.canvases_parent_div.style.width.replace("px","") ) // Adjust x point clicked
           const y_scaler = this.imageHeight / parseFloat( this.$refs.canvases_parent_div.style.height.replace("px","") ) // Adjust y point clicked
-          
           const x = event.offsetX;
           const y = event.offsetY;
           // Get the color value based on the selected channel
@@ -1194,9 +1150,7 @@ var monai_segmentation_app =new Vue({
           }
           segmentationContext.beginPath();
           segmentationContext.arc(x*x_scaler, y*y_scaler, this.brushSize / 2, 0, Math.PI * 2);
-          // segmentationContext.arc(x*x_scaler - MS.translatePos.x, y*y_scaler - MS.translatePos.y, this.brushSize / 2, 0, Math.PI * 2);
           segmentationContext.fill();
-          
           // Get Patch
           //// Borrowed over from displayCanvas as that is essentially what we are doing for the seg mask
           current_working_width = this.$refs['canvases_parent_div'].parentElement.offsetWidth
@@ -1208,9 +1162,8 @@ var monai_segmentation_app =new Vue({
           const y_patch = Math.max(Math.min(this.translatePos.y, max_y_pixels_you_can_shift_image), 0) * (segmentationCanvas.height / current_working_height); // Y-coordinate of the top-left corner of the patch
           const width_patch = Math.floor(this.imageWidth / (this.scale)); // Width of the patch
           const height_patch = Math.floor(this.imageHeight / (this.scale)); // Height of the patch
-          // // Create a new canvas element to hold the captured patch
+          // Create a new canvas element to hold the captured patch
           const patchCanvas = this.$refs.patchCanvas
-          // const patchCanvas = document.createElement('canvas');
           // Get a 2D rendering context for the new canvas
           const patchContext = patchCanvas.getContext('2d');
           patchCanvas.width = width_patch
@@ -1218,8 +1171,8 @@ var monai_segmentation_app =new Vue({
           // Draw the specified region from the source canvas onto the new canvas
           sX = 0
           sY = 0
-          sW = segmentationCanvas.width// width_patch
-          sH = segmentationCanvas.height// height_patch
+          sW = segmentationCanvas.width // width_patch
+          sH = segmentationCanvas.height // height_patch
           dX = 0
           dY = 0
           dW = patchCanvas.width
@@ -1227,18 +1180,9 @@ var monai_segmentation_app =new Vue({
           patchContext.drawImage(segmentationCanvas, sX, sY, sW, sH, dX, dY, dW, dH);
 
           tcanvas = this.$refs.testcanvas
-          // tcanvas.width = this.imageWidth // BAD: CLEARS CANVAS
-          // tcanvas.height = this.imageHeight // BAD: CLEARS CANVAS
           tcanvas.style.width = parseFloat( this.$refs.canvases_parent_div.style.width.replace("px","") )// DO WE NEED?
           tcanvas.style.height = parseFloat( this.$refs.canvases_parent_div.style.height.replace("px","") )// DO WE NEED?
           tcontext = tcanvas.getContext('2d');
-          // Draw patch on testcanvas or preview of mask canvas
-          console.log(`this.translatePos.x ${this.translatePos.x} | this.translatePos.y ${this.translatePos.y}`)
-          console.log(`x_patch ${x_patch} | y_patch ${y_patch}`)
-          console.log(`patchCanvas.width ${patchCanvas.width} | patchCanvas.height ${patchCanvas.height}`)
-          console.log(`tcanvas.width ${tcanvas.width} | tcanvas.height ${tcanvas.height}`)
-          console.log(`width_patch ${width_patch} | height_patch ${height_patch}`)
-          console.log(`segmentationCanvas.width ${segmentationCanvas.width} | segmentationCanvas.height ${segmentationCanvas.height}`)
           sX = 0
           sY = 0
           sW = width_patch
@@ -1272,13 +1216,11 @@ var monai_segmentation_app =new Vue({
       async getBase64DataOfImageFromCouch(image_id) {
         // old ${this.SSL===true ? 'https' : 'http'}://${this.DNS}:${this.HTTP_PORT}
         const url = `/get_image/${image_id}`;
-
         try {
           const response = await fetch(url);
           if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
           }
-
           const data = await response.text();
           return `data:image/png;base64,${data}`;
         } catch (error) {
@@ -1295,15 +1237,12 @@ var monai_segmentation_app =new Vue({
         const headers = {
           'Accept': 'application/json',
         };
-    
         // Create a new FormData object to handle multipart/form-data
         const formData = new FormData();
-    
         // Add the parameters, empty file field, and label (if needed) to the FormData
         formData.append('params', JSON.stringify({}));
         formData.append('file', '');
         formData.append('label', '');
-    
         // Send a POST request with the FormData using the fetch API
         fetch(url, {
           method: 'POST',
@@ -1318,10 +1257,6 @@ var monai_segmentation_app =new Vue({
             const base64String = reader.result;
             MSA.inferenceLoading = false;
             MSA.inferenceDoneTraining = true;
-            // If you need to use the Base64 string elsewhere, do it here.
-            // For instance, to set it as the source of an image:
-            // const imageElement = document.getElementById('myImage');
-            // imageElement.src = base64String;
             MSA.segmentation_image['base64'] = base64String
             MSA.displayBrushImage(current_image=MSA.task.value.current_idx, fromInference=true); // fix later
           };
@@ -1334,17 +1269,14 @@ var monai_segmentation_app =new Vue({
       },
       async uploadImage() {
         // Define the URL and headers
-        image_name = this.image.image_id.split('.')[0]; // Use const or let to declare the variable
+        image_name = this.image.image_id.split('.')[0];
         url = this.URLS.uploadImage + `?image=${image_name}`;
         headers = {
             'Accept': 'application/json',
         };
-
         // Create a new FormData object to handle multipart/form-data
         formData = new FormData();
-
         formData.append('params', JSON.stringify({}));
-
         // Add the image data as a blob with a "image/png" type
         formFileName = `${image_name}.png`;
         byteCharacters = atob(this.image.base64.split(',')[1]);
@@ -1355,7 +1287,6 @@ var monai_segmentation_app =new Vue({
         byteArray = new Uint8Array(byteNumbers);
         imageBlob = new Blob([byteArray], { type: 'image/png' });
         formData.append('file', imageBlob, formFileName);
-
         try {
             // Send a PUT request with the FormData using the fetch API
             response = await fetch(url, {
@@ -1383,12 +1314,9 @@ var monai_segmentation_app =new Vue({
         const headers = {
             'Accept': 'application/json',
         };
-    
         // Create a new FormData object to handle multipart/form-data
         const formData = new FormData();
-
         formData.append('params', JSON.stringify({}));
-    
         // Add the image data as a blob with a "image/png" type
         const formFileName = `${image_name}.png`;
         const byteCharacters = atob(this.segmentation_image.base64.split(',')[1]);
@@ -1399,7 +1327,6 @@ var monai_segmentation_app =new Vue({
         const byteArray = new Uint8Array(byteNumbers);
         const imageBlob = new Blob([byteArray], { type: 'image/png' });
         formData.append('label', imageBlob, formFileName);
-    
         // Send a PUT request with the FormData using the fetch API
         fetch(url, {
             method: 'PUT',
@@ -1422,10 +1349,8 @@ var monai_segmentation_app =new Vue({
           'Accept': 'application/json',
           'Content-Type': 'application/json',
         };
-    
         // Define the POST request body data
         const postData = {};
-    
         // Send a POST request using the fetch API
         fetch(url, {
           method: 'POST',
@@ -1468,58 +1393,81 @@ var monai_segmentation_app =new Vue({
       },
       hideCanvas() {
         if(this.segmentation_image.display === ""){
-          this.hideBrushButtonText = "Unhide Brush Canvas"
+          // this.hideBrushButtonText = "Unhide Brush Canvas" // In case we want it 
           this.segmentation_image.display = "none"
         }else{
-          this.hideBrushButtonText = "Hide Brush Canvas"
+          // this.hideBrushButtonText = "Hide Brush Canvas" // In case we want it 
           this.segmentation_image.display = ""
-
         }
       },
       hidePolygon() {
         if(this.polygonDisplay === ""){
-          this.hidePolygonButtonText = "Unhide Polygon"
+          // this.hidePolygonButtonText = "Unhide Polygon" // In case we want it 
           this.polygonDisplay = "none"
         }else{
-          this.hidePolygonButtonText = "Hide Polygon"
+          // this.hidePolygonButtonText = "Hide Polygon" // In case we want it 
           this.polygonDisplay = ""
         }
       },
       toggleBrushPolygon(variable) {
-        if(variable instanceof PointerEvent){
-          // if we clicked the Select Polygon Tool button
-          if (this.polygons_z_index === 0){
-            this.polygons_z_index = 1
-            this.segmentation_z_index = 0
-            this.polygonDisplay = ""
-            this.toggleBrushPolygonButtonText = 'Select Brush'
-          } else {
-            this.polygons_z_index = 0
-            this.segmentation_z_index = 1
-            this.result.radio_button_categories[0]['selected'] = "Mark GA"
-            this.segmentation_image.display = ""
-            this.toggleBrushPolygonButtonText = 'Select Polygon Tool'
-          }
-        } else {
-          // if we clicked a radio button
-          this.polygons_z_index = 0
+        // if we clicked the Select Polygon Tool button
+        if(variable === "image"){
+          this.image_selected = true
+          this.segmentation_selected = false
+          this.polygon_selected = false
+          this.image_opacity = 0.9
+          this.image_z_index = 2
+          this.polygons_z_index = 1
+          this.segmentation_z_index = 0
+        } else if (variable === "polygon"){
+          this.polygon_selected = true
+          this.image_selected = false
+          this.segmentation_selected = false
+          this.image_opacity = 1
+          this.polygons_z_index = 2
           this.segmentation_z_index = 1
+          this.image_z_index = 0
+          this.polygonDisplay = ""
+          this.BrushButtonText = 'Brush'
+          this.PolygonButtonText = 'Shape (Selected)'
+        } else if (variable === "brush"){
+          this.segmentation_selected = true
+          this.polygon_selected = false
+          this.image_selected = false
+          this.image_opacity = 1
+          this.segmentation_z_index = 2
+          this.polygons_z_index = 1
+          this.image_z_index = 0
+          this.result.radio_button_categories[0]['selected'] = "Mark GA"
+          this.segmentation_image.display = ""
+          this.BrushButtonText = 'Brush (Selected)'
+          this.PolygonButtonText = 'Shape'
+        } else {
+          this.segmentation_selected = true
+          this.polygon_selected = false
+          this.image_selected = false
+          this.image_opacity = 1
+          // if we clicked a radio button
+          this.segmentation_z_index = 2
+          this.polygons_z_index = 1
+          this.image_z_index = 0
           this.result.radio_button_categories[0]['selected'] = variable
           this.segmentation_image.display = ""
-          this.toggleBrushPolygonButtonText = 'Select Polygon Tool'
+          this.BrushButtonText = 'Brush (Selected)'
+          this.PolygonButtonText = 'Shape'
         }
 
       },
       // For the submit form
       submit() {
-        //this.$v.$touch() // for uswe with veulidate which you haven't setup for this app
+        //this.$v.$touch() // for use with veulidate which you haven't setup for this app
         // this.$refs.form.$el.submit() // Normal submit but we want to send results in a better organized way
         // Define the URL and headers
         let error = null;
         this.result['radio_button_categories'].forEach((v, i, a) => {
-          if (v['selected'] === null){
+          if (v['selected'] === null && v['category_id'] != 'Choose Region To Segment'){
             error = true
-            this.alert_error = "You must make a selection for the radio buttons."
+            this.alert_error = "You must make a selection for the radio buttons not related to segmentation."
             setTimeout(()=>{this.alert_error = null}, 2000)
           }
         })
