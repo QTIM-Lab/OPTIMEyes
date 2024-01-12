@@ -392,6 +392,15 @@
                   >
                     Next Image
                   </v-btn>
+                  <v-alert
+                  title="Error"
+                  color="red"
+                  elevation="4"
+                  type="error"
+                  v-if="alert_error != null"
+                >
+                  [[ alert_error ]]
+                </v-alert>
                   <v-btn @click="clear">
                     clear
                   </v-btn>
@@ -757,8 +766,6 @@ var monai_segmentation_app =new Vue({
             const distance = Math.sqrt((vertex.translatedX - x*x_scaler) ** 2 + (vertex.translatedY - y*y_scaler) ** 2);
             // threshold = x_scaler*y_scaler // before
             threshold = 2 * MS.imageWidth / current_working_width
-            console.log(`distance from vertice: ${distance}`)
-            console.log(`threshold: ${threshold}`)
             return distance < threshold; // Adjust the radius as needed for your click detection
           });
 
@@ -1458,9 +1465,9 @@ var monai_segmentation_app =new Vue({
         // Define the URL and headers
         let error = null;
         this.result['radio_button_categories'].forEach((v, i, a) => {
-          if (v['selected'] === null){
+          if (v['selected'] === null && v['category_id'] != 'Choose Region To Segment'){
             error = true
-            this.alert_error = "You must make a selection for the radio buttons."
+            this.alert_error = "You must make a selection for the radio buttons not related to segmentation."
             setTimeout(()=>{this.alert_error = null}, 2000)
           }
         })
