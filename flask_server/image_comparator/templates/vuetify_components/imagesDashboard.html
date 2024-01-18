@@ -30,6 +30,14 @@
                   color="red"
                   elevation="4"
                   type="success"
+                  v-if="message != null"
+                >
+                  <p>[[ message ]]</p>
+                </v-alert>
+                <v-alert
+                  color="red"
+                  elevation="4"
+                  type="success"
                   v-if="deleted_images != null"
                 >
                   <p>Deleted [[ deleted_images.count ]] images.</p>
@@ -38,7 +46,9 @@
                   </ul>
                 </v-alert>
 
-                <v-simple-table>
+                <v-simple-table
+                v-if="admin"
+                >
                   <template v-slot:default>
                     <thead>
                       <tr>
@@ -166,7 +176,7 @@ var template_app =new Vue({
     },
 
     data: () => ({
-        message: 'This is the images dashboard',
+        message: null,
         imageSets: [],
         // form data
         admin: false,
@@ -189,6 +199,10 @@ var template_app =new Vue({
       this.ADMIN_PARTY = configuration.ADMIN_PARTY;
       this.USER_INFO = configuration.USER_INFO;
       this.admin = this.USER_INFO.admin
+      if(!this.admin){
+        this.message = "Non admins can't see image sets";
+          setTimeout(()=>{this.message = null;}, 2000);
+      }
       this.getImageSets();
   },
 
@@ -234,6 +248,7 @@ var template_app =new Vue({
           throw new Error(message);
       }
       const configuration = await response.json();
+      debugger
       return configuration;
     },
     getImageSets() {

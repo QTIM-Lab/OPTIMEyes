@@ -97,7 +97,9 @@ def main_dashboard():
 @bp.route('/imagesDashboard', methods=['GET'])
 @login_required
 def imagesDashboard():
+    # pdb.set_trace()
     return render_template('/vuetify_components/imagesDashboard.html')
+
 
 @bp.route('/image_set_summary/<imageSet>', methods=['GET'])
 @login_required
@@ -111,26 +113,31 @@ def tasksList():
 
 ## Apps
 @bp.route('/classifyApp/<user>/<list_name>', methods=['GET'])
+@login_required
 def classifyApp(user, list_name):
     task_dict = {"user":user, "list_name":list_name}
     return render_template('/vuetify_components/classifyApp.html', task=task_dict)
 
 @bp.route('/compareApp/<user>/<list_name>', methods=['GET'])
+@login_required
 def compareApp(user, list_name):
     task_dict = {"user":user, "list_name":list_name}
     return render_template('/vuetify_components/compareApp.html', task=task_dict)
 
 @bp.route('/flickerApp/<user>/<list_name>', methods=['GET'])
+@login_required
 def flickerApp(user, list_name):
     task_dict = {"user":user, "list_name":list_name}
     return render_template('/vuetify_components/flickerApp.html', task=task_dict)
 
 @bp.route('/sliderApp/<user>/<list_name>', methods=['GET'])
+@login_required
 def sliderApp(user, list_name):
     task_dict = {"user":user, "list_name":list_name}
     return render_template('/vuetify_components/sliderApp.html', task=task_dict)
 
 @bp.route('/monaiSegmentationApp/<user>/<list_name>', methods=['GET'])
+@login_required
 def monaiSegmentationApp(user, list_name):
     task_dict = {"user":user, "list_name":list_name}
     return render_template('/vuetify_components/monaiSegmentationApp.html', task=task_dict)
