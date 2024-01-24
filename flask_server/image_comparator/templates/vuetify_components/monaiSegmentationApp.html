@@ -472,6 +472,10 @@ var monai_segmentation_app =new Vue({
       //   "id": 11111111111111,
       // }],
       coco_annotations: [],
+      // 01_23_2024
+      vertices: [],
+      currentSegmentation: [],
+      // 01_23_2024
       borderCoco: "1px red solid", /* for debugging */
       hidePolygonButtonText: "Hide",
       polygonDisplay: "",
@@ -610,6 +614,7 @@ var monai_segmentation_app =new Vue({
           await MS.displayCanvasImage(MS.current_image, translatePos=MS.translatePos, scale=MS.scale);
           MS.drawAnnotations(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale);
           MS.displayBrushImage(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale);
+          MS.drawVertices();
         }, false);
 
         document.getElementById("minus").addEventListener("click", async function() {
@@ -618,6 +623,7 @@ var monai_segmentation_app =new Vue({
             await MS.displayCanvasImage(MS.current_image, translatePos=MS.translatePos, scale=MS.scale);
             MS.drawAnnotations(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale);
             MS.displayBrushImage(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale);
+            MS.drawVertices();
           }
         }, false);
 
@@ -660,6 +666,7 @@ var monai_segmentation_app =new Vue({
               MS.displayCanvasImage(MS.current_image, translatePos=MS.translatePos, scale=MS.scale);
               MS.displayBrushImage(MS.current_image, translatePos=MS.translatePos, scale=MS.scale);
               MS.drawAnnotations(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale);
+              MS.drawVertices()
             }
           }
         });
@@ -730,26 +737,29 @@ var monai_segmentation_app =new Vue({
         const canvas = this.$refs['coco'];
         const ctx = canvas.getContext('2d');
         // Load the annotations for the image
-        let currentSegmentation = [];
+        // let currentSegmentation = []; // delete when sure it works
         // Create an array to store draggable points (vertices)
-        const vertices = [];
+        // const vertices = []; // delete when sure it works
 
         // Flag to track whether the user is currently drawing a polygon
         let isDrawing = false;
-
+        
+        document.addEventListener('contextmenu', event => {
+          event.preventDefault();
+        });
         document.addEventListener('keydown', (event) => {
           if (event.key === 'Enter') {
             // Enter key saves the current polygon (if one is being drawn)
-            if (isDrawing && vertices.length > 0) {
+            if (isDrawing && MS.vertices.length > 0) {
               isDrawing = false;
-              points = currentSegmentation.segmentation
+              points = MS.currentSegmentation.segmentation
               for (let i = 0; i < points.length; i += 2) {
                 // points and data at this point should be real relative to full size image
-                currentSegmentation.segmentation[i] = points[i] //- MS.translatePos.x
-                currentSegmentation.segmentation[i+1] = points[i+1] //- MS.translatePos.y
+                MS.currentSegmentation.segmentation[i] = points[i] //- MS.translatePos.x
+                MS.currentSegmentation.segmentation[i+1] = points[i+1] //- MS.translatePos.y
               }
-              this.coco_annotations.push(currentSegmentation); // Store the current polygon
-              vertices.length = 0; // Clear the vertices
+              this.coco_annotations.push(MS.currentSegmentation); // Store the current polygon
+              MS.vertices.length = 0; // Clear the vertices
               this.drawAnnotations(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale);
             }
             event.preventDefault(); // Prevent the default behavior of the Enter key
@@ -757,15 +767,29 @@ var monai_segmentation_app =new Vue({
         });
 
         canvas.addEventListener('mousedown', (event) => {
+          function undo_vertice_placement() {
+              // Check if there are vertices to delete
+              if (MS.vertices.length > 0) {
+                // Remove the last vertex
+                MS.vertices.pop();
+                // Redraw the annotations with the updated vertices
+                MS.drawVertices(translatePos=MS.translatePos, scale=MS.scale);
+              }
+          }
           const x_scaler = MS.imageWidth / parseFloat( MS.$refs.canvases_parent_div.style.width.replace("px","") ) // Adjust x point clicked
           const y_scaler = MS.imageHeight / parseFloat( MS.$refs.canvases_parent_div.style.height.replace("px","") ) // Adjust y point clicked
           const x = event.clientX - canvas.getBoundingClientRect().left; // literal pixels on screen\browser
           const y = event.clientY - canvas.getBoundingClientRect().top; // literal pixels on screen\browser
           // Check if a vertex was clicked (within a certain radius)
-          const clickedVertex = vertices.find((vertex) => {
-            const distance = Math.sqrt((vertex.translatedX - x*x_scaler) ** 2 + (vertex.translatedY - y*y_scaler) ** 2);
+          v = 0
+          const clickedVertex = MS.vertices.find((vertex) => {
+            v+=1
+            where_on_image_clicked_x = x*x_scaler/MS.scale + MS.translatePos.x*x_scaler
+            where_on_image_clicked_y = y*y_scaler/MS.scale + MS.translatePos.y*y_scaler
+            const distance = Math.sqrt((vertex.translatedX - where_on_image_clicked_x) ** 2 + (vertex.translatedY - where_on_image_clicked_y) ** 2);
             // threshold = x_scaler*y_scaler // before
-            threshold = 2 * MS.imageWidth / current_working_width
+            threshold = 2.5 * MS.imageWidth / current_working_width
+            console.log(`v: ${v} vX: ${vertex.translatedX} vY: ${vertex.translatedY} x: ${where_on_image_clicked_x} y: ${where_on_image_clicked_y} distance: ${distance}`)
             return distance < threshold; // Adjust the radius as needed for your click detection
           });
 
@@ -777,16 +801,18 @@ var monai_segmentation_app =new Vue({
               const newX = event.clientX - canvas.getBoundingClientRect().left;
               const newY = event.clientY - canvas.getBoundingClientRect().top;
               // clickedVertex.x = newX; // original
-              clickedVertex.translatedX = newX*x_scaler;
+              clickedVertex.translatedX = newX*x_scaler/MS.scale + MS.translatePos.x*x_scaler;
               // clickedVertex.y = newY; // original
-              clickedVertex.translatedY = newY*y_scaler;
-              drawVertices(translatePos=MS.translatePos, scale=MS.scale);
+              clickedVertex.translatedY = newY*y_scaler/MS.scale + MS.translatePos.y*y_scaler;
+              MS.drawVertices(translatePos=MS.translatePos, scale=MS.scale);
             }
 
             function onMouseUp() {
               canvas.removeEventListener('mousemove', onMouseMove);
               canvas.removeEventListener('mouseup', onMouseUp);
             }
+          } else if (event.button === 2) {
+            undo_vertice_placement()
           } else {
             newX = x*x_scaler/MS.scale + MS.translatePos.x * x_scaler
             newY = y*y_scaler/MS.scale + MS.translatePos.y * y_scaler
@@ -796,117 +822,193 @@ var monai_segmentation_app =new Vue({
               translatedX = newX
               translatedY = newY
               const newVertex = { translatedX, translatedY };
-              vertices.push(newVertex);
+              MS.vertices.push(newVertex);
             } else {
               // Continue adding vertices to the current polygon
               translatedX = newX
               translatedY = newY
               const newVertex = { translatedX, translatedY };
-              vertices.push(newVertex);
+              MS.vertices.push(newVertex);
             }
             // Redraw the entire canvas with updated points
-            drawVertices(translatePos=MS.translatePos, scale=MS.scale);
+            MS.drawVertices(translatePos=MS.translatePos, scale=MS.scale);
           }
         });
 
         // Add a keyboard event listener to listen for Ctrl+Z keypress
         document.addEventListener('keydown', (event) => {
           if (event.ctrlKey && event.key === 'z') {
-            // Check if there are vertices to delete
-            if (vertices.length > 0) {
-              // Remove the last vertex
-              vertices.pop();
-              // Redraw the annotations with the updated vertices
-              drawVertices(translatePos=MS.translatePos, scale=MS.scale);
-            }
+            undo_vertice_placement()
           }
         });
 
-        function calculateArea(segmentation) {
+        // function calculateArea(segmentation) {
+        //   // Implement a function to calculate the area of a segmentation.
+        //   // You can use a formula or algorithm to calculate the area based on the segmentation points.
+        //   // This depends on your specific requirements.
+        //   return 100
+        // }
+
+        // function calculateBoundingBox(segmentation) {
+        //   // Implement a function to calculate the bounding box of a segmentation.
+        //   // You can find the minimum and maximum x and y coordinates in the segmentation points.
+        //   // This depends on your specific requirements.
+        //   return [0.0,0.0, 0.0,0.0]
+        // }
+        
+        // function generateUniqueId() {
+        //   // Implement a function to generate a unique ID for each segmentation.
+        //   // You can use a timestamp, a random number generator, or any other method to ensure uniqueness.
+        //   // This depends on your specific requirements.
+        //   return Date.now()
+        // }
+
+        // function drawVertices(translatePos={x:0,y:0}, scale=1.0) {
+        //   ctx.clearRect(0, 0, canvas.width, canvas.height); // I'm concerned here
+        //   // fingers crossed
+        //   const imageCanvas = MS.$refs['image'];
+        //   current_working_width = MS.$refs['canvases_parent_div'].parentElement.offsetWidth
+        //   current_working_height = current_working_width/MS.aspectRatio
+        //   max_x_pixels_you_can_shift_image = MS.imageWidth * (1 - (1 / MS.scale)) * ( current_working_width / imageCanvas.width )
+        //   max_y_pixels_you_can_shift_image = MS.imageHeight * (1 - (1 / MS.scale)) * ( current_working_height / imageCanvas.height )
+        //   MS.translatePos.x = Math.max(Math.min(MS.translatePos.x, max_x_pixels_you_can_shift_image), 0)
+        //   MS.translatePos.y = Math.max(Math.min(MS.translatePos.y, max_y_pixels_you_can_shift_image), 0)
+        //   MS.drawAnnotations(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale)
+          
+        //   // Draw existing vertices
+        //   ctx.save()
+        //   ctx.scale(scale, scale)
+        //   ctx.translate( -translatePos.x * (canvas.width/current_working_width), -translatePos.y * (canvas.height/current_working_height) )
+        //   ctx.fillStyle = 'blue'; // Set the vertex color
+        //   vertices.forEach((vertex) => {
+        //     ctx.beginPath();
+        //     // Retrieve to scale vertexes
+        //     current_working_width = MS.$refs['canvases_parent_div'].parentElement.offsetWidth
+        //     let arc_x = vertex.translatedX
+        //     let arc_y = vertex.translatedY
+        //     let arc_radius = 2 * MS.imageWidth / current_working_width // arbitrary sizing based on canvas div and image width then again scaled by 2, arbitrarily
+        //     let arc_startAngle = 0
+        //     let arc_endAngle = 2 * Math.PI
+        //     ctx.arc(arc_x, arc_y, arc_radius, arc_startAngle, arc_endAngle);
+        //     ctx.fill();
+        //   });
+
+        //   // Draw the polygon based on the vertices
+        //   ctx.fillStyle = 'rgba(0, 255, 0, 0.10)'; // Transparent (Green)
+        //   ctx.strokeStyle = 'rgba(0, 255, 0, 1)'; // Set the line color (Green)
+        //   ctx.lineWidth = MS.imageWidth / current_working_width; // Set the line width
+        //   ctx.beginPath();
+        //   if (vertices.length > 0){
+        //     ctx.moveTo(vertices[0].translatedX, vertices[0].translatedY);
+        //     vertices.forEach((vertex) => {
+        //       ctx.lineTo(vertex.translatedX, vertex.translatedY);
+        //     });
+        //     ctx.closePath();
+        //     ctx.fill();
+        //     ctx.stroke();
+        //   }
+        //   ctx.stroke();
+        //   ctx.restore();
+        //   // Update cocoAnnotations based on vertices
+        //   const segmentation = vertices.map((vertex) => [vertex.translatedX, vertex.translatedY]);
+        //   const flattenedSegmentation = vertices.reduce((acc, vertex) => {
+        //     acc.push(vertex.translatedX, vertex.translatedY);
+        //     return acc;
+        //   }, []);
+        //   const newSegmentation = {
+        //     segmentation: flattenedSegmentation,
+        //     area: calculateArea(segmentation),
+        //     iscrowd: 0,
+        //     image_id: MS.image.image_id, // Set the image ID as needed
+        //     bbox: calculateBoundingBox(segmentation),
+        //     category_id: 1, // Set the category ID as needed
+        //     id: generateUniqueId(), // Generate a unique ID for the segmentation
+        //   };
+        //   currentSegmentation = newSegmentation;
+        // }
+      },
+      calculateArea(segmentation) {
           // Implement a function to calculate the area of a segmentation.
           // You can use a formula or algorithm to calculate the area based on the segmentation points.
           // This depends on your specific requirements.
           return 100
-        }
+      },
+      calculateBoundingBox(segmentation) {
+        // Implement a function to calculate the bounding box of a segmentation.
+        // You can find the minimum and maximum x and y coordinates in the segmentation points.
+        // This depends on your specific requirements.
+        return [0.0,0.0, 0.0,0.0]
+      },
+      generateUniqueId() {
+        // Implement a function to generate a unique ID for each segmentation.
+        // You can use a timestamp, a random number generator, or any other method to ensure uniqueness.
+        // This depends on your specific requirements.
+        return Date.now()
+      },
+      drawVertices(translatePos={x:0,y:0}, scale=1.0) {
+        const canvas = this.$refs['coco'];
+        const ctx = canvas.getContext('2d');
 
-        function calculateBoundingBox(segmentation) {
-          // Implement a function to calculate the bounding box of a segmentation.
-          // You can find the minimum and maximum x and y coordinates in the segmentation points.
-          // This depends on your specific requirements.
-          return [0.0,0.0, 0.0,0.0]
-        }
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // I'm concerned here
+        // fingers crossed
+        const imageCanvas = MS.$refs['image'];
+        current_working_width = MS.$refs['canvases_parent_div'].parentElement.offsetWidth
+        current_working_height = current_working_width/MS.aspectRatio
+        max_x_pixels_you_can_shift_image = MS.imageWidth * (1 - (1 / MS.scale)) * ( current_working_width / imageCanvas.width )
+        max_y_pixels_you_can_shift_image = MS.imageHeight * (1 - (1 / MS.scale)) * ( current_working_height / imageCanvas.height )
+        MS.translatePos.x = Math.max(Math.min(MS.translatePos.x, max_x_pixels_you_can_shift_image), 0)
+        MS.translatePos.y = Math.max(Math.min(MS.translatePos.y, max_y_pixels_you_can_shift_image), 0)
+        MS.drawAnnotations(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale)
         
-        function generateUniqueId() {
-          // Implement a function to generate a unique ID for each segmentation.
-          // You can use a timestamp, a random number generator, or any other method to ensure uniqueness.
-          // This depends on your specific requirements.
-          return Date.now()
-        }
-
-        function drawVertices(translatePos={x:0,y:0}, scale=1.0) {
-          ctx.clearRect(0, 0, canvas.width, canvas.height); // I'm concerned here
-          // fingers crossed
-          const imageCanvas = MS.$refs['image'];
-          current_working_width = MS.$refs['canvases_parent_div'].parentElement.offsetWidth
-          current_working_height = current_working_width/MS.aspectRatio
-          max_x_pixels_you_can_shift_image = MS.imageWidth * (1 - (1 / MS.scale)) * ( current_working_width / imageCanvas.width )
-          max_y_pixels_you_can_shift_image = MS.imageHeight * (1 - (1 / MS.scale)) * ( current_working_height / imageCanvas.height )
-          MS.translatePos.x = Math.max(Math.min(MS.translatePos.x, max_x_pixels_you_can_shift_image), 0)
-          MS.translatePos.y = Math.max(Math.min(MS.translatePos.y, max_y_pixels_you_can_shift_image), 0)
-          MS.drawAnnotations(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale)
-          
-          // Draw existing vertices
-          ctx.save()
-          ctx.scale(scale, scale)
-          ctx.translate( -translatePos.x * (canvas.width/current_working_width), -translatePos.y * (canvas.height/current_working_height) )
-          ctx.fillStyle = 'blue'; // Set the vertex color
-          vertices.forEach((vertex) => {
-            ctx.beginPath();
-            // Retrieve to scale vertexes
-            current_working_width = MS.$refs['canvases_parent_div'].parentElement.offsetWidth
-            let arc_x = vertex.translatedX
-            let arc_y = vertex.translatedY
-            let arc_radius = 2 * MS.imageWidth / current_working_width // arbitrary sizing based on canvas div and image width then again scaled by 2, arbitrarily
-            console.log(`arc_radius: ${arc_radius}`)
-            let arc_startAngle = 0
-            let arc_endAngle = 2 * Math.PI
-            ctx.arc(arc_x, arc_y, arc_radius, arc_startAngle, arc_endAngle);
-            ctx.fill();
-          });
-
-          // Draw the polygon based on the vertices
-          ctx.fillStyle = 'rgba(0, 255, 0, 0.10)'; // Transparent (Green)
-          ctx.strokeStyle = 'rgba(0, 255, 0, 1)'; // Set the line color (Green)
-          ctx.lineWidth = MS.imageWidth / current_working_width; // Set the line width
+        // Draw existing vertices
+        ctx.save()
+        ctx.scale(scale, scale)
+        ctx.translate( -translatePos.x * (canvas.width/current_working_width), -translatePos.y * (canvas.height/current_working_height) )
+        ctx.fillStyle = 'blue'; // Set the vertex color
+        MS.vertices.forEach((vertex) => {
           ctx.beginPath();
-          if (vertices.length > 0){
-            ctx.moveTo(vertices[0].translatedX, vertices[0].translatedY);
-            vertices.forEach((vertex) => {
-              ctx.lineTo(vertex.translatedX, vertex.translatedY);
-            });
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
-          }
+          // Retrieve to scale vertexes
+          current_working_width = MS.$refs['canvases_parent_div'].parentElement.offsetWidth
+          let arc_x = vertex.translatedX
+          let arc_y = vertex.translatedY
+          let arc_radius = 2 * MS.imageWidth / current_working_width // arbitrary sizing based on canvas div and image width then again scaled by 2, arbitrarily
+          let arc_startAngle = 0
+          let arc_endAngle = 2 * Math.PI
+          ctx.arc(arc_x, arc_y, arc_radius, arc_startAngle, arc_endAngle);
+          ctx.fill();
+        });
+        // Draw the polygon based on the vertices
+        ctx.fillStyle = 'rgba(0, 255, 0, 0.10)'; // Transparent (Green)
+        ctx.strokeStyle = 'rgba(0, 255, 0, 1)'; // Set the line color (Green)
+        ctx.lineWidth = MS.imageWidth / current_working_width; // Set the line width
+        ctx.beginPath();
+        if (MS.vertices.length > 0){
+          ctx.moveTo(MS.vertices[0].translatedX, MS.vertices[0].translatedY);
+          MS.vertices.forEach((vertex) => {
+            ctx.lineTo(vertex.translatedX, vertex.translatedY);
+          });
+          ctx.closePath();
+          ctx.fill();
           ctx.stroke();
-          ctx.restore();
-          // Update cocoAnnotations based on vertices
-          const segmentation = vertices.map((vertex) => [vertex.translatedX, vertex.translatedY]);
-          const flattenedSegmentation = vertices.reduce((acc, vertex) => {
-            acc.push(vertex.translatedX, vertex.translatedY);
-            return acc;
-          }, []);
-          const newSegmentation = {
-            segmentation: flattenedSegmentation,
-            area: calculateArea(segmentation),
-            iscrowd: 0,
-            image_id: MS.image.image_id, // Set the image ID as needed
-            bbox: calculateBoundingBox(segmentation),
-            category_id: 1, // Set the category ID as needed
-            id: generateUniqueId(), // Generate a unique ID for the segmentation
-          };
-          currentSegmentation = newSegmentation;
         }
+        ctx.stroke();
+        ctx.restore();
+        // Update cocoAnnotations based on vertices
+        const segmentation = MS.vertices.map((vertex) => [vertex.translatedX, vertex.translatedY]);
+        const flattenedSegmentation = MS.vertices.reduce((acc, vertex) => {
+          acc.push(vertex.translatedX, vertex.translatedY);
+          return acc;
+        }, []);
+        const newSegmentation = {
+          segmentation: flattenedSegmentation,
+          area: MS.calculateArea(segmentation),
+          iscrowd: 0,
+          image_id: MS.image.image_id, // Set the image ID as needed
+          bbox: MS.calculateBoundingBox(segmentation),
+          category_id: 1, // Set the category ID as needed
+          id: MS.generateUniqueId(), // Generate a unique ID for the segmentation
+        };
+        MS.currentSegmentation = newSegmentation;
       },
       drawAnnotations(recursion_base_case=0, translatePos={x:0,y:0}, scale=1.0) {
         const coco = this.$refs['coco'];
@@ -1023,7 +1125,6 @@ var monai_segmentation_app =new Vue({
         const segmentation = new Image();
         MS = this;
         // FROM = fromInference
-        // debugger
         segmentation.onload = () => {
           // Once the image is loaded, draw it onto the canvas
           const segmentationCanvas = this.$refs['segmentation'];
@@ -1042,7 +1143,6 @@ var monai_segmentation_app =new Vue({
           dY = 0
           dW = segmentationCanvas.width
           dH = segmentationCanvas.height
-          debugger
           segmentationContext.drawImage(segmentation, sX, sY, sW, sH, dX, dY, dW, dH);
 
           // All of this below is inefficient;
