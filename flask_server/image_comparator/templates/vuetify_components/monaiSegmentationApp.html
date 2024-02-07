@@ -268,7 +268,7 @@
                       </v-btn>
 
                       <!-- Monai Label Buttons and Tools -->
-                      <h4>Monai Label Tools:</h4>
+                      <!-- <h4>Monai Label Tools:</h4>
                       <div>
                         <v-btn @click="performInference">
                           <v-icon>[[ 'mdi-lightbulb-outline' ]]</v-icon>
@@ -297,7 +297,7 @@
                           <div v-if="trainDoneTraining" class="check-mark">✔</div>
                         </v-btn>
 
-                      </div>
+                      </div> -->
 
                     </v-col>
                   </v-row>  
@@ -613,7 +613,7 @@ var monai_segmentation_app =new Vue({
           MS.scale /= MS.scaleMultiplier;
           await MS.displayCanvasImage(MS.current_image, translatePos=MS.translatePos, scale=MS.scale);
           MS.drawAnnotations(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale);
-          MS.displayBrushImage(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale);
+          MS.displayBrushImage(current_image=MS.task.value.current_idx, recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale);
           MS.drawVertices();
         }, false);
 
@@ -622,7 +622,7 @@ var monai_segmentation_app =new Vue({
             MS.scale *= MS.scaleMultiplier;          
             await MS.displayCanvasImage(MS.current_image, translatePos=MS.translatePos, scale=MS.scale);
             MS.drawAnnotations(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale);
-            MS.displayBrushImage(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale);
+            MS.displayBrushImage(current_image=MS.task.value.current_idx, recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale);
             MS.drawVertices();
           }
         }, false);
@@ -664,7 +664,7 @@ var monai_segmentation_app =new Vue({
             // add scale soon
             if(MS.scale > 1.0){
               MS.displayCanvasImage(MS.current_image, translatePos=MS.translatePos, scale=MS.scale);
-              MS.displayBrushImage(MS.current_image, translatePos=MS.translatePos, scale=MS.scale);
+              MS.displayBrushImage(current_image=MS.task.value.current_idx, translatePos=MS.translatePos, scale=MS.scale);
               MS.drawAnnotations(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale);
               MS.drawVertices()
             }
@@ -789,7 +789,6 @@ var monai_segmentation_app =new Vue({
             const distance = Math.sqrt((vertex.translatedX - where_on_image_clicked_x) ** 2 + (vertex.translatedY - where_on_image_clicked_y) ** 2);
             // threshold = x_scaler*y_scaler // before
             threshold = 2.5 * MS.imageWidth / current_working_width
-            console.log(`v: ${v} vX: ${vertex.translatedX} vY: ${vertex.translatedY} x: ${where_on_image_clicked_x} y: ${where_on_image_clicked_y} distance: ${distance}`)
             return distance < threshold; // Adjust the radius as needed for your click detection
           });
 
