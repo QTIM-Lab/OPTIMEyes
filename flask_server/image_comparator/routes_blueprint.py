@@ -319,7 +319,6 @@ def get_image_classify_lists():
     try:
         key = request.args['key']
     except:
-        print("in except")
         # view = f"_design/basic_views/_view/image_classify_lists"
         view = f"_design/classifyApp/_view/imageLists"
         url = f"{base}/{view}"
@@ -339,7 +338,6 @@ def get_image_compare_lists():
     try:
         key = request.args['key']
     except:
-        print("in except")
         # view = f"_design/basic_views/_view/image_compare_lists"
         view = f"_design/compareApp/_view/imageLists"
         url = f"{base}/{view}"
@@ -360,7 +358,6 @@ def get_image_flicker_lists():
     try:
         key = request.args['key']
     except:
-        print("in except")
         # view = f"_design/basic_views/_view/image_flicker_lists"
         view = f"_design/flickerApp/_view/imageLists"
         url = f"{base}/{view}"
@@ -379,7 +376,6 @@ def get_image_slider_lists():
     try:
         key = request.args['key']
     except:
-        print("in except")
         # view = f"_design/basic_views/_view/image_slider_lists"
         view = f"_design/sliderApp/_view/imageLists"
         url = f"{base}/{view}"
@@ -398,7 +394,6 @@ def get_image_monai_segmentation_lists():
     try:
         key = request.args['key']
     except:
-        print("in except")
         view = f"_design/monaiSegmentationApp/_view/imageLists"
         url = f"{base}/{view}"
         response = check_if_admin_party_then_make_request(url)
