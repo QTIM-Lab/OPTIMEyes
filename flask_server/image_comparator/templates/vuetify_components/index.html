@@ -34,11 +34,20 @@
                     [[ item.name ]]
                 </v-card-title>
                 <v-card-text>
-                    <v-img
+                    <!-- <v-img
                     :src="item.src"
                     width="75%"
                     class="bg-grey-lighten-2"
-                    ></v-img>
+                    ></v-img> -->
+                    <iframe 
+                        width="560" 
+                        height="315" 
+                        :src="item.tutorial_video" 
+                        title="YouTube video player" 
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                        allowfullscreen>
+                    </iframe>
                 </v-card-text>
 
                 </v-card>
@@ -64,29 +73,41 @@
         data: () => ({
             items: [
                 {
-                name: "Sign Up",
-                src: "/static/img/home_images/sign_up.png",
+                name: "Sign Up (If enabled | Otherwise you are provisioned an account)",
+                src: "", // If you want an image; You'll need to uncomment the image rendering above
+                tutorial_video: "https://www.youtube.com/embed/ZhmR0Me0Z34?si=cnyEJTIL1shzdjbj"
                 },
                 {
                 name: "Log In",
-                src: "/static/img/home_images/log_in.png",
+                src: "",
+                tutorial_video: "https://www.youtube.com/embed/w8pNBqcXC-k?si=K9d3D81y5g5V6Sy1"
                 },
                 {
-                name: "Main Dashboard",
-                src: "/static/img/home_images/main_dashboard.png",
+                name: "MonaiLabel app",
+                src: "", // If you want an image; You'll need to uncomment the image rendering above
+                tutorial_video: "https://www.youtube.com/embed/J12VxOWivWM?si=2ALR7G9q1adRUHRT"
                 },
                 {
-                name: "Navigate",
-                src: "/static/img/home_images/navigate.png",
+                name: "Classify App",
+                src: "", // If you want an image; You'll need to uncomment the image rendering above
+                tutorial_video: "https://www.youtube.com/embed/LsUm5UGd4dg?si=w8JDy4W_47D0ZiWm"
                 },
                 {
-                name: "Images Dashboard",
-                src: "/static/img/home_images/images_dashboard.png",
+                name: "Compare App",
+                src: "", // If you want an image; You'll need to uncomment the image rendering above
+                tutorial_video: "https://www.youtube.com/embed/we0ZvIsEKgk?si=ticlayJ4-yJxrPZc"
                 },
                 {
-                name: "Create Task",
-                src: "/static/img/home_images/create_task.png",
+                name: "Flicker App",
+                src: "", // If you want an image; You'll need to uncomment the image rendering above
+                tutorial_video: "https://www.youtube.com/embed/vH4WA_gEh3s?si=dYd0_dw7ZKCW542y"
                 },
+                {
+                name: "Slider App",
+                src: "", // If you want an image; You'll need to uncomment the image rendering above
+                tutorial_video: "https://www.youtube.com/embed/OHr3_OASoZk?si=bE519ohoWkZkjsy7"
+                }
+                
             ],
         }),
         delimiters: ['[[',']]'],

@@ -15,10 +15,13 @@ var main_dashboard = new Vue({
         classifyImageLists: [],
         compareImageLists: [],
         flickerImageLists: [],
+        sliderImageLists: [],
+        monaiLabelImageLists: [],
         classifyTasks: [],
         compareTasks: [],
         flickerTasks: [],
-        tasks: []
+        sliderTasks: [],
+        monaiLabelTasks: []
     }),
 
     async mounted() {
@@ -42,9 +45,13 @@ var main_dashboard = new Vue({
                 getClassifyLists: `/get_image_classify_lists`,
                 getCompareLists: `/get_image_compare_lists`,
                 getFlickerLists: `/get_image_flicker_lists`,
+                getSliderLists: `/get_image_slider_lists`,
+                getMonaiLabelLists: `/get_image_monai_segmentation_lists`,
                 getClassifyTasks: `/get_tasks/classify?username=${this.USER_INFO.username}`,
                 getCompareTasks: `/get_tasks/compare?username=${this.USER_INFO.username}`,
-                getFlickerTasks: `/get_tasks/flicker?username=${this.USER_INFO.username}`
+                getFlickerTasks: `/get_tasks/flicker?username=${this.USER_INFO.username}`,
+                getSliderTasks: `/get_tasks/slider?username=${this.USER_INFO.username}`,
+                getMonaiLabelTasks: `/get_tasks/monaiSegmentation?username=${this.USER_INFO.username}`
             }
         }
     },
@@ -59,7 +66,6 @@ var main_dashboard = new Vue({
             const configuration = await response.json();
             return configuration;
         },
-
         getImageLists() {
             console.log("getImageLists")
             fetch(this.URLS.getClassifyLists)
@@ -81,6 +87,20 @@ var main_dashboard = new Vue({
                 .then((data) => {
                     data.rows.forEach((v, i, a) => {
                         this.flickerImageLists.push(v)
+                    })
+                })
+            fetch(this.URLS.getSliderLists)
+                .then((response) => response.json())
+                .then((data) => {
+                    data.rows.forEach((v, i, a) => {
+                        this.sliderImageLists.push(v)
+                    })
+                })
+            fetch(this.URLS.getMonaiLabelTasks)
+                .then((response) => response.json())
+                .then((data) => {
+                    data.rows.forEach((v, i, a) => {
+                        this.monaiLabelImageLists.push(v)
                     })
                 })
         },
@@ -106,6 +126,20 @@ var main_dashboard = new Vue({
                 .then((data) => {
                     data.rows.forEach((v, i, a) => {
                         this.flickerTasks.push(v)
+                    })
+                })
+            fetch(this.URLS.getSliderTasks)
+                .then((response) => response.json())
+                .then((data) => {
+                    data.rows.forEach((v, i, a) => {
+                        this.sliderTasks.push(v)
+                    })
+                })
+            fetch(this.URLS.getMonaiLabelTasks)
+                .then((response) => response.json())
+                .then((data) => {
+                    data.rows.forEach((v, i, a) => {
+                        this.monaiLabelTasks.push(v)
                     })
                 })
         },

@@ -27,7 +27,7 @@
               <h1>Main Dashboard [[ message ]]</h1>
               
               <div v-if=USER_INFO.admin>
-                <h2>Image Lists (I think only admins should see lists):</h2>
+                <h2>Image Lists:</h2>
                 <h3>Classify Image Lists:</h3>
                 <ul>
                   <li v-for="item in classifyImageLists">
@@ -43,6 +43,18 @@
                 <h3>Flicker Image Lists:</h3>
                 <ul>
                   <li v-for="item in flickerImageLists">
+                    List Name: [[ item.value.list_name ]]; Count: [[ item.value.count ]]; Added: [[ item.value.time_added ]]
+                  </li>
+                </ul>
+                <h3>Slider Image Lists:</h3>
+                <ul>
+                  <li v-for="item in sliderImageLists">
+                    List Name: [[ item.value.list_name ]]; Count: [[ item.value.count ]]; Added: [[ item.value.time_added ]]
+                  </li>
+                </ul>
+                <h3>MonaiLabel Image Lists:</h3>
+                <ul>
+                  <li v-for="item in monaiLabelImageLists">
                     List Name: [[ item.value.list_name ]]; Count: [[ item.value.count ]]; Added: [[ item.value.time_added ]]
                   </li>
                 </ul>
@@ -64,6 +76,18 @@
               <h3>Flicker Tasks:</h3>
               <ul>
                 <li v-for="item in flickerTasks">
+                  Task Type: [[ item.value.app ]]; Completed: [[ item.value.completed ]]; Associated List: [[ item.value.list_name ]]; Priority: [[ item.value.task_order ]]
+                </li>
+              </ul>
+              <h3>Slider Tasks:</h3>
+              <ul>
+                <li v-for="item in sliderTasks">
+                  Task Type: [[ item.value.app ]]; Completed: [[ item.value.completed ]]; Associated List: [[ item.value.list_name ]]; Priority: [[ item.value.task_order ]]
+                </li>
+              </ul>
+              <h3>MonaiLabel Tasks:</h3>
+              <ul>
+                <li v-for="item in monaiLabelTasks">
                   Task Type: [[ item.value.app ]]; Completed: [[ item.value.completed ]]; Associated List: [[ item.value.list_name ]]; Priority: [[ item.value.task_order ]]
                 </li>
               </ul>
