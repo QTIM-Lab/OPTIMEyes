@@ -37,7 +37,7 @@
                 <v-text-field
                   v-model="name"
                   :error-messages="nameErrors"
-                  :counter="10"
+                  :counter="15"
                   label="Username"
                   required
                   @input="$v.name.$touch()"
@@ -127,7 +127,7 @@ var signup_page =new Vue({
     mixins: [validationMixin],
 
     validations: {
-        name: { required, maxLength: maxLength(10) },
+        name: { required, maxLength: maxLength(15) },
         email: { required, email },
         password: { required, minLength: minLength(8) },
         repeatPassword: { required, sameAsPassword: sameAs('password') }
@@ -169,7 +169,7 @@ var signup_page =new Vue({
         nameErrors () {
           const errors = []
           if (!this.$v.name.$dirty) return errors
-          !this.$v.name.maxLength && errors.push('Name must be at most 10 characters long')
+          !this.$v.name.maxLength && errors.push('Name must be at most 15 characters long')
           !this.$v.name.required && errors.push('Name is required.')
           return errors
         },
