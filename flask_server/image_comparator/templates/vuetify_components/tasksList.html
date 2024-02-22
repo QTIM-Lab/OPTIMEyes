@@ -312,13 +312,16 @@
                           >[[ item.value.imageSet ]]</v-btn>
                         </td> 
                         <td>[[ item.value.app ]]</td> 
-                        <td>[[ item.value.completed ]]</td> 
-                        <!--<td>
+                        <!-- Display false if not done -->
+                        <td v-if="item.value.completed === false">[[ item.value.completed ]]</td>
+                        <!-- Display button to download if done -->
+                        <td>
                           <v-btn
-                          elevation="2"
-                          @click="goToImageSummary(item.value.linked_with_image_list_name)" 
-                          >[[ item.value.linked_with_image_list_name ? item.value.linked_with_image_list_name : "None" ]]</v-btn>
-                        </td>-->
+                            v-if="item.value.completed === true"
+                            elevation="2"
+                            @click="downloadAnnotations(item.id)" 
+                          >Download Annotations</v-btn>
+                        </td>
                         <td>[[ item.value.task_order ]]</td> 
                       </tr>
                     </tbody>
@@ -335,7 +338,7 @@
                     name="user"
                     v-model="user"
                     :error-messages="userErrors"
-                    :counter="10"
+                    :counter="15"
                     label="User"
                     required
                     @input="$v.user.$touch()"

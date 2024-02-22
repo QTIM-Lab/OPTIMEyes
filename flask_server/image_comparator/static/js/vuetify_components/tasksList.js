@@ -9,7 +9,7 @@ var tasksList = new Vue({
     mixins: [validationMixin],
 
     validations: {
-        user: { required, maxLength: maxLength(10) },
+        user: { required, maxLength: maxLength(15) },
         imageSetName: { required },
         imageListTypeSelect: { required },
         taskOrder: { required },
@@ -59,6 +59,7 @@ var tasksList = new Vue({
                 getFlickerTasks: `/get_tasks/flicker?username=${this.USER_INFO.username}`,
                 getSliderTasks: `/get_tasks/slider?username=${this.USER_INFO.username}`,
                 getMonaiSegmentationTasks: `/get_tasks/monaiSegmentation?username=${this.USER_INFO.username}`,
+                getMonaiSegmentationAnnotation: `/downloadAnnotations`,
                 goToImageSummary: `/image_set_summary`,
                 makeTask: `/make_task`,
             }
@@ -67,7 +68,7 @@ var tasksList = new Vue({
         userErrors() {
             const errors = []
             if (!this.$v.user.$dirty) return errors
-            !this.$v.user.maxLength && errors.push('User must be at most 10 characters long')
+            !this.$v.user.maxLength && errors.push('User must be at most 15 characters long')
             !this.$v.user.required && errors.push('User is required.')
             return errors
         },
@@ -140,8 +141,19 @@ var tasksList = new Vue({
                     data.rows.forEach((v, i, a) => {
                         this.monaiSegmentationTasks.push(v)
                     })
-                    debugger
             })
+        },
+        async downloadAnnotations(task_id){
+            const response = await fetch(`${this.URLS.getMonaiSegmentationAnnotation}/monaiSegmentation/${task_id}`);
+            if (!response.ok) {
+                const message = `An error has occured: ${response.status}`;
+                throw new Error(message);
+            }
+            debugger
+            var blob = await response.blob();
+            var url = URL.createObjectURL(blob);
+            window.open(url);
+            // debugger;
         },
         goToImageSummary(imageList) {
             console.log("goToImageSummary")
@@ -152,7 +164,7 @@ var tasksList = new Vue({
                 this.alert_error = "No Image List Associated"
                 setTimeout(()=>{this.alert_error = null}, 2000)
             }
-          },
+        },
         goToApp(task) {
           console.log(`goToApp(${task.value.user}, ${task.value.list_name})`)
           debugger
