@@ -111,6 +111,26 @@ docker run \
   image-comparator:flask flask run --port $MACHINE_PORT --host 0.0.0.0 --cert=certs/cert.pem --key=certs/key.pem
 ```
 
+To shell into this container:
+```bash
+docker exec -it image-comparator-flask-$APP_NAME bash
+flask shell
+```
+
+```python
+from image_comparator.auth_blueprint import load_user
+from image_comparator.db import get_server
+# Get the database instance
+couch_server = get_server()
+db = couch_server['image_comparator']
+
+user = load_user('user_guest')
+user.set_password("newpassword")
+user.save(db)
+
+
+```
+
 ```bash
 # certbot certs
 # tbd

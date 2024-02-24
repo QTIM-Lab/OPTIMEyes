@@ -23,6 +23,7 @@ auth_bp = Blueprint(
     static_folder='static'
 )
 
+
 @login_manager.user_loader
 def load_user(user_id):
     """Note:
@@ -65,12 +66,16 @@ class User(UserMixin):
         """Create hashed password."""
         self.password = generate_password_hash(
             password,
-            method='sha256'
+            method='scrypt'
         )
 
     def check_password(self, password):
-        """Check hashed password."""
-        return check_password_hash(self.password, password)
+        if self.password.startswith('sha256$'):  # Check for SHA256 prefix
+            # Note: This is getting deprecated so have everyone change their password
+            #       so that it is encrypted with scrypt versus the older sha256
+            return check_password_hash(self.password, password, method='sha256')
+        else:
+            return check_password_hash(self.password, password)  # Assume scrypt
     
     # Overridding UserMixin
     def get_id(self):
@@ -79,6 +84,11 @@ class User(UserMixin):
             return str(self.id) 
         except AttributeError:
             raise NotImplementedError("No `id` attribute - override `get_id`") from None
+
+    def save(self, db):
+        updated_doc = self.serialize_for_couchdb()
+        updated_doc['_rev'] = db['user_guest']['_rev']
+        db['user_guest'] = updated_doc
 
     def serialize_for_couchdb(self):
         dictionary_representation = {

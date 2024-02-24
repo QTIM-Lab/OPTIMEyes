@@ -5,6 +5,7 @@ import io
 import json
 import base64
 import pdb
+import zipfile
 
 from flask import (
     current_app,
@@ -606,4 +607,44 @@ def task_result():
         return jsonify('asdf')  # ! What is this
 
     return jsonify('asdf')  # ! What is this
+
+@bp.route('/downloadAnnotations/<app>/<task_id>', methods=['GET'])
+def downloadAnnotations(app, task_id):
+    couch_server = get_server(); db = couch_server['image_comparator'];
+    view = f'_design/{app}App/_view/resultsByTask?key=%22{task_id}%22'
+    # Fetch annotations from CouchDB
+    annotations = db.view('monaiSegmentationApp/resultsByTask', key=task_id)
+    # Fetch images from CouchDB
+    task = db.view('monaiSegmentationApp/tasks', key=['bbearce', task_id])####################################33
+    print(task)
+    task.rows
+    for row in task.rows:##########        # Access the document ID of each row using the `id` attribute
+        doc_id = row.id
+        print(f"Document ID: {doc_id}")
+    pdb.set_trace()
+    task_ = [record for record in task.rows]
+    task.value['imageList']
+    images = db.view('monaiSegmentationApp/resultsByTask', key=task_id)
+    # pdb.set_trace()
+    # Create an in-memory zip file
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED, False) as zip_file:
+        for record in annotations:
+            # Assuming the attachment name is 'image' and you want to use the record ID as the filename
+            attachment = db.get_attachment(record.id, 'image.png')
+            if attachment:
+                zip_file.writestr(f"{record.id}.jpg", attachment.read())
+
+    # Move to the beginning of the buffer:
+    # Seeking to the beginning of the file (zip_buffer.seek(0)) is necessary because after writing data to the zip file, the file pointer moves to the end of the file.
+    # When you return the file using send_file, Flask reads from the current position of the file pointer. If you don't seek back to the beginning, Flask will read from the end of the file, resulting in an empty or partially empty response because the file pointer is at the end.
+    zip_buffer.seek(0)
+    # zip_buffer.getbuffer().nbytes
+    # Return the zip file as a downloadable attachment
+    return send_file(
+        zip_buffer,
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name='annotations.zip'
+    )
 
