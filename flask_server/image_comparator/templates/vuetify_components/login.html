@@ -24,6 +24,16 @@
           <v-container>
             <h1>Login:</h1>
             
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <ul class=flashes>
+            {% for message in messages %}
+                <li class="flask_flash_messages">{{ message }}</li>
+            {% endfor %}
+            </ul>
+            {% endif %}
+            {% endwith %}
+            
             <v-form action="/login" method="post" ref="form">
                 <v-text-field
                   name="username"

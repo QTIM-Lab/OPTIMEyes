@@ -87,8 +87,9 @@ class User(UserMixin):
 
     def save(self, db):
         updated_doc = self.serialize_for_couchdb()
-        updated_doc['_rev'] = db['user_guest']['_rev']
-        db['user_guest'] = updated_doc
+        updated_doc['_rev'] = db[f'user_{self.username}']['_rev']
+        # import pdb; pdb.set_trace()
+        db[f'user_{self.username}'] = updated_doc
 
     def serialize_for_couchdb(self):
         dictionary_representation = {
@@ -200,13 +201,14 @@ def login():
             pdb.set_trace()
         # pdb.set_trace()
         user = User(id=f"user_{users[0].value['username']}",username=users[0].value['username'],email=users[0].value['email'],admin=users[0].value['admin'])
-        user.set_password(request.form['password'])
+        # pdb.set_trace()
+        user.password = users[0].value['password']
         if user.check_password(request.form['password']):
             login_user(user, remember=True)
             return redirect(url_for('routes_blueprint.main_dashboard'))
         else:
             flash("Try again please, incorrect password.")
-            return render_template('login.html')
+            return render_template('vuetify_components/login.html')
         # Test dictionary DB
         # for usr in Users_DB:
         #     # if found
