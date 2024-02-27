@@ -284,7 +284,7 @@
                           Task Type
                         </th>
                         <th class="text-left">
-                          Completed
+                          Download All
                         </th>
                         <!--<th class="text-left">
                           Associated List
@@ -313,14 +313,14 @@
                         </td> 
                         <td>[[ item.value.app ]]</td> 
                         <!-- Display false if not done -->
-                        <td v-if="item.value.completed === false">[[ item.value.completed ]]</td>
+                        <!-- <td v-if="item.value.completed === false">[[ item.value.completed ]]</td> -->
                         <!-- Display button to download if done -->
                         <td>
+                          <!-- v-if="item.value.completed === true"c -->
                           <v-btn
-                            v-if="item.value.completed === true"
                             elevation="2"
                             @click="downloadAnnotations(item.id)" 
-                          >Download Annotations</v-btn>
+                          >Download All | Completed: [[ item.value.completed ]]</v-btn>
                         </td>
                         <td>[[ item.value.task_order ]]</td> 
                       </tr>

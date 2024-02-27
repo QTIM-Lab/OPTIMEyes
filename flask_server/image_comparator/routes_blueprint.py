@@ -614,28 +614,43 @@ def downloadAnnotations(app, task_id):
     couch_server = get_server(); db = couch_server['image_comparator'];
     view = f'_design/{app}App/_view/resultsByTask?key=%22{task_id}%22'
     # Fetch annotations from CouchDB
-    annotations = db.view('monaiSegmentationApp/resultsByTask', key=['bbearce', task_id])
+    annotations = db.view('monaiSegmentationApp/resultsByTask', key=task_id)
     # Fetch images from CouchDB
-    task = db.view('monaiSegmentationApp/tasksByUserAndListName', key=[task_id])
-    print(task)
-    [i for i in annotations]
-    [i for i in task]
-    for row in task.rows:##########        # Access the document ID of each row using the `id` attribute
-        doc_id = row.id
-        print(f"Document ID: {doc_id}")
-    pdb.set_trace()
-    task_ = [record for record in task.rows]
-    task.value['imageList']
-    images = db.view('monaiSegmentationApp/resultsByTask', key=task_id)
+    task = db.view('monaiSegmentationApp/tasks', key=task_id)
+    # print(task)
+    # [i for i in annotations]
+    # [i for i in task]
+    # for row in task.rows:##########        # Access the document ID of each row using the `id` attribute
+    #     doc_id = row.id
+    #     print(f"Document ID: {doc_id}")
+    # pdb.set_trace()
+    task_rows = [record for record in task.rows]
+    if len(task_rows) != 1:
+        raise Exception("Multiple tasks returned for task_id.")
+    task_value = task_rows[0].value
+    images = db.view('images/imagesBySet', key=task_value['imageSet'])
     # pdb.set_trace()
     # Create an in-memory zip file
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED, False) as zip_file:
         for record in annotations:
             # Assuming the attachment name is 'image' and you want to use the record ID as the filename
-            attachment = db.get_attachment(record.id, 'image.png')
+            if record.id.find('.png') != -1:
+                attachment = db.get_attachment(record.id, 'image.png')
+            elif record.id.find('.jpg') != -1:
+                attachment = db.get_attachment(record.id, 'image.jpg')
             if attachment:
-                zip_file.writestr(f"{record.id}.jpg", attachment.read())
+                zip_file.writestr(f"{record.id}", attachment.read())
+        for image in images:
+            # Assuming the attachment name is 'image' and you want to use the image ID as the filename
+            # pdb.set_trace()
+            if image.id.find('.png') != -1:
+                attachment = db.get_attachment(image.id, 'image')
+            elif image.id.find('.jpg') != -1:
+                attachment = db.get_attachment(image.id, 'image')
+            if attachment:
+                zip_file.writestr(f"{image.id}", attachment.read())
+                
 
     # Move to the beginning of the buffer:
     # Seeking to the beginning of the file (zip_buffer.seek(0)) is necessary because after writing data to the zip file, the file pointer moves to the end of the file.
@@ -647,6 +662,7 @@ def downloadAnnotations(app, task_id):
         zip_buffer,
         mimetype='application/zip',
         as_attachment=True,
-        download_name='annotations.zip'
+        download_name='annotations_and_source_images.zip'
     )
+
 
