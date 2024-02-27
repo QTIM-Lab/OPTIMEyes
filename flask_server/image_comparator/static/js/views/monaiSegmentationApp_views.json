@@ -2,8 +2,11 @@
     "_id": "_design/classifyApp",
     "language": "javascript",
     "views": {
-        "tasks": {
+        "tasksByUser": {
             "map": "function(doc) {\n  if (doc.type === \"task\" && doc.app === \"monaiSegmentation\") {\n    emit (doc.user, doc);\n  }\n}"
+        },
+        "tasks": {
+            "map": "function(doc) {\n  if (doc.type === \"task\" && doc.app === \"monaiSegmentation\") {\n    emit (doc._id, doc);\n  }\n}"
         },
         "completedTasks": {
             "map": "function(doc) {\n  if (doc.type === \"task\" && doc.app === \"monaiSegmentation\" && doc.completed === true) {\n    emit ([doc.user, doc.list_name], doc);\n  }\n}"

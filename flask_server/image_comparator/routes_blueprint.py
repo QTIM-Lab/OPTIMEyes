@@ -236,7 +236,7 @@ def get_tasks(app):
         current_app.config['DNS'], current_app.config['DB_PORT'], current_app.config["IMAGES_DB"])
     # view = f"_design/basic_views/_view/incomplete_{app}_tasks?key=\"{username}\""
     # view = f"_design/{app}App/_view/incomplete_{app}_tasks?key=\"{username}\""
-    view = f"_design/{app}App/_view/tasks?key=\"{username}\""
+    view = f"_design/{app}App/_view/tasksByUser?key=\"{username}\""
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
     return json.loads(response.content.decode('utf-8'))
@@ -481,6 +481,7 @@ def task_result():
             })
         task = task_map.__next__()
         image_list = list_map.__next__()
+        # pdb.set_trace()
         if task['current_idx'] == image_list['count'] - 1:
             # That was the last task so mark task as complete
             task['completed'] = True
@@ -613,11 +614,12 @@ def downloadAnnotations(app, task_id):
     couch_server = get_server(); db = couch_server['image_comparator'];
     view = f'_design/{app}App/_view/resultsByTask?key=%22{task_id}%22'
     # Fetch annotations from CouchDB
-    annotations = db.view('monaiSegmentationApp/resultsByTask', key=task_id)
+    annotations = db.view('monaiSegmentationApp/resultsByTask', key=['bbearce', task_id])
     # Fetch images from CouchDB
-    task = db.view('monaiSegmentationApp/tasks', key=['bbearce', task_id])####################################33
+    task = db.view('monaiSegmentationApp/tasksByUserAndListName', key=[task_id])
     print(task)
-    task.rows
+    [i for i in annotations]
+    [i for i in task]
     for row in task.rows:##########        # Access the document ID of each row using the `id` attribute
         doc_id = row.id
         print(f"Document ID: {doc_id}")
