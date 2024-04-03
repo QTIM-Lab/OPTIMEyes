@@ -694,7 +694,7 @@ var monai_segmentation_app =new Vue({
         // segmentationContext.clearRect(0, 0, segmentationCanvas.width, segmentationCanvas.height);
         current_working_width = this.$refs['canvases_parent_div'].parentElement.offsetWidth
         current_working_height = current_working_width/this.aspectRatio
-        // Iterate over the polygons and draw them on the segmentation canvas
+        // Iterate over the polygons and draw them on the segmentation canvas 
         coco_annotations.forEach(segmentation => {
           const points = segmentation.segmentation;
           if (points.length > 0) {
@@ -1587,7 +1587,8 @@ var monai_segmentation_app =new Vue({
           // Add the image data as a blob with a "image/png" type
           const formFileName = `${segmentation_name}.png`;
           // Save segmentation canvas to segmentation_image.base64
-          var segmentationCanvas = this.$refs['segmentation'];
+          // var segmentationCanvas = this.$refs['segmentation'];
+          var segmentationCanvas = this.$refs['testcanvas'];
           this.segmentation_image.base64 = segmentationCanvas.toDataURL('image/png')
           //
           const byteCharacters = atob(this.segmentation_image.base64.split(',')[1]);
@@ -1599,8 +1600,10 @@ var monai_segmentation_app =new Vue({
           const imageBlob = new Blob([byteArray], { type: 'image/png' });
           formData.append('image', imageBlob, formFileName);
           // Add metadata
+          var d = new Date()
           this.result['_id'] = `${this.task.id}-result-${this.image.image_id}`
           this.result['user'] = this.user
+          this.result['date'] = d.toTimeString()
           this.result['list_name'] = this.task.value.list_name
           this.result['app'] = "monaiSegmentation"
           this.result['type'] = "result"
