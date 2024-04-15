@@ -105,6 +105,7 @@
 
 <!-- Components -->
 {% include 'vuetify_components/navbar.html' %}
+{% include 'vuetify_components/timer.html' %}
 
 <!-- Index Vue App -->
 <div id="monai_segmentation_app">
@@ -112,15 +113,19 @@
         <navbar-tag></navbar-tag>
       <v-main>
           <v-container>
-            <v-btn v-if="images.length != 0">
-              <v-tooltip left>
-                <template v-slot:activator="{ on }">
-                  <v-icon v-on="on" style="font-style: normal; font-size: small;">Monai Label Task | On Image [[ task.value.current_idx + 1 ]] of [[ images.length ]]
-                  </v-icon>
-                </template>
-                Image List Name: [[ list_name ]]
-              </v-tooltip>
-            </v-btn>          
+
+              <v-btn v-if="images.length != 0" style="display: inline-block;">
+                <v-tooltip left>
+                  <template v-slot:activator="{ on }">
+                    <v-icon v-on="on" style="font-style: normal; font-size: small;">Monai Label Task | On Image [[ task.value.current_idx + 1 ]] of [[ images.length ]]
+                    </v-icon>
+                  </template>
+                  Image List Name: [[ list_name ]]
+                </v-tooltip>
+              </v-btn> 
+              <timer-tag @update-time="updateTrackedTime"></timer-tag>
+              <!-- Debug Time - comes from <timer-tag> -->
+              <!-- <p>[[ total_sec ]]</p> -->
             
             <!-- Alert -->
             <v-alert
@@ -430,6 +435,11 @@ var monai_segmentation_app =new Vue({
 
     data: () => ({
       app: "monaiSegmentation",
+      /* timer component variables */
+      total_sec: 0,
+      min: 0,
+      sec: 0,
+      /* ------------------------- */
       user: "{{ task.user }}",
       list_name: "{{ task.list_name }}",
       monaiLabelPort: 8000,
@@ -602,6 +612,12 @@ var monai_segmentation_app =new Vue({
     },
 
     methods: {
+      updateTrackedTime(total_sec, min, sec) {
+        // From child <timer-tag>
+        this.total_sec = total_sec
+        this.min = min
+        this.sec = sec;
+      },
       initCanvasZoomTools(){
         MS = this;
         var canvas = this.$refs.image;
@@ -1609,6 +1625,8 @@ var monai_segmentation_app =new Vue({
           this.result['type'] = "result"
           this.result['coco_annotation'] = this.coco_annotations
           this.result['taskid'] = this.task.id
+          this.result['total_sec'] = this.total_sec
+          this.result['timer'] = `${this.min.toString().padStart(2, '0')}:${this.sec.toString().padStart(2, '0')}`
           formData.append('json', JSON.stringify(this.result));
           fetch(this.URLS.taskResult, {
             method: 'POST',

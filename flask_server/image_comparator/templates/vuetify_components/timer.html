@@ -1,0 +1,66 @@
+<script type="text/template" id="timer">
+    <div class="timer-container">
+        <!-- <span>[[ min ]]:[[ sec ]] (min:sec)</span>
+        <v-btn @click="button_text === 'Pause' ? pause() : start()">[[ button_text ]]</v-btn> -->
+    </div>
+</script>
+
+<script>
+// this is the JS file, eg app.js
+Vue.component('timer-tag', {
+    template: '#timer',
+    data() {
+        return { 
+            min: '00',
+            sec: '00',
+            total_sec: 0,
+            intervalID: 0,
+            button_text: 'Pause',
+     }
+    },
+    mounted(){
+        this.start(init=true)
+        // Simulate time tracking
+        setInterval(() => {
+            this.currentTime++;
+            this.$emit('update-time', this.total_sec, this.min, this.sec); // Emitting custom event to update time in parent
+        }, 1000);
+    },
+    methods: {
+        // Function to update the timer display
+        updateTimer() {
+            // Increment seconds
+            this.total_sec++;
+            // Calculate minutes and remaining seconds
+            const minutes = Math.floor(this.total_sec / 60);
+            const remainingSeconds = this.total_sec % 60;
+
+            // Update the timer display
+            this.min = minutes.toString().padStart(2, '0')
+            this.sec = remainingSeconds.toString().padStart(2, '0')
+        },
+        start(init=false) {
+            // Set the initial time in seconds
+            if(init) {
+                this.total_sec = 0;
+            }
+            this.button_text = "Pause"
+            // Start the timer
+            this.intervalID = setInterval(this.updateTimer, 1000);
+        },
+        pause(){
+            this.button_text = "Continue"
+            clearInterval(this.intervalID)
+        }
+    },
+    delimiters: ['[[',']]'],
+});
+</script>
+
+<style>
+    .timer-container {
+        padding: 0px 0px 0px 10px;
+        display: inline;
+        float: center;
+    };
+</style>
