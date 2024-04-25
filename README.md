@@ -1,4 +1,4 @@
-# OptimEYES Ophthalmology Annotation App
+# OPTIMEyes Ophthalmology Annotation App
 
 Purpose: Set up a static webpage and server to host classifier/pairwise comparator tasks for images 
 
