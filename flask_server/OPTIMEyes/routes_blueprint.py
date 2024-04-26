@@ -610,7 +610,7 @@ def task_result():
     return jsonify('asdf')  # ! What is this
 
 @bp.route('/downloadAnnotations/<app>/<task_id>', methods=['GET'])
-def downloadAnnotations(app, task_id):
+def downloadAnnotations(app, task_id, cli=False, zip_path=None):
     couch_server = get_server(); db = couch_server['image_comparator'];
     view = f'_design/{app}App/_view/resultsByTask?key=%22{task_id}%22'
     # Fetch annotations from CouchDB
@@ -658,11 +658,14 @@ def downloadAnnotations(app, task_id):
     zip_buffer.seek(0)
     # zip_buffer.getbuffer().nbytes
     # Return the zip file as a downloadable attachment
-    return send_file(
-        zip_buffer,
-        mimetype='application/zip',
-        as_attachment=True,
-        download_name='annotations_and_source_images.zip'
-    )
-
-
+    if cli:
+        with open(zip_path, 'wb') as zfile:
+            # pdb.set_trace()
+            zfile.write(zip_buffer.getvalue())
+    else:
+        return send_file(
+            zip_buffer,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name='annotations_and_source_images.zip'
+        )
