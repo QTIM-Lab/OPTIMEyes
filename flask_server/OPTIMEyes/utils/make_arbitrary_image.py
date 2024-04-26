@@ -27,10 +27,10 @@ green_image.save(green_image_io, format="PNG")
 blue_image_io = io.BytesIO()
 blue_image.save(blue_image_io, format="PNG")
 
-blank_image.save("/home/bearceb/Image-Comparator/flask_server/image_comparator/utils/blank_segmentation.png")
-red_image.save("/home/bearceb/Image-Comparator/flask_server/image_comparator/utils/red_segmentation.png")
-green_image.save("/home/bearceb/Image-Comparator/flask_server/image_comparator/utils/green_segmentation.png")
-blue_image.save("/home/bearceb/Image-Comparator/flask_server/image_comparator/utils/blue_segmentation.png")
+blank_image.save("/home/bearceb/Image-Comparator/flask_server/OPTIMEyes/utils/blank_segmentation.png")
+red_image.save("/home/bearceb/Image-Comparator/flask_server/OPTIMEyes/utils/red_segmentation.png")
+green_image.save("/home/bearceb/Image-Comparator/flask_server/OPTIMEyes/utils/green_segmentation.png")
+blue_image.save("/home/bearceb/Image-Comparator/flask_server/OPTIMEyes/utils/blue_segmentation.png")
 
 # Encode the image in base64
 blank_base64_encoded = base64.b64encode(blank_image_io.getvalue()).decode()

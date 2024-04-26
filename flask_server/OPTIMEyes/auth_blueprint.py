@@ -11,7 +11,7 @@ from flask import (
     jsonify
 )
 from . import login_manager
-from image_comparator.db import get_server
+from OPTIMEyes.db import get_server
 
 from flask_login import UserMixin, login_required, login_user, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash

@@ -23,6 +23,9 @@
         "results": {
             "map": "function(doc) {\n  if (doc.type === \"result\" && doc.app === \"monaiSegmentation\")\n    emit(doc._id, doc);\n}"
         },
+        "resultsByTask": {
+            "map": "function(doc) {\n  if (doc.type === \"result\" && doc.app === \"monaiSegmentation\") {\n    emit (doc.taskid, doc);\n  }\n}"
+        },
         "tasksByUserAndListName": {
             "map": "function(doc) {\n  if (doc.type === \"task\" && doc.app === \"monaiSegmentation\") {\n    emit ([doc.user, doc.list_name], doc);\n  }\n}"
           }

@@ -31,7 +31,7 @@ from .utils.addImages import addImages
 from .utils.deleteImageSet import deleteImageSet
 
 # DB
-from image_comparator.db import get_server
+from OPTIMEyes.db import get_server
 
 bp = Blueprint('routes_blueprint', __name__, url_prefix='/')
 

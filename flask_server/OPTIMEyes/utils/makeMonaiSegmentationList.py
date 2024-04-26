@@ -48,10 +48,15 @@ def getImageIDs(url: str) -> list:
     else:
         response = requests.get(url, auth=(DB_ADMIN_USER, DB_ADMIN_PASS))
     response = response.content.decode('utf-8')
-    #pdb.set_trace()
+    # pdb.set_trace()
     response = json.loads(response)
-    imageIDs = [row['id'] for row in response['rows']]
-    imageIDs.sort()
+    try:
+        response['rows'][0]['value']['order']
+        data = {row['value']['order']:row['id'] for row in response['rows']}
+        imageIDs = [data[i+1] for i in range(len(data.keys()))]
+    except KeyError:
+        imageIDs = [row['id'] for row in response['rows']]
+        imageIDs.sort()
 
     return imageIDs
 
@@ -75,7 +80,8 @@ def makeMonaiSegmentationList(imageSet: str, monaiSegmentationListName: str, pct
         imageIDs = getImageIDs(url)
         # create all unique combinations
         amountRepeat = math.ceil(pctRepeat/100 * len(imageIDs))
-        random.shuffle(imageIDs)
+        # random.shuffle(imageIDs)
+        # pdb.set_trace()
         repeats = random.sample(imageIDs, amountRepeat)
         images = imageIDs + repeats
 
