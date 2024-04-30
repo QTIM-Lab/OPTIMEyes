@@ -67,10 +67,12 @@ docker run \
   -v $PWD/Image-Comparator-Data:/Image-Comparator-Data \
   -v $PWD:$PWD \
   -w /flask_server \
-  -e FLASK_APP=image_comparator \
+  -e FLASK_APP=OPTIMEyes \
   -e MACHINE_PORT=$MACHINE_PORT \
   --name image-comparator-flask-"$APP_NAME" \
-  image-comparator:flask flask run --port $MACHINE_PORT --host 0.0.0.0
+  gunicorn -b 0.0.0.0:8080 "OPTIMEyes:create_app()"
+  # image-comparator:flask bash
+  # image-comparator:flask flask run --port $MACHINE_PORT --host 0.0.0.0 --debug
 ```
 
 #### HTTPS
@@ -127,11 +129,44 @@ db = couch_server['image_comparator']
 user = load_user('user_guest')
 user.set_password("newpassword")
 user.save(db)
-
-
 ```
+
+```python
+from image_comparator.auth_blueprint import load_user
+from image_comparator.db import get_server
+# Get the database instance
+couch_server = get_server()
+db = couch_server['image_comparator']
+
+user = load_user('')
+user.set_password("")
+user.save(db)
+
+user_pass=[
+('guest', 'testtest')
+]
+
+for u, p in user_pass:
+    print(u)
+    print(p)
+
+
+for u, p in user_pass:
+    user = load_user(f'user_{u}')
+    print(f'{u} {p}')
+    user.set_password(p)
+    user.save(db)
+
+
+
+# head -c 16 /dev/urandom | base64
+```
+
 
 ```bash
 # certbot certs
 # tbd
 ```
+
+#### NGINX
+

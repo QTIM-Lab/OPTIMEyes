@@ -201,7 +201,6 @@ def login():
             pdb.set_trace()
         # pdb.set_trace()
         user = User(id=f"user_{users[0].value['username']}",username=users[0].value['username'],email=users[0].value['email'],admin=users[0].value['admin'])
-        # pdb.set_trace()
         user.password = users[0].value['password']
         if user.check_password(request.form['password']):
             login_user(user, remember=True)

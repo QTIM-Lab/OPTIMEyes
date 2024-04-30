@@ -13,13 +13,13 @@ def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
     app.permanent_session_lifetime = datetime.timedelta(hours=1)
+    load_dotenv(".env", verbose=True)
     app.config.from_mapping(
         # SECRET_KEY=b'',
         SECRET_KEY=os.getenv("SECRET_KEY")
     )
     
     # Get environ config    
-    load_dotenv(verbose=True)
     app.config['DB_ADMIN_USER'] = os.getenv("DB_ADMIN_USER")
     app.config['DB_ADMIN_PASS'] = os.getenv("DB_ADMIN_PASS")
     app.config['DNS'] = os.getenv("DNS")

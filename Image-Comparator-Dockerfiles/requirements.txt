@@ -11,3 +11,4 @@ Pillow
 pandas
 pycocotools
 scikit-image
+gunicorn
