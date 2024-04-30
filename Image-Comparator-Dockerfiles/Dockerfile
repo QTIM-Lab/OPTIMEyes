@@ -1,5 +1,5 @@
 # Image-Comparator Dockerfile
-FROM ubuntu:latest
+FROM ubuntu:jammy-20230816
 
 # These are essential
 RUN apt update -y
