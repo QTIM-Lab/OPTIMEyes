@@ -215,14 +215,14 @@
                       <!-- Segmentation Tools -->
                       <h4>Segmentation Tools:</h4>
                       <!-- Simple button example if needed for later -->
-                      <!-- <v-btn @click="toggleBrushPolygon('brush')"> 
+                      <!-- <v-btn @click="toggleTool('brush')"> 
                         <v-icon>[[ 'mdi-brush-outline' ]]</v-icon>
                         [[ BrushButtonText ]]
                       </v-btn> -->
 
                       <!-- Image Tools -->
                       <h4>Image Tools:</h4>
-                      <v-btn :outlined="image_selected" @click="toggleBrushPolygon('image')">
+                      <v-btn :outlined="image_selected" @click="toggleTool('image')">
                         <v-tooltip left>
                           <template v-slot:activator="{ on }">
                             <v-icon v-on="on">[[ 'mdi-cursor-move' ]]</v-icon>
@@ -233,7 +233,7 @@
 
                       <!-- Brush Options -->
                       <h5>Brush Options:</h5>
-                      <v-btn :outlined="segmentation_selected" @click="toggleBrushPolygon('brush')"> 
+                      <v-btn :outlined="segmentation_selected" @click="toggleTool('brush')"> 
                         <v-tooltip left>
                           <template v-slot:activator="{ on }">
                             <v-icon v-on="on">[[ 'mdi-brush-outline' ]]</v-icon>
@@ -251,7 +251,7 @@
 
                       <!-- Coco Polygon Options -->
                       <h4>Coco Polygon Options:</h4>
-                      <v-btn :outlined="polygon_selected" @click="toggleBrushPolygon('polygon')"> 
+                      <v-btn :outlined="polygon_selected" @click="toggleTool('polygon')"> 
                         <v-tooltip left>
                           <template v-slot:activator="{ on }">
                             <v-icon v-on="on">[[ 'mdi-vector-polygon' ]]</v-icon>
@@ -273,7 +273,7 @@
                       </v-btn>
 
                       <!-- Monai Label Buttons and Tools -->
-                      <!-- <h4>Monai Label Tools:</h4>
+                      <h4>Monai Label Tools:</h4>
                       <div>
                         <v-btn @click="performInference">
                           <v-icon>[[ 'mdi-lightbulb-outline' ]]</v-icon>
@@ -301,8 +301,19 @@
                           </div>
                           <div v-if="trainDoneTraining" class="check-mark">✔</div>
                         </v-btn>
+                        <br>
+                        <v-btn @click="drawROI">
+                          <v-tooltip left>
+                            <template v-slot:activator="{ on }">
+                              <v-icon v-on="on">[[ 'mdi-crop-square' ]]</v-icon> ROI
+                            </template>
+                            Region of Interest: [x_left, y_top, x_right, y_bottom]
+                          </v-tooltip>
+                        </v-btn>
 
-                      </div> -->
+                        <v-text-field label="ROI for Inference" v-model:value="roi"></v-text-field>                        
+
+                      </div>
 
                     </v-col>
                   </v-row>  
@@ -339,7 +350,7 @@
                           :key="radio_button['button_id']"
                           :label="`${result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id}`"
                           :value="`${result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id}`"                       
-                          @click="toggleBrushPolygon(result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id)"
+                          @click="toggleTool(result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id)"
                         ></v-radio>
 
                       </v-radio-group>
@@ -453,6 +464,17 @@ var monai_segmentation_app =new Vue({
         base64: null
         // base64: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAfQAAAH0CAIAAABEtEjdAAAC7UlEQVR4nO3BAQEAAACCIP+vbkhAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPwYdEkAAXvqzcMAAAAASUVORK5CYII="
       },
+      imageCanvasMouseDownROIEventListerner: null,
+      imageCanvasMouseUpROIEventListerner: null,
+      imageCanvasMouseOutROIEventListerner: null,
+      imageCanvasMouseMoveROIEventListerner: null,
+
+      imageCanvasMouseDownInitCanvasEventListerner: null,
+      imageCanvasMouseUpInitCanvasEventListerner: null,
+      imageCanvasMouseOverInitCanvasEventListerner: null,
+      imageCanvasMouseOutInitCanvasEventListerner: null,
+      imageCanvasMouseMoveInitCanvasEventListerner: null,
+      
       imageWidth: 0,
       imageHeight: 0,
       canvasWidth: 0, // These are the internal pixels; try to keep consistent with polygons and should match imageWidth
@@ -500,14 +522,17 @@ var monai_segmentation_app =new Vue({
       alert_error: null,
       BrushButtonText: "Brush (Selected)",
       PolygonButtonText: "Shape",
-      // Spinners
-      //// Inference
+      // AI Tools
+      //// ROI
+      roi: JSON.stringify([0, 0, 0, 0]),
+      //// Spinners
+      ////// Inference
       inferenceLoading: false,
       inferenceDoneTraining: false,
-      //// Save Image and Label to MonaiLabel
+      ////// Save Image and Label to MonaiLabel
       saveLoading: false,
       saveDoneTraining: false,
-      //// Training
+      ////// Training
       trainLoading: false,
       trainIntervalId: null,
       trainDoneTraining: false,
@@ -594,10 +619,12 @@ var monai_segmentation_app =new Vue({
               resetToPreviousResult: `/reset_to_previous_result`,
               // MonaiLabel URLS
               activeLearning: `http://${this.DNS}:${this.monaiLabelPort}/activelearning/last`,
-              performInference: `http://${this.DNS}:${this.monaiLabelPort}/infer/SegformerBundle`,
+              // performInference: `http://${this.DNS}:${this.monaiLabelPort}/infer/SegformerBundle`,
+              performInference: `http://${this.DNS}:${this.monaiLabelPort}/infer/MedSamBundle`,
               uploadImage: `http://${this.DNS}:${this.monaiLabelPort}/datastore/image`,
               saveLabel: `http://${this.DNS}:${this.monaiLabelPort}/datastore/label`,
-              trainOnLables: `http://${this.DNS}:${this.monaiLabelPort}/train/SegformerBundle`,
+              // trainOnLabels: `http://${this.DNS}:${this.monaiLabelPort}/train/SegformerBundle`,
+              trainOnLabels: `http://${this.DNS}:${this.monaiLabelPort}/train/MedSamBundle`,
               trainStatus: `http://${this.DNS}:${this.monaiLabelPort}/train/?all=false&check_if_running=false`
           }
       },
@@ -643,28 +670,46 @@ var monai_segmentation_app =new Vue({
           }
         }, false);
 
+        function onMouseUp(evt) {
+          console.log("initCanvasZoomTools onMouseUp")
+          mouseDown = false;
+        }
+        
+        function onMouseOver(evt) {
+          console.log("initCanvasZoomTools onMouseOver")
+          mouseDown = false;
+        }
+        
+        function onMouseOut(evt) {
+          console.log("initCanvasZoomTools onMouseOut")
+          mouseDown = false;
+        }
+        
         // add event listeners to handle screen drag
-        canvas.addEventListener("mousedown", function(evt) {
+        function onMouseDown(evt) {
+          console.log("initCanvasZoomTools onMouseDown")
+          // canvas.removeEventListener("mousedown", MS.imageCanvasMouseDownROIEventListerner)
           mouseDown = true;
           startDragOffset.x = evt.clientX + MS.translatePos.x; // forward (mouse slides image around)
           startDragOffset.y = evt.clientY + MS.translatePos.y; // forward (mouse slides image around)
           // startDragOffset.x = evt.clientX - MS.translatePos.x; // reverse (mouse is moving across image)
           // startDragOffset.y = evt.clientY - MS.translatePos.y; // reverse (mouse is moving across image)
-        });
-
-        canvas.addEventListener("mouseup", function(evt) {
-          mouseDown = false;
-        });
-
-        canvas.addEventListener("mouseover", function(evt) {
-          mouseDown = false;
-        });
-
-        canvas.addEventListener("mouseout", function(evt) {
-          mouseDown = false;
-        });
-
-        canvas.addEventListener("mousemove", function(evt) {
+        }
+        this.imageCanvasMouseDownInitCanvasEventListerner = onMouseDown
+        this.imageCanvasMouseUpInitCanvasEventListerner = onMouseUp
+        this.imageCanvasMouseOverInitCanvasEventListerner = onMouseOver
+        this.imageCanvasMouseOutInitCanvasEventListerner = onMouseOut
+        this.imageCanvasMouseMoveInitCanvasEventListerner = onMouseMove
+        
+        // done in this..toggleTool()
+        // canvas.addEventListener("mousedown", onMouseDown);
+        // canvas.addEventListener("mouseup", onMouseUp);
+        // canvas.addEventListener("mouseover", onMouseOver);
+        // canvas.addEventListener("mouseout", onMouseOut);
+        // canvas.addEventListener("mousemove", onMouseMove);
+        
+        function onMouseMove(evt) {
+          console.log("initCanvasZoomTools onMouseMove")
           if (mouseDown) {
             const imageCanvas = MS.$refs['image'];
             current_working_width = MS.$refs['canvases_parent_div'].parentElement.offsetWidth
@@ -676,7 +721,7 @@ var monai_segmentation_app =new Vue({
             MS.translatePos.y = Math.max(0, Math.min(startDragOffset.y - evt.clientY, max_y_pixels_you_can_shift_image)) // forward (mouse slides image around)
             // MS.translatePos.x = Math.max(0, Math.min(evt.clientX - startDragOffset.x, max_x_pixels_you_can_shift_image)) // reverse (mouse is moving across image)
             // MS.translatePos.y = Math.max(0, Math.min(evt.clientY - startDragOffset.y, max_y_pixels_you_can_shift_image)) // reverse (mouse is moving across image)
-
+            
             // add scale soon
             if(MS.scale > 1.0){
               MS.displayCanvasImage(MS.current_image, translatePos=MS.translatePos, scale=MS.scale);
@@ -685,8 +730,8 @@ var monai_segmentation_app =new Vue({
               MS.drawVertices()
             }
           }
-        });
-
+        }         
+        
       },
       mergePolygonsToBrushCanvas(){
         // Get the canvas elements
@@ -1060,6 +1105,152 @@ var monai_segmentation_app =new Vue({
         }
         coco_ctx.restore()
       },
+      drawROI(translatePos={x:0,y:0}, scale=1.0) {
+        
+        const imageCanvas = MS.$refs['image'];
+        // Remove Move Tools reactivity
+        // imageCanvas.removeEventListener("mousemove", this.imageCanvasMouseMoveEventListerner)
+        var x_scaler = MS.imageWidth / parseFloat( MS.$refs.canvases_parent_div.style.width.replace("px","") ) // Adjust x point clicked
+        var y_scaler = MS.imageHeight / parseFloat( MS.$refs.canvases_parent_div.style.height.replace("px","") ) // Adjust y point clicked
+        
+        // Load the annotations for the image
+        this.toggleTool("roi")
+        // debugger
+        // add event listeners to handle roi definition
+        var startDragOffset = {};
+        var drag = {};
+        var mouseDown = false;
+
+        this.imageCanvasMouseDownROIEventListerner = onMouseDown
+        this.imageCanvasMouseUpROIEventListerner = onMouseUp
+        this.imageCanvasMouseOutROIEventListerner = onMouseOut
+        this.imageCanvasMouseMoveROIEventListerner = onMouseMove
+
+        // done in this..toggleTool()
+        // imageCanvas.addEventListener("mousedown", onMouseDown);
+        // imageCanvas.addEventListener("mouseup", onMouseUp);
+        // imageCanvas.addEventListener("mouseout", onMouseOut);
+        // imageCanvas.addEventListener("mousemove", onMouseMove);
+
+        function onMouseDown(evt) {
+          console.log("ROI onMouseDown")
+          
+          // debugger
+          // imageCanvas.addEventListener("mousemove", onMouseMove);
+          // imageCanvas.addEventListener("mouseup", onMouseUp);
+          
+          // setTimeout(()=>{MS.displayCanvasImage()}, 2000)
+          MS.displayCanvasImage(MS.current_image, translatePos=MS.translatePos, scale=MS.scale);
+          mouseDown = true;
+          x_scaler = MS.imageWidth / parseFloat( MS.$refs.canvases_parent_div.style.width.replace("px","") ) // Adjust x point clicked
+          y_scaler = MS.imageHeight / parseFloat( MS.$refs.canvases_parent_div.style.height.replace("px","") ) // Adjust y point clicked
+          // const x = evt.clientX - imageCanvas.getBoundingClientRect().left; // literal pixels on screen\browser
+          // const y = evt.clientY - imageCanvas.getBoundingClientRect().top; // literal pixels on screen\browser
+          const x = evt.offsetX; // literal pixels on screen\browser
+          const y = evt.offsetY; // literal pixels on screen\browser
+          console.log(MS.scale)
+          console.log(`x ${x} | x ${y}`)
+          console.log(`evt.clientX ${evt.clientX} | evt.clientY ${evt.clientY}`)
+          console.log(`x_scaler ${x_scaler} | y_scaler ${y_scaler}`)
+          where_on_image_clicked_x = x*x_scaler/MS.scale // /MS.scale //+ MS.translatePos.x*x_scaler
+          where_on_image_clicked_y = y*y_scaler/MS.scale // /MS.scale //+ MS.translatePos.y*y_scaler
+          startDragOffset.x = where_on_image_clicked_x; // forward (mouse slides image around)
+          startDragOffset.y = where_on_image_clicked_y; // forward (mouse slides image around)
+          // startDragOffset.x = evt.clientX - MS.translatePos.x; // reverse (mouse is moving across image)
+          // startDragOffset.y = evt.clientY - MS.translatePos.y; // reverse (mouse is moving across image)
+          // console.log(`roi startDragOffset.x: ${startDragOffset.x}`)
+          // console.log(`roi startDragOffset.y: ${startDragOffset.y}`)
+          
+        }
+        
+        function onMouseUp(evt) {
+          console.log("ROI onMouseUp")
+          mouseDown = false;
+          startDragOffset.x = 0
+          startDragOffset.y = 0
+          displayROI(imageCanvas);
+          // setTimeout(()=>{MS.displayCanvasImage()}, 2000)
+          // imageCanvas.removeEventListener('mousemove', onMouseMove);
+          // imageCanvas.removeEventListener('mouseup', onMouseUp);          
+          // imageCanvas.removeEventListener('mousedown', onMouseDown);
+          // imageCanvas.removeEventListener('mouseout', onMouseOut);
+        }
+        
+        function onMouseOut(evt) {
+          console.log("ROI onMouseOut")
+          
+          mouseDown = false;
+          startDragOffset.x = 0
+          startDragOffset.y = 0
+          // imageCanvas.removeEventListener('mousemove', onMouseMove);
+          // imageCanvas.removeEventListener('mouseup', onMouseUp);
+          // imageCanvas.removeEventListener('mousedown', onMouseDown);
+          // imageCanvas.removeEventListener('mouseout', onMouseOut);
+        }
+        
+        function onMouseMove(evt) {
+          console.log("ROI onMouseMove")
+          if (mouseDown === true){
+            // debugger
+            const imageCanvas = MS.$refs['image'];
+            imageCanvas.style.width = this.$refs.canvases_parent_div.style.width;
+            imageCanvas.style.height = this.$refs.canvases_parent_div.style.height;
+            current_working_width = MS.$refs['canvases_parent_div'].parentElement.offsetWidth
+            current_working_height = current_working_width/MS.aspectRatio
+            
+            // const x = evt.clientX - imageCanvas.getBoundingClientRect().left; // literal pixels on screen\browser
+            // const y = evt.clientY - imageCanvas.getBoundingClientRect().top; // literal pixels on screen\browser
+            const x = evt.offsetX
+            const y = evt.offsetY
+            where_on_image_am_i_x = x*x_scaler/MS.scale //+ MS.translatePos.x*x_scaler
+            where_on_image_am_i_y = y*y_scaler/MS.scale //+ MS.translatePos.y*y_scaler
+
+            drag.x = where_on_image_am_i_x // forward (mouse slides image around)
+            drag.y = where_on_image_am_i_y // forward (mouse slides image around)
+            
+            // MS.translatePos.x = evt.clientX - startDragOffset.x // reverse (mouse is moving across image)
+            // MS.translatePos.y = evt.clientY - startDragOffset.y // reverse (mouse is moving across image)
+            // debugger
+            // console.log(`drag.x: ${drag.x}`)
+            // console.log(`drag.y: ${drag.y}`)
+            MS.roi = JSON.stringify([startDragOffset.x, startDragOffset.y, drag.x, drag.y])
+            // console.log(MS.roi)
+          }
+        }
+        
+        function displayROI(imageCanvas){
+          debugger
+          console.log("ROI display")
+          let imageCanvasContext = imageCanvas.getContext('2d');
+          let roi = JSON.parse(MS.roi);
+          // top_left = [200, 200]
+          // top_right = [1200, 200]
+          // bottom_right = [1200, 1200]
+          // bottom_left = [200, 1200]
+          // [0,1,2,3]
+          // [x1,y1,x2,y2]
+          top_left = [roi[0], roi[1]]
+          top_right = [roi[2], roi[1]]
+          bottom_right = [roi[2], roi[3]]
+          bottom_left = [roi[0], roi[3]]
+          roi_square = [top_left, top_right, bottom_right, bottom_left]
+          // Draw roi
+          imageCanvasContext.beginPath();
+          imageCanvasContext.moveTo(top_left[0], top_left[1]);
+          for (let i = 0; i < roi_square.length; i += 1) {
+            imageCanvasContext.fillStyle = 'rgba(255, 0, 0, 0.10)';
+            imageCanvasContext.strokeStyle = 'rgba(255, 0, 0, 1)'; // Set the line color
+            imageCanvasContext.lineWidth = MS.imageWidth / current_working_width; // Set the line width
+            imageCanvasContext.moveTo(roi_square[i][0], roi_square[i][1]);
+            imageCanvasContext.lineTo(roi_square[i===3 ? 0 : i+1][0], roi_square[i===3 ? 0 : i+1][1]);
+            imageCanvasContext.closePath();
+            imageCanvasContext.fill();
+            imageCanvasContext.stroke();
+          }
+        }
+
+
+      },
       async getConfiguration() {
           const response = await fetch('/configuration');
           if (!response.ok) {
@@ -1104,6 +1295,10 @@ var monai_segmentation_app =new Vue({
             // Once the image is loaded, draw it onto the canvas
             MS.imageWidth = image.width;
             MS.imageHeight = image.height;
+            this.roi
+            if (MS.roi === '[0,0,0,0]'){
+              MS.roi = JSON.stringify([0, 0, MS.imageWidth, MS.imageHeight])
+            }
             this.aspectRatio = MS.imageWidth / MS.imageHeight;
             // First time through image load
             current_working_width = this.$refs['canvases_parent_div'].parentElement.offsetWidth
@@ -1350,7 +1545,7 @@ var monai_segmentation_app =new Vue({
         this.inferenceLoading = true;
         this.inferenceDoneTraining = false;
         await this.uploadImage();
-        
+        // debugger
         image_name = this.segmentation_image.image_id.split('.')[0] // sans extension, as shows up in datastore_v2.json
         const url = this.URLS.performInference+'?image=' + image_name + '&output=image';
         const headers = {
@@ -1359,7 +1554,7 @@ var monai_segmentation_app =new Vue({
         // Create a new FormData object to handle multipart/form-data
         const formData = new FormData();
         // Add the parameters, empty file field, and label (if needed) to the FormData
-        formData.append('params', JSON.stringify({}));
+        formData.append('params', JSON.stringify({"roi": JSON.parse(this.roi)}));
         formData.append('file', '');
         formData.append('label', '');
         // Send a POST request with the FormData using the fetch API
@@ -1373,11 +1568,13 @@ var monai_segmentation_app =new Vue({
           const reader = new FileReader(); // While FileReader used for files, the api works for imageBlob data.
           reader.onloadend = function() {
             // The result contains the Base64 string
+            // debugger
             const base64String = reader.result;
             MSA.inferenceLoading = false;
             MSA.inferenceDoneTraining = true;
             MSA.segmentation_image['base64'] = base64String
             MSA.displayBrushImage(current_image=MSA.task.value.current_idx, fromInference=true); // fix later
+            MSA.toggleTool("brush")
           };
           reader.readAsDataURL(imageBlob);
         })
@@ -1399,6 +1596,7 @@ var monai_segmentation_app =new Vue({
         formData.append('params', JSON.stringify({}));
         // Add the image data as a blob with a "image/png" type
         formFileName = `${image_name}.png`;
+        // debugger;
         byteCharacters = atob(this.image.base64.split(',')[1]);
         byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
@@ -1466,7 +1664,7 @@ var monai_segmentation_app =new Vue({
         this.trainLoading = true; // Set loading to true
         this.trainDoneTraining = false;
         // Define the URL and headers
-        const url = this.URLS.trainOnLables + '?run_sync=false&enqueue=false';
+        const url = this.URLS.trainOnLabels + '?run_sync=false&enqueue=false';
         const headers = {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -1531,9 +1729,9 @@ var monai_segmentation_app =new Vue({
           this.polygonDisplay = ""
         }
       },
-      toggleBrushPolygon(variable) {
+      toggleTool(variable) {
         // if we clicked the Select Polygon Tool button
-        if(variable === "image"){
+        if(variable === "image" || variable === "roi"){
           this.image_selected = true
           this.segmentation_selected = false
           this.polygon_selected = false
@@ -1541,6 +1739,32 @@ var monai_segmentation_app =new Vue({
           this.image_z_index = 2
           this.polygons_z_index = 1
           this.segmentation_z_index = 0
+          const imageCanvas = MS.$refs['image'];
+          if (variable === "image"){
+            imageCanvas.addEventListener('mousedown', this.imageCanvasMouseDownInitCanvasEventListerner)
+            imageCanvas.addEventListener('mouseup', this.imageCanvasMouseUpInitCanvasEventListerner)
+            imageCanvas.addEventListener('mouseover', this.imageCanvasMouseOverInitCanvasEventListerner)
+            imageCanvas.addEventListener('mouseout', this.imageCanvasMouseOutInitCanvasEventListerner)
+            imageCanvas.addEventListener('mousemove', this.imageCanvasMouseMoveInitCanvasEventListerner)
+            // debugger
+            imageCanvas.removeEventListener('mousedown', this.imageCanvasMouseDownROIEventListerner)
+            imageCanvas.removeEventListener('mouseup', this.imageCanvasMouseUpROIEventListerner)
+            imageCanvas.removeEventListener('mouseout', this.imageCanvasMouseOutROIEventListerner)
+            imageCanvas.removeEventListener('mousemove', this.imageCanvasMouseMoveROIEventListerner)
+          } else if (variable === "roi"){
+            imageCanvas.addEventListener('mousedown', this.imageCanvasMouseDownROIEventListerner)
+            imageCanvas.addEventListener('mouseup', this.imageCanvasMouseUpROIEventListerner)
+            imageCanvas.addEventListener('mouseout', this.imageCanvasMouseOutROIEventListerner)
+            imageCanvas.addEventListener('mousemove', this.imageCanvasMouseMoveROIEventListerner)
+            // debugger
+            imageCanvas.removeEventListener('mousedown', this.imageCanvasMouseDownInitCanvasEventListerner)
+            imageCanvas.removeEventListener('mouseup', this.imageCanvasMouseUpInitCanvasEventListerner)
+            imageCanvas.removeEventListener('mouseover', this.imageCanvasMouseOverInitCanvasEventListerner)
+            imageCanvas.removeEventListener('mouseout', this.imageCanvasMouseOutInitCanvasEventListerner)
+            imageCanvas.removeEventListener('mousemove', this.imageCanvasMouseMoveInitCanvasEventListerner)
+          }else {
+            alert("Something unexpected is happeing - line 1707 ish...")
+          }
         } else if (variable === "polygon"){
           this.polygon_selected = true
           this.image_selected = false
