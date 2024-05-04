@@ -690,6 +690,8 @@ var monai_segmentation_app =new Vue({
           console.log("initCanvasZoomTools onMouseDown")
           // canvas.removeEventListener("mousedown", MS.imageCanvasMouseDownROIEventListerner)
           mouseDown = true;
+          // startDragOffset.x = evt.clientX + canvas.getBoundingClientRect().left + MS.translatePos.x; // literal pixels on screen\browser
+          // startDragOffset.y = evt.clientY + canvas.getBoundingClientRect().top + MS.translatePos.y; // literal pixels on screen\browser
           startDragOffset.x = evt.clientX + MS.translatePos.x; // forward (mouse slides image around)
           startDragOffset.y = evt.clientY + MS.translatePos.y; // forward (mouse slides image around)
           // startDragOffset.x = evt.clientX - MS.translatePos.x; // reverse (mouse is moving across image)
@@ -874,8 +876,8 @@ var monai_segmentation_app =new Vue({
           } else if (event.button === 2) {
             undo_vertice_placement()
           } else {
-            newX = x*x_scaler/MS.scale + MS.translatePos.x * x_scaler
-            newY = y*y_scaler/MS.scale + MS.translatePos.y * y_scaler
+            newX = x*x_scaler/MS.scale + MS.translatePos.x*x_scaler
+            newY = y*y_scaler/MS.scale + MS.translatePos.y*y_scaler
             if (!isDrawing) {
               // Clicked outside existing vertices, add a new point
               isDrawing = true;
@@ -1115,7 +1117,6 @@ var monai_segmentation_app =new Vue({
         
         // Load the annotations for the image
         this.toggleTool("roi")
-        // debugger
         // add event listeners to handle roi definition
         var startDragOffset = {};
         var drag = {};
@@ -1135,7 +1136,6 @@ var monai_segmentation_app =new Vue({
         function onMouseDown(evt) {
           console.log("ROI onMouseDown")
           
-          // debugger
           // imageCanvas.addEventListener("mousemove", onMouseMove);
           // imageCanvas.addEventListener("mouseup", onMouseUp);
           
@@ -1144,22 +1144,23 @@ var monai_segmentation_app =new Vue({
           mouseDown = true;
           x_scaler = MS.imageWidth / parseFloat( MS.$refs.canvases_parent_div.style.width.replace("px","") ) // Adjust x point clicked
           y_scaler = MS.imageHeight / parseFloat( MS.$refs.canvases_parent_div.style.height.replace("px","") ) // Adjust y point clicked
-          // const x = evt.clientX - imageCanvas.getBoundingClientRect().left; // literal pixels on screen\browser
-          // const y = evt.clientY - imageCanvas.getBoundingClientRect().top; // literal pixels on screen\browser
-          const x = evt.offsetX; // literal pixels on screen\browser
-          const y = evt.offsetY; // literal pixels on screen\browser
-          console.log(MS.scale)
-          console.log(`x ${x} | x ${y}`)
-          console.log(`evt.clientX ${evt.clientX} | evt.clientY ${evt.clientY}`)
-          console.log(`x_scaler ${x_scaler} | y_scaler ${y_scaler}`)
-          where_on_image_clicked_x = x*x_scaler/MS.scale // /MS.scale //+ MS.translatePos.x*x_scaler
-          where_on_image_clicked_y = y*y_scaler/MS.scale // /MS.scale //+ MS.translatePos.y*y_scaler
+          const x = evt.clientX - imageCanvas.getBoundingClientRect().left; // literal pixels on screen\browser
+          const y = evt.clientY - imageCanvas.getBoundingClientRect().top; // literal pixels on screen\browser
+          // const x = evt.offsetX; // literal pixels on screen\browser
+          // const y = evt.offsetY; // literal pixels on screen\browser
+          // console.log(MS.scale)
+          // console.log(`x ${x} | x ${y}`)
+          // console.log(`evt.clientX ${evt.clientX} | evt.clientY ${evt.clientY}`)
+          // console.log(`x_scaler ${x_scaler} | y_scaler ${y_scaler}`)
+          where_on_image_clicked_x = x*x_scaler/MS.scale + MS.translatePos.x*x_scaler
+          where_on_image_clicked_y = y*y_scaler/MS.scale + MS.translatePos.y*y_scaler
+
           startDragOffset.x = where_on_image_clicked_x; // forward (mouse slides image around)
           startDragOffset.y = where_on_image_clicked_y; // forward (mouse slides image around)
           // startDragOffset.x = evt.clientX - MS.translatePos.x; // reverse (mouse is moving across image)
           // startDragOffset.y = evt.clientY - MS.translatePos.y; // reverse (mouse is moving across image)
-          // console.log(`roi startDragOffset.x: ${startDragOffset.x}`)
-          // console.log(`roi startDragOffset.y: ${startDragOffset.y}`)
+          console.log(`roi startDragOffset.x: ${startDragOffset.x}`)
+          console.log(`roi startDragOffset.y: ${startDragOffset.y}`)
           
         }
         
@@ -1191,48 +1192,74 @@ var monai_segmentation_app =new Vue({
         function onMouseMove(evt) {
           console.log("ROI onMouseMove")
           if (mouseDown === true){
-            // debugger
             const imageCanvas = MS.$refs['image'];
-            imageCanvas.style.width = this.$refs.canvases_parent_div.style.width;
-            imageCanvas.style.height = this.$refs.canvases_parent_div.style.height;
+            imageCanvas.style.width = MS.$refs.canvases_parent_div.style.width;
+            imageCanvas.style.height = MS.$refs.canvases_parent_div.style.height;
             current_working_width = MS.$refs['canvases_parent_div'].parentElement.offsetWidth
             current_working_height = current_working_width/MS.aspectRatio
             
-            // const x = evt.clientX - imageCanvas.getBoundingClientRect().left; // literal pixels on screen\browser
-            // const y = evt.clientY - imageCanvas.getBoundingClientRect().top; // literal pixels on screen\browser
-            const x = evt.offsetX
-            const y = evt.offsetY
-            where_on_image_am_i_x = x*x_scaler/MS.scale //+ MS.translatePos.x*x_scaler
-            where_on_image_am_i_y = y*y_scaler/MS.scale //+ MS.translatePos.y*y_scaler
+            const x = evt.clientX - imageCanvas.getBoundingClientRect().left; // literal pixels on screen\browser
+            const y = evt.clientY - imageCanvas.getBoundingClientRect().top; // literal pixels on screen\browser
+            // const x = evt.offsetX
+            // const y = evt.offsetY
+            where_on_image_am_i_x = x*x_scaler/MS.scale + MS.translatePos.x*x_scaler
+            where_on_image_am_i_y = y*y_scaler/MS.scale + MS.translatePos.y*y_scaler
 
             drag.x = where_on_image_am_i_x // forward (mouse slides image around)
             drag.y = where_on_image_am_i_y // forward (mouse slides image around)
             
             // MS.translatePos.x = evt.clientX - startDragOffset.x // reverse (mouse is moving across image)
             // MS.translatePos.y = evt.clientY - startDragOffset.y // reverse (mouse is moving across image)
-            // debugger
-            // console.log(`drag.x: ${drag.x}`)
-            // console.log(`drag.y: ${drag.y}`)
-            MS.roi = JSON.stringify([startDragOffset.x, startDragOffset.y, drag.x, drag.y])
+            console.log(`drag.x: ${drag.x}`)
+            console.log(`drag.y: ${drag.y}`)
+            MS.roi = JSON.stringify([parseFloat(startDragOffset.x.toFixed(1)),
+                                     parseFloat(startDragOffset.y.toFixed(1)),
+                                     parseFloat(drag.x.toFixed(1)),
+                                     parseFloat(drag.y.toFixed(1))])
             // console.log(MS.roi)
           }
         }
         
         function displayROI(imageCanvas){
-          debugger
           console.log("ROI display")
           let imageCanvasContext = imageCanvas.getContext('2d');
           let roi = JSON.parse(MS.roi);
+          x_scaler = MS.imageWidth / parseFloat( MS.$refs.canvases_parent_div.style.width.replace("px","") ) // Adjust x point clicked
+          y_scaler = MS.imageHeight / parseFloat( MS.$refs.canvases_parent_div.style.height.replace("px","") ) // Adjust y point clicked
+          current_working_width = MS.$refs['canvases_parent_div'].parentElement.offsetWidth
+          current_working_height = current_working_width/MS.aspectRatio
+          console.log(`MS.scale: ${MS.scale}`)
+          console.log(`roi: [${roi[0]}, ${roi[1]}, ${roi[2]}, ${roi[3]}]`)
+          console.log(`x_scaler: ${x_scaler} | y_scaler: ${y_scaler}`)
           // top_left = [200, 200]
           // top_right = [1200, 200]
           // bottom_right = [1200, 1200]
           // bottom_left = [200, 1200]
           // [0,1,2,3]
           // [x1,y1,x2,y2]
-          top_left = [roi[0], roi[1]]
-          top_right = [roi[2], roi[1]]
-          bottom_right = [roi[2], roi[3]]
-          bottom_left = [roi[0], roi[3]]
+          // top_left = [(roi[0] - MS.translatePos.x*x_scaler)/x_scaler*MS.scale, (roi[1] - MS.translatePos.y*y_scaler)/y_scaler*MS.scale]
+          // top_right = [(roi[2] - MS.translatePos.x*x_scaler)/x_scaler*MS.scale, (roi[1] - MS.translatePos.y*y_scaler)/y_scaler*MS.scale]
+          // bottom_right = [(roi[2] - MS.translatePos.x*x_scaler)/x_scaler*MS.scale, (roi[3] - MS.translatePos.y*y_scaler)/y_scaler*MS.scale]
+          // bottom_left = [(roi[0] - MS.translatePos.x*x_scaler)/x_scaler*MS.scale, (roi[3] - MS.translatePos.y*y_scaler)/y_scaler*MS.scale]
+
+          // top_left = [(roi[0] * MS.scale - MS.translatePos.x*x_scaler)/x_scaler, (roi[1] * MS.scale - MS.translatePos.y*y_scaler)/y_scaler]
+          // top_right = [(roi[2] * MS.scale - MS.translatePos.x*x_scaler)/x_scaler, (roi[1] * MS.scale - MS.translatePos.y*y_scaler)/y_scaler]
+          // bottom_right = [(roi[2] * MS.scale - MS.translatePos.x*x_scaler)/x_scaler, (roi[3] * MS.scale - MS.translatePos.y*y_scaler)/y_scaler]
+          // bottom_left = [(roi[0] * MS.scale - MS.translatePos.x*x_scaler)/x_scaler, (roi[3] * MS.scale - MS.translatePos.y*y_scaler)/y_scaler]
+
+          // top_left = [roi[0], roi[1]]
+          // top_right = [roi[2], roi[1]]
+          // bottom_right = [roi[2], roi[3]]
+          // bottom_left = [roi[0], roi[3]]
+          // top_left = [(roi[0]/x_scaler - MS.translatePos.x/x_scaler)*MS.scale, (roi[1]/y_scaler - MS.translatePos.y)*MS.scale]
+          // top_right = [(roi[2]/x_scaler - MS.translatePos.x/x_scaler)*MS.scale, (roi[1]/y_scaler - MS.translatePos.y)*MS.scale]
+          // bottom_right = [(roi[2]/x_scaler - MS.translatePos.x/x_scaler)*MS.scale, (roi[3]/y_scaler - MS.translatePos.y)*MS.scale]
+          // bottom_left = [(roi[0]/x_scaler - MS.translatePos.x/x_scaler)*MS.scale, (roi[3]/y_scaler - MS.translatePos.y)*MS.scale]
+
+          top_left = [(roi[0] - MS.translatePos.x*x_scaler)*MS.scale, (roi[1] - MS.translatePos.y*y_scaler)*MS.scale]
+          top_right = [(roi[2] - MS.translatePos.x*x_scaler)*MS.scale, (roi[1] - MS.translatePos.y*y_scaler)*MS.scale]
+          bottom_right = [(roi[2] - MS.translatePos.x*x_scaler)*MS.scale, (roi[3] - MS.translatePos.y*y_scaler)*MS.scale]
+          bottom_left = [(roi[0] - MS.translatePos.x*x_scaler)*MS.scale, (roi[3] - MS.translatePos.y*y_scaler)*MS.scale]
           roi_square = [top_left, top_right, bottom_right, bottom_left]
           // Draw roi
           imageCanvasContext.beginPath();
@@ -1545,7 +1572,6 @@ var monai_segmentation_app =new Vue({
         this.inferenceLoading = true;
         this.inferenceDoneTraining = false;
         await this.uploadImage();
-        // debugger
         image_name = this.segmentation_image.image_id.split('.')[0] // sans extension, as shows up in datastore_v2.json
         const url = this.URLS.performInference+'?image=' + image_name + '&output=image';
         const headers = {
@@ -1568,7 +1594,6 @@ var monai_segmentation_app =new Vue({
           const reader = new FileReader(); // While FileReader used for files, the api works for imageBlob data.
           reader.onloadend = function() {
             // The result contains the Base64 string
-            // debugger
             const base64String = reader.result;
             MSA.inferenceLoading = false;
             MSA.inferenceDoneTraining = true;
@@ -1596,7 +1621,6 @@ var monai_segmentation_app =new Vue({
         formData.append('params', JSON.stringify({}));
         // Add the image data as a blob with a "image/png" type
         formFileName = `${image_name}.png`;
-        // debugger;
         byteCharacters = atob(this.image.base64.split(',')[1]);
         byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
@@ -1746,7 +1770,6 @@ var monai_segmentation_app =new Vue({
             imageCanvas.addEventListener('mouseover', this.imageCanvasMouseOverInitCanvasEventListerner)
             imageCanvas.addEventListener('mouseout', this.imageCanvasMouseOutInitCanvasEventListerner)
             imageCanvas.addEventListener('mousemove', this.imageCanvasMouseMoveInitCanvasEventListerner)
-            // debugger
             imageCanvas.removeEventListener('mousedown', this.imageCanvasMouseDownROIEventListerner)
             imageCanvas.removeEventListener('mouseup', this.imageCanvasMouseUpROIEventListerner)
             imageCanvas.removeEventListener('mouseout', this.imageCanvasMouseOutROIEventListerner)
@@ -1756,7 +1779,6 @@ var monai_segmentation_app =new Vue({
             imageCanvas.addEventListener('mouseup', this.imageCanvasMouseUpROIEventListerner)
             imageCanvas.addEventListener('mouseout', this.imageCanvasMouseOutROIEventListerner)
             imageCanvas.addEventListener('mousemove', this.imageCanvasMouseMoveROIEventListerner)
-            // debugger
             imageCanvas.removeEventListener('mousedown', this.imageCanvasMouseDownInitCanvasEventListerner)
             imageCanvas.removeEventListener('mouseup', this.imageCanvasMouseUpInitCanvasEventListerner)
             imageCanvas.removeEventListener('mouseover', this.imageCanvasMouseOverInitCanvasEventListerner)
