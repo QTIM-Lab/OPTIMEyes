@@ -1108,30 +1108,16 @@ var monai_segmentation_app =new Vue({
         coco_ctx.restore()
       },
       drawROI(translatePos={x:0,y:0}, scale=1.0) {
-        
         const imageCanvas = MS.$refs['image'];
         // Remove Move Tools reactivity
         // imageCanvas.removeEventListener("mousemove", this.imageCanvasMouseMoveEventListerner)
         var x_scaler = MS.imageWidth / parseFloat( MS.$refs.canvases_parent_div.style.width.replace("px","") ) // Adjust x point clicked
         var y_scaler = MS.imageHeight / parseFloat( MS.$refs.canvases_parent_div.style.height.replace("px","") ) // Adjust y point clicked
-        
-        // Load the annotations for the image
-        this.toggleTool("roi")
+
         // add event listeners to handle roi definition
         var startDragOffset = {};
         var drag = {};
         var mouseDown = false;
-
-        this.imageCanvasMouseDownROIEventListerner = onMouseDown
-        this.imageCanvasMouseUpROIEventListerner = onMouseUp
-        this.imageCanvasMouseOutROIEventListerner = onMouseOut
-        this.imageCanvasMouseMoveROIEventListerner = onMouseMove
-
-        // done in this..toggleTool()
-        // imageCanvas.addEventListener("mousedown", onMouseDown);
-        // imageCanvas.addEventListener("mouseup", onMouseUp);
-        // imageCanvas.addEventListener("mouseout", onMouseOut);
-        // imageCanvas.addEventListener("mousemove", onMouseMove);
 
         function onMouseDown(evt) {
           console.log("ROI onMouseDown")
@@ -1219,6 +1205,11 @@ var monai_segmentation_app =new Vue({
             // console.log(MS.roi)
           }
         }
+
+        this.imageCanvasMouseDownROIEventListerner = onMouseDown
+        this.imageCanvasMouseUpROIEventListerner = onMouseUp
+        this.imageCanvasMouseOutROIEventListerner = onMouseOut
+        this.imageCanvasMouseMoveROIEventListerner = onMouseMove
         
         function displayROI(imageCanvas){
           console.log("ROI display")
@@ -1275,6 +1266,9 @@ var monai_segmentation_app =new Vue({
             imageCanvasContext.stroke();
           }
         }
+                
+        // Load the annotations for the image
+        this.toggleTool("roi")
 
 
       },
@@ -1370,18 +1364,20 @@ var monai_segmentation_app =new Vue({
           current_working_height = current_working_width/this.aspectRatio
           segmentationCanvas.width = MS.imageWidth // clears canvas; Also I think this could be anything as whatever it is, the s square of segmentation will be drawn on it.
           segmentationCanvas.height = MS.imageHeight // clears canvas; Also I think this could be anything as whatever it is, the s square of segmentation will be drawn on it.
-          max_x_pixels_you_can_shift_image = MS.imageWidth * (1 - (1 / scale)) * ( current_working_width / segmentationCanvas.width )
-          max_y_pixels_you_can_shift_image = MS.imageHeight * (1 - (1 / scale)) * ( current_working_height / segmentationCanvas.height )
+          max_x_pixels_you_can_shift_image = MS.imageWidth * (1 - (1 / MS.scale)) * ( current_working_width / segmentationCanvas.width )
+          max_y_pixels_you_can_shift_image = MS.imageHeight * (1 - (1 / MS.scale)) * ( current_working_height / segmentationCanvas.height )
           sX = Math.max(Math.min(MS.translatePos.x, max_x_pixels_you_can_shift_image), 0) * (segmentationCanvas.width / current_working_width)
           sY = Math.max(Math.min(MS.translatePos.y, max_y_pixels_you_can_shift_image), 0) * (segmentationCanvas.height / current_working_height)
-          sW = MS.imageWidth / (scale)
-          sH = MS.imageHeight / (scale)
+          sW = MS.imageWidth / (MS.scale)
+          sH = MS.imageHeight / (MS.scale)
           dX = 0
           dY = 0
           dW = segmentationCanvas.width
           dH = segmentationCanvas.height
           segmentationContext.drawImage(segmentation, sX, sY, sW, sH, dX, dY, dW, dH);
-
+          // MS.toggleTool("brush")
+          // MS.segmentation_z_index = 2
+          
           // All of this below is inefficient;
           // This is all to set the tCanvas width and height;
           // What we need is to set this once when the image is loaded. 
@@ -1598,7 +1594,7 @@ var monai_segmentation_app =new Vue({
             MSA.inferenceLoading = false;
             MSA.inferenceDoneTraining = true;
             MSA.segmentation_image['base64'] = base64String
-            MSA.displayBrushImage(current_image=MSA.task.value.current_idx, fromInference=true); // fix later
+            MSA.displayBrushImage(current_image=MSA.task.value.current_idx, fromInference=true, translatePos=MSA.translatePos, scale=MSA.scale); // fix later
             MSA.toggleTool("brush")
           };
           reader.readAsDataURL(imageBlob);
@@ -1765,6 +1761,7 @@ var monai_segmentation_app =new Vue({
           this.segmentation_z_index = 0
           const imageCanvas = MS.$refs['image'];
           if (variable === "image"){
+            debugger
             imageCanvas.addEventListener('mousedown', this.imageCanvasMouseDownInitCanvasEventListerner)
             imageCanvas.addEventListener('mouseup', this.imageCanvasMouseUpInitCanvasEventListerner)
             imageCanvas.addEventListener('mouseover', this.imageCanvasMouseOverInitCanvasEventListerner)
@@ -1802,7 +1799,7 @@ var monai_segmentation_app =new Vue({
           this.segmentation_selected = true
           this.polygon_selected = false
           this.image_selected = false
-          this.image_opacity = 1
+          this.image_opacity = 0.9
           this.segmentation_z_index = 2
           this.polygons_z_index = 1
           this.image_z_index = 0
@@ -1814,7 +1811,7 @@ var monai_segmentation_app =new Vue({
           this.segmentation_selected = true
           this.polygon_selected = false
           this.image_selected = false
-          this.image_opacity = 1
+          this.image_opacity = 0.9
           // if we clicked a radio button
           this.segmentation_z_index = 2
           this.polygons_z_index = 1
