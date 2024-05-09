@@ -1,9 +1,11 @@
 ### Deploy couchdb docker image
 Decide on a place to store the couchdb data. ```/opt/couchdb/data``` is where a normal couchdb installs will store data so don't use this directory in a docker mount unless you don't have couchdb installed on the machine already.
 ```
-APP_NAME=default
-DB_LOCATION=/opt/couchdb/data/$APP_NAME
-sudo mkdir -p $DB_LOCATION # if it doesn't exist already
+APP_NAME=dev
+# DB_LOCATION=/opt/couchdb/data/$APP_NAME # default
+DB_LOCATION=/sddata/app_or_generated_data/Image-Comparator/couchdb/data/$APP_NAME
+mkdir -p $DB_LOCATION # if it doesn't exist already
+echo $DB_LOCATION
 
 # Change in production
 COUCHDB_USER=admin
@@ -50,9 +52,14 @@ We will be using the *Dockerfile* file in ```Image-Comparator-Dockerfiles```.
 Build a new image for flask and serve in the context of the flask_server folder:
 ```bash
 cd Image-Comparator-Dockerfiles
+MACHINE_PORT="443"
 MACHINE_PORT="8080"
 CONTAINER_NAME=image-comparator
 CONTAINER_TAG=flask
+
+echo $MACHINE_PORT
+echo $CONTAINER_NAME
+echo $CONTAINER_TAG
 
 docker build . -f Dockerfile --force-rm -t $CONTAINER_NAME:$CONTAINER_TAG
 
@@ -70,12 +77,13 @@ docker run \
   -e FLASK_APP=OPTIMEyes \
   -e MACHINE_PORT=$MACHINE_PORT \
   --name image-comparator-flask-"$APP_NAME" \
-  gunicorn -b 0.0.0.0:8080 "OPTIMEyes:create_app()"
+  image-comparator:flask flask run --port $MACHINE_PORT --host 0.0.0.0 --debug
+  # image-comparator:flask gunicorn -b 0.0.0.0:8080 "OPTIMEyes:create_app()"
   # image-comparator:flask bash
-  # image-comparator:flask flask run --port $MACHINE_PORT --host 0.0.0.0 --debug
 ```
 
 #### HTTPS
+For some reason the --cert=adhoc not working that well
 ```bash
 docker run \
   -it \
@@ -86,14 +94,14 @@ docker run \
   -v $PWD/Image-Comparator-Data:/Image-Comparator-Data \
   -v $PWD:$PWD \
   -w /flask_server \
-  -e FLASK_APP=image_comparator \
+  -e FLASK_APP=OPTIMEyes \
   -e MACHINE_PORT=$MACHINE_PORT \
   --name image-comparator-flask-"$APP_NAME" \
   image-comparator:flask flask run --port $MACHINE_PORT --host 0.0.0.0 --cert=adhoc
 ```
 
+**self-signed certs**:  
 ```bash
-# self-signed certs
 openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
 ```
 
@@ -127,9 +135,17 @@ couch_server = get_server()
 db = couch_server['image_comparator']
 
 user = load_user('user_guest')
-user.set_password("newpassword")
+user = load_user('user_bbearce')
+user.set_password("password")
 user.save(db)
 ```
+
+# https://docs.google.com/spreadsheets/d/186tDQo-Uv2r9eMhXObW7O7FSEw40lEG0BZKO6wDWtCo/edit#gid=0
+Reviewers of annotators in `user_pass` list below:
+* Emily
+* Aaron
+* Tiarnan
+
 
 ```python
 from image_comparator.auth_blueprint import load_user
@@ -138,11 +154,12 @@ from image_comparator.db import get_server
 couch_server = get_server()
 db = couch_server['image_comparator']
 
-user = load_user('')
-user.set_password("")
+user = load_user('user_nmanoharan')
+user.set_password("nmanoharan_7TShGcqed5")
 user.save(db)
 
 user_pass=[
+('bbearce', 'testtest'),
 ('guest', 'testtest')
 ]
 
@@ -161,7 +178,6 @@ for u, p in user_pass:
 
 # head -c 16 /dev/urandom | base64
 ```
-
 
 ```bash
 # certbot certs

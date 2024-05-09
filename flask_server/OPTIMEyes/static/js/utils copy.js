@@ -1,6 +1,6 @@
 // source: https://gist.github.com/paldepind/7211654
 
-var HOST = "chris"
+var HOST = "localhost"
 var PORT = "5984"
 var DB = "image_comparator"
 var DB_USER = "admin"
@@ -20,9 +20,7 @@ async function delete_docs_in_view(design_doc, view) {
     })
     data = await response.json();
     data.rows.forEach(async function (doc) {
-        // debugger
-        var encodedDocId = encodeURIComponent(doc.id);
-        response_delete = await fetch(url_delete_doc + `/${encodedDocId}?rev=${doc.value._rev}`, {
+        response_delete = await fetch(url_delete_doc + `/${doc.id}?rev=${doc.value._rev}`, {
             method: 'DELETE',
             headers: { 'Authorization': 'Basic ' + btoa(`${DB_USER}:${DB_PASS}`) }
         })
@@ -35,13 +33,14 @@ async function delete_docs_in_view(design_doc, view) {
 // delete_docs_in_view(VIEW)
 
 // Dangerous!!!
-views_to_clear = ['imagesDelete']
-// views_to_clear = ['imageDelete']
-// views_to_clear = ['classifyResults']
+// views_to_clear = ['users', 'taskresults', 'tasks', 'classifyResults', 'image_classify_lists', 'image_compare_lists', 'image_grid_lists', 'imageSet2ImageId_deleteme']
+// views_to_clear = ['imagesByList']
+views_to_clear = ['deleteME']
 
 views_to_clear.forEach((v, i, a) => {
-    delete_docs_in_view(design_doc = 'images', view = v) //delete al docs in this view
+    delete_docs_in_view(design_doc = 'monaiSegmentationApp', view = v) //delete al docs in this view
 })
+
 
 // Get Doc
 //let DOC_ID = "9218b9c59ce6a2194bd03091e7005c92"
