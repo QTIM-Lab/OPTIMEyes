@@ -826,6 +826,8 @@ var monai_segmentation_app =new Vue({
               this.drawAnnotations(recursion_base_case=0, translatePos=MS.translatePos, scale=MS.scale);
             }
             event.preventDefault(); // Prevent the default behavior of the Enter key
+            // 05_13_2024
+            this.mergePolygonsToBrushCanvas()
           }
         });
 
