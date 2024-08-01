@@ -623,7 +623,6 @@ def downloadAnnotations(app, task_id, cli=False, zip_path=None):
     # for row in task.rows:##########        # Access the document ID of each row using the `id` attribute
     #     doc_id = row.id
     #     print(f"Document ID: {doc_id}")
-    # pdb.set_trace()
     task_rows = [record for record in task.rows]
     if len(task_rows) != 1:
         raise Exception("Multiple tasks returned for task_id.")
@@ -634,6 +633,7 @@ def downloadAnnotations(app, task_id, cli=False, zip_path=None):
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED, False) as zip_file:
         for record in annotations:
+            # pdb.set_trace()
             # Assuming the attachment name is 'image' and you want to use the record ID as the filename
             if record.id.find('.png') != -1:
                 attachment = db.get_attachment(record.id, 'image.png')

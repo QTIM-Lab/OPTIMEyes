@@ -259,32 +259,32 @@
                         [[ PolygonButtonText ]]
                         </v-tooltip>
                       </v-btn>
-                      <v-btn @click="mergePolygonsToBrushCanvas">
+                      <!-- <v-btn @click="mergePolygonsToBrushCanvas">
                         <v-tooltip left>
                           <template v-slot:activator="{ on }">
                             <v-icon v-on="on">[[ 'mdi-stamper' ]]</v-icon>
                           </template>
                           (Stamp committed polygons onto brush canvas as brush pixels)
                         </v-tooltip>
-                      </v-btn>
+                      </v-btn> -->
                       <v-btn @click="hidePolygon">
                         <v-icon>[[ polygonDisplay === '' ? 'mdi-eye-outline' : 'mdi-eye-off' ]]</v-icon>
                         [[ hidePolygonButtonText ]]
                       </v-btn>
 
                       <!-- Monai Label Buttons and Tools -->
-                      <h4>Monai Label Tools:</h4>
+                      <!-- <h4>Monai Label Tools:</h4> -->
                       <div>
-                        <v-btn @click="performInference">
+                        <!-- <v-btn @click="performInference">
                           <v-icon>[[ 'mdi-lightbulb-outline' ]]</v-icon>
                           Perform Inference
                           <div v-if="inferenceLoading" class="spinner">
                             <div class="spinner-inner"></div>
                           </div>
                           <div v-if="inferenceDoneTraining" class="check-mark">✔</div>
-                        </v-btn>
+                        </v-btn> -->
 
-                        <v-btn @click="saveLabel">
+                        <!-- <v-btn @click="saveLabel">
                           <v-icon>[[ 'mdi-content-save' ]]</v-icon>
                           Save Current Annotation
                           <div v-if="saveLoading" class="spinner">
@@ -300,9 +300,11 @@
                             <div class="spinner-inner"></div>
                           </div>
                           <div v-if="trainDoneTraining" class="check-mark">✔</div>
-                        </v-btn>
+                        </v-btn> -->
+
                         <br>
-                        <v-btn @click="drawROI">
+                        
+                        <!-- <v-btn @click="drawROI">
                           <v-tooltip left>
                             <template v-slot:activator="{ on }">
                               <v-icon v-on="on">[[ 'mdi-crop-square' ]]</v-icon> ROI
@@ -311,7 +313,7 @@
                           </v-tooltip>
                         </v-btn>
 
-                        <v-text-field label="ROI for Inference" v-model:value="roi"></v-text-field>                        
+                        <v-text-field label="ROI for Inference" v-model:value="roi"></v-text-field>                         -->
 
                       </div>
 
@@ -417,9 +419,9 @@
                 >
                   [[ alert_error ]]
                 </v-alert>
-                  <v-btn @click="clear">
+                  <!-- <v-btn @click="clear">
                     clear
-                  </v-btn>
+                  </v-btn> -->
                   <v-btn @click="resetToPreviousResult">
                     Previous Image
                   </v-btn>
@@ -525,6 +527,7 @@ var monai_segmentation_app =new Vue({
       // AI Tools
       //// ROI
       roi: JSON.stringify([0, 0, 0, 0]),
+      roi_image: {base64: null},
       //// Spinners
       ////// Inference
       inferenceLoading: false,
@@ -807,11 +810,35 @@ var monai_segmentation_app =new Vue({
         // Flag to track whether the user is currently drawing a polygon
         let isDrawing = false;
         
+        const x_scaler = MS.imageWidth / parseFloat( MS.$refs.canvases_parent_div.style.width.replace("px","") ) // Adjust x point clicked
+        const y_scaler = MS.imageHeight / parseFloat( MS.$refs.canvases_parent_div.style.height.replace("px","") ) // Adjust y point clicked
+
+        function onMouseMoveFootPrint(event) {
+          const newX = event.clientX - canvas.getBoundingClientRect().left;
+          const newY = event.clientY - canvas.getBoundingClientRect().top;
+          translatedX = newX*x_scaler/MS.scale + MS.translatePos.x*x_scaler;
+          translatedY = newY*y_scaler/MS.scale + MS.translatePos.y*y_scaler;
+
+          // MS.drawVertices(translatePos=MS.translatePos, scale=MS.scale);
+          const newVertex = { translatedX, translatedY };
+          MS.vertices.push(newVertex);
+          MS.drawVertices(translatePos=MS.translatePos, scale=MS.scale);
+        }
+        function undo_vertice_placement() {
+              // Check if there are vertices to delete
+              if (MS.vertices.length > 0) {
+                // Remove the last vertex
+                MS.vertices.pop();
+                // Redraw the annotations with the updated vertices
+                MS.drawVertices(translatePos=MS.translatePos, scale=MS.scale);
+              }
+        }    
         document.addEventListener('contextmenu', event => {
           event.preventDefault();
         });
         document.addEventListener('keydown', (event) => {
           if (event.key === 'Enter') {
+            canvas.removeEventListener('mousemove', onMouseMoveFootPrint);
             // Enter key saves the current polygon (if one is being drawn)
             if (isDrawing && MS.vertices.length > 0) {
               isDrawing = false;
@@ -828,21 +855,18 @@ var monai_segmentation_app =new Vue({
             event.preventDefault(); // Prevent the default behavior of the Enter key
             // 05_13_2024
             this.mergePolygonsToBrushCanvas()
+          } else if (event.key === "Backspace" || event.key === "Delete"){
+            undo_vertice_placement()
           }
-        });
 
+        });
+        canvas.addEventListener('dblclick', (event) => {
+          canvas.addEventListener('mousemove', onMouseMoveFootPrint);
+        })
         canvas.addEventListener('mousedown', (event) => {
-          function undo_vertice_placement() {
-              // Check if there are vertices to delete
-              if (MS.vertices.length > 0) {
-                // Remove the last vertex
-                MS.vertices.pop();
-                // Redraw the annotations with the updated vertices
-                MS.drawVertices(translatePos=MS.translatePos, scale=MS.scale);
-              }
-          }
-          const x_scaler = MS.imageWidth / parseFloat( MS.$refs.canvases_parent_div.style.width.replace("px","") ) // Adjust x point clicked
-          const y_scaler = MS.imageHeight / parseFloat( MS.$refs.canvases_parent_div.style.height.replace("px","") ) // Adjust y point clicked
+          // Delete if nothing bad happens for a while 05/16/2024
+          // const x_scaler = MS.imageWidth / parseFloat( MS.$refs.canvases_parent_div.style.width.replace("px","") ) // Adjust x point clicked
+          // const y_scaler = MS.imageHeight / parseFloat( MS.$refs.canvases_parent_div.style.height.replace("px","") ) // Adjust y point clicked
           const x = event.clientX - canvas.getBoundingClientRect().left; // literal pixels on screen\browser
           const y = event.clientY - canvas.getBoundingClientRect().top; // literal pixels on screen\browser
           // Check if a vertex was clicked (within a certain radius)
@@ -857,24 +881,24 @@ var monai_segmentation_app =new Vue({
             return distance < threshold; // Adjust the radius as needed for your click detection
           });
 
+          function onMouseMoveClickedVertex(event) {
+            const newX = event.clientX - canvas.getBoundingClientRect().left;
+            const newY = event.clientY - canvas.getBoundingClientRect().top;
+            // clickedVertex.x = newX; // original
+            clickedVertex.translatedX = newX*x_scaler/MS.scale + MS.translatePos.x*x_scaler;
+            // clickedVertex.y = newY; // original
+            clickedVertex.translatedY = newY*y_scaler/MS.scale + MS.translatePos.y*y_scaler;
+            MS.drawVertices(translatePos=MS.translatePos, scale=MS.scale);
+          }
+          function onMouseUp() {
+            canvas.removeEventListener('mousemove', onMouseMoveClickedVertex);
+            canvas.removeEventListener('mouseup', onMouseUp);
+            canvas.removeEventListener('mousemove', onMouseMoveFootPrint);
+          }
           if (clickedVertex) {
             // Clicked on an existing vertex, make it draggable
-            canvas.addEventListener('mousemove', onMouseMove);
+            canvas.addEventListener('mousemove', onMouseMoveClickedVertex);
             canvas.addEventListener('mouseup', onMouseUp);
-            function onMouseMove(event) {
-              const newX = event.clientX - canvas.getBoundingClientRect().left;
-              const newY = event.clientY - canvas.getBoundingClientRect().top;
-              // clickedVertex.x = newX; // original
-              clickedVertex.translatedX = newX*x_scaler/MS.scale + MS.translatePos.x*x_scaler;
-              // clickedVertex.y = newY; // original
-              clickedVertex.translatedY = newY*y_scaler/MS.scale + MS.translatePos.y*y_scaler;
-              MS.drawVertices(translatePos=MS.translatePos, scale=MS.scale);
-            }
-
-            function onMouseUp() {
-              canvas.removeEventListener('mousemove', onMouseMove);
-              canvas.removeEventListener('mouseup', onMouseUp);
-            }
           } else if (event.button === 2) {
             undo_vertice_placement()
           } else {
@@ -1356,8 +1380,23 @@ var monai_segmentation_app =new Vue({
       },
       async displayBrushImage(current_image, translatePos={x:0,y:0}, scale=1.0, fromInference=false, recursion_base_case=0) {
         const segmentation = new Image();
+        const roi_image = new Image();
         MS = this;
-        // FROM = fromInference
+        this.segmentation_image['image_id'] = this.images[current_image]
+        if (this.segmentation_image['base64'] === null){       
+          // Create a canvas element with desired dimensions
+          image_canvas = this.$refs['image'];
+          // adjust parent 
+          var segmentation_canvas = document.createElement('canvas');
+          segmentation_canvas.width = image_canvas.width; // Set the width of the canvas
+          segmentation_canvas.height = image_canvas.height; // Set the height of the canvas
+          // Convert the new canvas to a base64 data URL (default format is PNG)
+          this.segmentation_image.base64 = segmentation_canvas.toDataURL();
+          // Send in image
+          segmentation.src = `${this.segmentation_image.base64}`;
+        } else {
+          segmentation.src = `${this.segmentation_image.base64}`;
+        };
         segmentation.onload = () => {
           // Once the image is loaded, draw it onto the canvas
           const segmentationCanvas = this.$refs['segmentation'];
@@ -1413,22 +1452,51 @@ var monai_segmentation_app =new Vue({
           dW = segmentationCanvas.width
           dH = segmentationCanvas.height
           patchContext.drawImage(segmentation, sX, sY, sW, sH, dX, dY, dW, dH); // redraw because we erased above
+          
+          // Meant to render roi after seg to avoid roi being overwritten by seg variable
+          roi_image.src = MS.roi_image['base64']
+
         }; 
-        this.segmentation_image['image_id'] = this.images[current_image]
-        if (this.segmentation_image['base64'] === null){       
-          // Create a canvas element with desired dimensions
-          image_canvas = this.$refs['image'];
-          // adjust parent 
-          var segmentation_canvas = document.createElement('canvas');
-          segmentation_canvas.width = image_canvas.width; // Set the width of the canvas
-          segmentation_canvas.height = image_canvas.height; // Set the height of the canvas
-          // Convert the new canvas to a base64 data URL (default format is PNG)
-          this.segmentation_image.base64 = segmentation_canvas.toDataURL();
-          // Send in image
-          segmentation.src = `${this.segmentation_image.base64}`;
-        } else {
-          segmentation.src = `${this.segmentation_image.base64}`;
+        roi_image.onload = () => {
+          current_working_width = this.$refs['canvases_parent_div'].parentElement.offsetWidth
+          current_working_height = current_working_width/this.aspectRatio
+
+          const tCanvas = this.$refs['testcanvas'];
+          const tContext = tCanvas.getContext('2d');
+          const roi = JSON.parse(MS.roi)
+          sX = roi[0]
+          sY = roi[1]
+          sW = roi[2] - roi[0]
+          sH = roi[3] - roi[1]
+          dX = roi[0]
+          dY = roi[1]
+          dW = roi[2] - roi[0]
+          dH = roi[3] - roi[1]
+          tContext.drawImage(roi_image, sX, sY, sW, sH, dX, dY, dW, dH);
+          MS.segmentation_image.base64 = tCanvas.toDataURL();
+
+          
+          const segmentationCanvas = this.$refs['segmentation'];
+          const segmentationContext = segmentationCanvas.getContext('2d');
+          // Draw back on segmentation canvas from test canvas
+          sX = MS.translatePos.x * (segmentationCanvas.width / current_working_width)
+          sY = MS.translatePos.y * (segmentationCanvas.height / current_working_height)
+          sW = MS.imageWidth / (MS.scale)
+          sH = MS.imageHeight / (MS.scale)
+          dX = 0
+          dY = 0
+          dW = segmentationCanvas.width
+          dH = segmentationCanvas.height
+          segmentationContext.drawImage(tCanvas, sX, sY, sW, sH, dX, dY, dW, dH);
+          // Draw back on patch canvas from test canvas
+          var patchCanvas = this.$refs['patchCanvas'];
+          var patchContext = patchCanvas.getContext('2d');
+          patchContext.drawImage(tCanvas, sX, sY, sW, sH, dX, dY, dW, dH);
+
+          // Delete ROI memory so it doesn't keep redrawing ROI
+          MS.roi_image['base64'] = null
         }
+        
       },
       changeImageChannel(value) {
         // This function will be called when the selected radio button changes.
@@ -1529,6 +1597,7 @@ var monai_segmentation_app =new Vue({
           dY = y_patch
           dW = width_patch
           dH = height_patch
+
           tcontext.clearRect(dX, dY, dW, dH);
           tcontext.drawImage(patchCanvas, sX, sY, sW, sH, dX, dY, dW, dH);
           this.segmentation_image.base64 = tcanvas.toDataURL();
@@ -1595,7 +1664,9 @@ var monai_segmentation_app =new Vue({
             const base64String = reader.result;
             MSA.inferenceLoading = false;
             MSA.inferenceDoneTraining = true;
-            MSA.segmentation_image['base64'] = base64String
+            // DRAW PATCH FROM INFERENCE ROI
+            MSA.roi_image['base64'] = base64String
+            // MSA.segmentation_image['base64'] = base64String // If this works this is obsolete
             MSA.displayBrushImage(current_image=MSA.task.value.current_idx, fromInference=true, translatePos=MSA.translatePos, scale=MSA.scale); // fix later
             MSA.toggleTool("brush")
           };
@@ -1763,7 +1834,6 @@ var monai_segmentation_app =new Vue({
           this.segmentation_z_index = 0
           const imageCanvas = MS.$refs['image'];
           if (variable === "image"){
-            debugger
             imageCanvas.addEventListener('mousedown', this.imageCanvasMouseDownInitCanvasEventListerner)
             imageCanvas.addEventListener('mouseup', this.imageCanvasMouseUpInitCanvasEventListerner)
             imageCanvas.addEventListener('mouseover', this.imageCanvasMouseOverInitCanvasEventListerner)

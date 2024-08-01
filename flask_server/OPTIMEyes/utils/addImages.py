@@ -94,6 +94,7 @@ def addImages(path_to_images: str, imageSetName: str, imageSetType: str = 'non-D
                    "timeAdded": t.strftime('%Y-%m-%d %H:%M:%S')}
 
             db.save(obj)
+            pdb.set_trace()
             print(f"Saved record: {record['image']}")
             image_content = open(os.path.join(
                 images_path, record['image']), "rb")
