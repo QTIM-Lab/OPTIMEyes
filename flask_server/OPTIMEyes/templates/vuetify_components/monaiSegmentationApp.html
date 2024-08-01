@@ -241,6 +241,10 @@
                         [[ BrushButtonText ]]
                         </v-tooltip>
                       </v-btn>
+                      <v-btn @click="clearCanvas">
+                        <v-icon>[[ 'mdi-eraser' ]]</v-icon>
+                        Clear Brush
+                      </v-btn>
                       <v-btn @click="hideCanvas">
                         <v-icon>[[ segmentation_image.display === '' ? 'mdi-eye-outline' : 'mdi-eye-off' ]]</v-icon>
                         [[ hideBrushButtonText ]]
@@ -273,7 +277,8 @@
                       </v-btn>
 
                       <!-- Monai Label Buttons and Tools -->
-                      <!-- <h4>Monai Label Tools:</h4> -->
+                      <h4>Monai Label Tools:</h4>
+                      <!-- <div style="display: none"> -->
                       <div>
                         <!-- <v-btn @click="performInference">
                           <v-icon>[[ 'mdi-lightbulb-outline' ]]</v-icon>
@@ -1378,6 +1383,13 @@ var monai_segmentation_app =new Vue({
           image.src = `${this.image.base64}`;
         })
       },
+      clearCanvas() {
+        this.segmentation_image['base64'] = null
+        this.segmentation_image['image_id'] = this.images[current_image]
+        debugger
+        //this.displayBrushImage()
+        this.displayBrushImage(current_image=this.task.value.current_idx, fromInference=false, translatePos=this.translatePos, scale=this.scale); // fix later
+      },
       async displayBrushImage(current_image, translatePos={x:0,y:0}, scale=1.0, fromInference=false, recursion_base_case=0) {
         const segmentation = new Image();
         const roi_image = new Image();
@@ -1639,6 +1651,7 @@ var monai_segmentation_app =new Vue({
         this.inferenceLoading = true;
         this.inferenceDoneTraining = false;
         await this.uploadImage();
+        debugger
         image_name = this.segmentation_image.image_id.split('.')[0] // sans extension, as shows up in datastore_v2.json
         const url = this.URLS.performInference+'?image=' + image_name + '&output=image';
         const headers = {
@@ -1647,7 +1660,8 @@ var monai_segmentation_app =new Vue({
         // Create a new FormData object to handle multipart/form-data
         const formData = new FormData();
         // Add the parameters, empty file field, and label (if needed) to the FormData
-        formData.append('params', JSON.stringify({"roi": JSON.parse(this.roi)}));
+        // formData.append('params', JSON.stringify({"roi": JSON.parse(this.roi)}));
+        formData.append('params', JSON.stringify({"roi": JSON.parse(this.roi), "trained":false}));
         formData.append('file', '');
         formData.append('label', '');
         // Send a POST request with the FormData using the fetch API
