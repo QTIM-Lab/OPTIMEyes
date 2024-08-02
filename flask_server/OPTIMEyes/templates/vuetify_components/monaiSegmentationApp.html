@@ -123,7 +123,7 @@
                   Image List Name: [[ list_name ]]
                 </v-tooltip>
               </v-btn> 
-              <timer-tag @update-time="updateTrackedTime"></timer-tag>
+              <timer-tag ref="timer" @update-time="updateTrackedTime"></timer-tag>
               <!-- Debug Time - comes from <timer-tag> -->
               <!-- <p>[[ total_sec ]]</p> -->
             
@@ -278,18 +278,18 @@
 
                       <!-- Monai Label Buttons and Tools -->
                       <h4>Monai Label Tools:</h4>
-                      <!-- <div style="display: none"> -->
-                      <div>
-                        <!-- <v-btn @click="performInference">
+                      <div style="display: none">
+                      <!-- <div> -->
+                        <v-btn @click="performInference">
                           <v-icon>[[ 'mdi-lightbulb-outline' ]]</v-icon>
                           Perform Inference
                           <div v-if="inferenceLoading" class="spinner">
                             <div class="spinner-inner"></div>
                           </div>
                           <div v-if="inferenceDoneTraining" class="check-mark">✔</div>
-                        </v-btn> -->
+                        </v-btn>
 
-                        <!-- <v-btn @click="saveLabel">
+                        <v-btn @click="saveLabel">
                           <v-icon>[[ 'mdi-content-save' ]]</v-icon>
                           Save Current Annotation
                           <div v-if="saveLoading" class="spinner">
@@ -305,11 +305,11 @@
                             <div class="spinner-inner"></div>
                           </div>
                           <div v-if="trainDoneTraining" class="check-mark">✔</div>
-                        </v-btn> -->
+                        </v-btn>
 
                         <br>
                         
-                        <!-- <v-btn @click="drawROI">
+                        <v-btn @click="drawROI">
                           <v-tooltip left>
                             <template v-slot:activator="{ on }">
                               <v-icon v-on="on">[[ 'mdi-crop-square' ]]</v-icon> ROI
@@ -318,7 +318,7 @@
                           </v-tooltip>
                         </v-btn>
 
-                        <v-text-field label="ROI for Inference" v-model:value="roi"></v-text-field>                         -->
+                        <v-text-field label="ROI for Inference" v-model:value="roi"></v-text-field>                        
 
                       </div>
 
@@ -588,6 +588,7 @@ var monai_segmentation_app =new Vue({
           this.drawAnnotations(); //
           this.initCoco();
           this.initCanvasZoomTools();
+          this.performInference();
 
           this.resizeObserver = new ResizeObserver(entries => {
             for (let entry of entries) {
@@ -1386,7 +1387,7 @@ var monai_segmentation_app =new Vue({
       clearCanvas() {
         this.segmentation_image['base64'] = null
         this.segmentation_image['image_id'] = this.images[current_image]
-        debugger
+        // debugger
         //this.displayBrushImage()
         this.displayBrushImage(current_image=this.task.value.current_idx, fromInference=false, translatePos=this.translatePos, scale=this.scale); // fix later
       },
@@ -1651,7 +1652,7 @@ var monai_segmentation_app =new Vue({
         this.inferenceLoading = true;
         this.inferenceDoneTraining = false;
         await this.uploadImage();
-        debugger
+        // debugger
         image_name = this.segmentation_image.image_id.split('.')[0] // sans extension, as shows up in datastore_v2.json
         const url = this.URLS.performInference+'?image=' + image_name + '&output=image';
         const headers = {
@@ -1661,7 +1662,23 @@ var monai_segmentation_app =new Vue({
         const formData = new FormData();
         // Add the parameters, empty file field, and label (if needed) to the FormData
         // formData.append('params', JSON.stringify({"roi": JSON.parse(this.roi)}));
-        formData.append('params', JSON.stringify({"roi": JSON.parse(this.roi), "trained":false}));
+        // USER KEY FOR GA STUDY
+        user_key = {
+          'bbearce': true,
+
+          'andres': false,
+          'larguinchona': false,
+          'bmarks': false,
+          'bhogan': false,
+          'iroseto': false,
+          'lbarrientos': false,
+          'dmilner': false,
+          'rgnanaraj': false,
+          'zgill': false,
+          'mtukel': false,
+        }
+        user_key[this.user]
+        formData.append('params', JSON.stringify({"roi": JSON.parse(this.roi), "trained":user_key[this.user] ? user_key[this.user] : false}));
         formData.append('file', '');
         formData.append('label', '');
         // Send a POST request with the FormData using the fetch API
@@ -1673,7 +1690,7 @@ var monai_segmentation_app =new Vue({
         .then(response => response.blob())
         .then(imageBlob => {
           const reader = new FileReader(); // While FileReader used for files, the api works for imageBlob data.
-          reader.onloadend = function() {
+          reader.onloadend = async function() {
             // The result contains the Base64 string
             const base64String = reader.result;
             MSA.inferenceLoading = false;
@@ -1681,8 +1698,10 @@ var monai_segmentation_app =new Vue({
             // DRAW PATCH FROM INFERENCE ROI
             MSA.roi_image['base64'] = base64String
             // MSA.segmentation_image['base64'] = base64String // If this works this is obsolete
-            MSA.displayBrushImage(current_image=MSA.task.value.current_idx, fromInference=true, translatePos=MSA.translatePos, scale=MSA.scale); // fix later
+            await MSA.displayBrushImage(current_image=MSA.task.value.current_idx, fromInference=true, translatePos=MSA.translatePos, scale=MSA.scale); // fix later
             MSA.toggleTool("brush")
+            // debugger
+            MSA.$refs.timer.start(init=true)
           };
           reader.readAsDataURL(imageBlob);
         })
@@ -1927,6 +1946,7 @@ var monai_segmentation_app =new Vue({
             'Accept': 'application/json',
         };
         if (!error){
+          // debugger
           // Create a new FormData object to handle multipart/form-data
           const formData = new FormData();
           // Add the image data as a blob with a "image/png" type
