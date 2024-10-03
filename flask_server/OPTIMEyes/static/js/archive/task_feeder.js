@@ -42,7 +42,7 @@ var ImageCompare = (function (IC) {
         var  db_config_elem = document.getElementById("database");
         IC.TaskFeeder.db_config = db_config_elem.options[db_config_elem.selectedIndex].value;
         IC.TaskFeeder.hostname = IC.TaskFeeder.db_config = "http://"+DNS+":"+DB_PORT+"/"
-        IC.TaskFeeder.imageDbName = IMAGES_DB+"/";
+        IC.TaskFeeder.imageDbName = COUCH_DB+"/";
         return IC.TaskFeeder.hostname + IC.TaskFeeder.imageDbName;
 
 
@@ -52,7 +52,7 @@ var ImageCompare = (function (IC) {
         //   setTimeout(window.location.reload, 1000)
         // }else{
         //   IC.TaskFeeder.hostname = IC.TaskFeeder.db_config = "http://"+DNS+":"+DB_PORT+"/"
-        //   IC.TaskFeeder.imageDbName = IMAGES_DB+"/";
+        //   IC.TaskFeeder.imageDbName = COUCH_DB+"/";
         //   return IC.TaskFeeder.hostname + IC.TaskFeeder.imageDbName;
         // }
     };

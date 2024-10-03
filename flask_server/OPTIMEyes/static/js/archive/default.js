@@ -8,7 +8,7 @@ config_initialization = $.ajax({
   success: function (response) {
     // Still super insecure, but at least we're converted to flask
     DNS = response['DNS']
-    IMAGES_DB = response['IMAGES_DB']
+    COUCH_DB = response['COUCH_DB']
     DB_PORT = response['DB_PORT']
     HTTP_PORT = response['HTTP_PORT']
     // Set initial values for dropdowns and other default elements 

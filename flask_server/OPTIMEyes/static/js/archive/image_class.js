@@ -48,7 +48,7 @@ function init_app() {
         const currentTime = new Date();
 
         const timeStr = currentTime.toString();
-        const img0 = `http://${DNS}:${DB_PORT}/${IMAGES_DB}/${this.currentImg}`;
+        const img0 = `http://${DNS}:${DB_PORT}/${COUCH_DB}/${this.currentImg}`;
         const task = this.currentTask._id;
         const task_idx = this.currentTask.current_idx;
         // debugger

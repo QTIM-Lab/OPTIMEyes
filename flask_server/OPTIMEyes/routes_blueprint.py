@@ -45,19 +45,19 @@ def check_if_admin_party_then_make_request(url, method="GET", data="no data"):
             response = requests.get('{}'.format(url))
         else:
             response = requests.get('{}'.format(
-                url), auth=(current_app.config["DB_ADMIN_USER"], current_app.config["DB_ADMIN_PASS"]))
+                url), auth=(current_app.config["COUCHDB_USER"], current_app.config["COUCHDB_PASSWORD"]))
     elif method == "PUT":
         if current_app.config['ADMIN_PARTY']:
             response = requests.put(url, data=data)
         else:
             response = requests.put(
-                url, data=data, auth=(current_app.config["DB_ADMIN_USER"], current_app.config["DB_ADMIN_PASS"]))
+                url, data=data, auth=(current_app.config["COUCHDB_USER"], current_app.config["COUCHDB_PASSWORD"]))
     elif method == "DELETE":
         if current_app.config['ADMIN_PARTY']:
             response = requests.delete(url)
         else:
             response = requests.delete(
-                url, auth=(current_app.config["DB_ADMIN_USER"], current_app.config["DB_ADMIN_PASS"]))
+                url, auth=(current_app.config["COUCHDB_USER"], current_app.config["COUCHDB_PASSWORD"]))
     return response
 
 
@@ -75,7 +75,7 @@ def config():
         USER_INFO = {"logged_in":current_user.is_authenticated}
     config = {
         "DNS": current_app.config['DNS'],
-        "IMAGES_DB": current_app.config['IMAGES_DB'],
+        "COUCH_DB": current_app.config['COUCH_DB'],
         "DB_PORT": current_app.config['DB_PORT'],
         "HTTP_PORT": current_app.config['HTTP_PORT'],
         "ADMIN_PARTY": current_app.config['ADMIN_PARTY'],
@@ -205,7 +205,8 @@ def make_task():
 def get_image_sets():
     print("in /get_image_sets")
     base = "http://{}:{}/{}".format(
-        current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
+        "couchdb", current_app.config["DB_PORT"], current_app.config["COUCH_DB"])
+        # current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["COUCH_DB"])
     view = f"_design/images/_view/images?group_level=1"
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
@@ -223,7 +224,8 @@ def get_images_by_set(imageSet):
     """
     print("in /get_images_by_set")
     base = "http://{}:{}/{}".format(
-        current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
+        "couchdb", current_app.config["DB_PORT"], current_app.config["COUCH_DB"])
+        # current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["COUCH_DB"])
     view = f'_design/images/_view/imagesBySet?key="{imageSet}"'
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
@@ -233,9 +235,8 @@ def get_images_by_set(imageSet):
 def get_tasks(app):
     username = request.args['username']
     base = "http://{}:{}/{}".format(
-        current_app.config['DNS'], current_app.config['DB_PORT'], current_app.config["IMAGES_DB"])
-    # view = f"_design/basic_views/_view/incomplete_{app}_tasks?key=\"{username}\""
-    # view = f"_design/{app}App/_view/incomplete_{app}_tasks?key=\"{username}\""
+        "couchdb", current_app.config['DB_PORT'], current_app.config["COUCH_DB"])
+        # current_app.config['DNS'], current_app.config['DB_PORT'], current_app.config["COUCH_DB"])
     view = f"_design/{app}App/_view/tasksByUser?key=\"{username}\""
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
@@ -244,7 +245,8 @@ def get_tasks(app):
 @bp.route('/get_task/<app>/<user>/<list_name>', methods=['GET'])
 def get_task(app, user, list_name):
     base = "http://{}:{}/{}".format(
-        current_app.config['DNS'], current_app.config['DB_PORT'], current_app.config["IMAGES_DB"])
+        "couchdb", current_app.config['DB_PORT'], current_app.config["COUCH_DB"])
+        # current_app.config['DNS'], current_app.config['DB_PORT'], current_app.config["COUCH_DB"])
     view = f"_design/{app}App/_view/tasksByUserAndListName?key=[\"{user}\", \"{list_name}\"]"
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
@@ -257,7 +259,8 @@ def reset_to_previous_result(app):
     # currentTask['value']['current_idx']
     # currentTask[image_list']
     base = "http://{}:{}/{}".format(
-        current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
+        "couchdb", current_app.config["DB_PORT"], current_app.config["COUCH_DB"])
+        # current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["COUCH_DB"])
     last_result_key=currentTask['last_result_key']
     view = f'_design/{app}App/_view/results?key=%22{last_result_key}%22'
     url = f'{base}/{view}'
@@ -294,7 +297,7 @@ def reset_to_previous_result(app):
 @bp.route('/update_tasks/<task_id>', methods=['PUT'])
 def update_tasks(task_id):
     base = "http://{}:{}/{}".format(
-        DNS, current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
+        DNS, current_app.config["DB_PORT"], current_app.config["COUCH_DB"])
     url = f"{base}/{task_id}"
     results = json.loads(request.data)
     response = check_if_admin_party_then_make_request(
@@ -305,7 +308,8 @@ def update_tasks(task_id):
 @bp.route('/get_toolset/<app>/<tool_set>', methods=['GET'])
 def get_toolset(app,tool_set):
     base = "http://{}:{}/{}".format(
-        current_app.config['DNS'], current_app.config['DB_PORT'], current_app.config["IMAGES_DB"])
+        "couchdb", current_app.config['DB_PORT'], current_app.config["COUCH_DB"])
+        # current_app.config['DNS'], current_app.config['DB_PORT'], current_app.config["COUCH_DB"])
     view = f"_design/{app}App/_view/toolSets?key=\"{tool_set}\""
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
@@ -316,7 +320,7 @@ def get_toolset(app,tool_set):
 @bp.route('/get_image_classify_lists', methods=['GET'])
 def get_image_classify_lists():
     base = "http://{}:{}/{}".format(
-        current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
+        current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["COUCH_DB"])
     try:
         key = request.args['key']
     except:
@@ -335,7 +339,7 @@ def get_image_classify_lists():
 @bp.route('/get_image_compare_lists', methods=['GET'])
 def get_image_compare_lists():
     base = "http://{}:{}/{}".format(
-        current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
+        current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["COUCH_DB"])
     try:
         key = request.args['key']
     except:
@@ -355,7 +359,7 @@ def get_image_compare_lists():
 @bp.route('/get_image_flicker_lists', methods=['GET'])
 def get_image_flicker_lists():
     base = "http://{}:{}/{}".format(
-        current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
+        current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["COUCH_DB"])
     try:
         key = request.args['key']
     except:
@@ -373,7 +377,7 @@ def get_image_flicker_lists():
 @bp.route('/get_image_slider_lists', methods=['GET'])
 def get_image_slider_lists():
     base = "http://{}:{}/{}".format(
-        current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
+        current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["COUCH_DB"])
     try:
         key = request.args['key']
     except:
@@ -391,7 +395,8 @@ def get_image_slider_lists():
 @bp.route('/get_image_monai_segmentation_lists', methods=['GET'])
 def get_image_monai_segmentation_lists():
     base = "http://{}:{}/{}".format(
-        current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["IMAGES_DB"])
+        "couchdb", current_app.config["DB_PORT"], current_app.config["COUCH_DB"])
+        # current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["COUCH_DB"])
     try:
         key = request.args['key']
     except:
@@ -410,12 +415,14 @@ def get_image_monai_segmentation_lists():
 def get_image(image_id):
     # Get Image ID to fetch image data
     IMAGE_ID = image_id
-    url_for_couchdb_image_fetch = f'http://{current_app.config["DNS"]}:{current_app.config["DB_PORT"]}/{current_app.config["IMAGES_DB"]}/{IMAGE_ID}/image'
+    url_for_couchdb_image_fetch = f'http://couchdb:{current_app.config["DB_PORT"]}/{current_app.config["COUCH_DB"]}/{IMAGE_ID}/image'
+    # url_for_couchdb_image_fetch = f'http://{current_app.config["DNS"]}:{current_app.config["DB_PORT"]}/{current_app.config["COUCH_DB"]}/{IMAGE_ID}/image'
     response = check_if_admin_party_then_make_request(url_for_couchdb_image_fetch)
     response.raw.decode_content = True # You can inspect with: type(response.content) # bytes
     image_response = base64.b64encode(response.content)
     # Fetch image name
-    url_for_couchdb_image_name_fetch = f'http://{current_app.config["DNS"]}:{current_app.config["DB_PORT"]}/{current_app.config["IMAGES_DB"]}/{IMAGE_ID}/'
+    url_for_couchdb_image_name_fetch = f'http://couchdb:{current_app.config["DB_PORT"]}/{current_app.config["COUCH_DB"]}/{IMAGE_ID}/'
+    # url_for_couchdb_image_name_fetch = f'http://{current_app.config["DNS"]}:{current_app.config["DB_PORT"]}/{current_app.config["COUCH_DB"]}/{IMAGE_ID}/'
     response = check_if_admin_party_then_make_request(url_for_couchdb_image_name_fetch)
     image_meta_data = json.loads(response.content)
     # pdb.set_trace()
@@ -437,12 +444,14 @@ def task_result():
     couch_server = get_server(); db = couch_server['image_comparator'];
     if current_app.config["ADMIN_PARTY"]:
         couch = couchdb.Server(
-            f'http://{current_app.config["DNS"]}:{current_app.config["DB_PORT"]}')
+            f'http://couchdb:{current_app.config["DB_PORT"]}')
+            # f'http://{current_app.config["DNS"]}:{current_app.config["DB_PORT"]}')
     else:
         couch = couchdb.Server(
-            f'http://{current_app.config["DB_ADMIN_USER"]}:{current_app.config["DB_ADMIN_PASS"]}@{current_app.config["DNS"]}:{current_app.config["DB_PORT"]}')
+            f'http://{current_app.config["COUCHDB_USER"]}:{current_app.config["COUCHDB_PASSWORD"]}@couchdb:{current_app.config["DB_PORT"]}')
+            # f'http://{current_app.config["COUCHDB_USER"]}:{current_app.config["COUCHDB_PASSWORD"]}@{current_app.config["DNS"]}:{current_app.config["DB_PORT"]}')
     # pdb.set_trace()
-    db = couch[current_app.config["IMAGES_DB"]]
+    db = couch[current_app.config["COUCH_DB"]]
     # Determine which app
     app = None # Redundant...clean up
     if isinstance(request.data, bytes) and request.data != b'': # broken!

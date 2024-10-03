@@ -24,7 +24,7 @@ init_app = function(){
     // FLASK AJAX
     url = `http://${DNS}:${HTTP_PORT}/get_users`
     // COUCHDB AJAX
-    // url = `http://${DNS}:${DB_PORT}/${IMAGES_DB}/_design/basic_views/_view/users`
+    // url = `http://${DNS}:${DB_PORT}/${COUCH_DB}/_design/basic_views/_view/users`
     $.ajax({
         url : url,
         type : 'GET',

@@ -22,9 +22,15 @@ def get_server():
     so current_app can be used.
     """
     if 'db' not in g:
-        U = current_app.config["DB_ADMIN_USER"]
-        P = current_app.config["DB_ADMIN_PASS"]
-        DNS = current_app.config["DNS"]
+        U = current_app.config["COUCHDB_USER"]
+        P = current_app.config["COUCHDB_PASSWORD"]
+        DNS = 'couchdb' # container in docker compose format
+        # DNS = current_app.config["DNS"] -> Was used 
+        # when couchdb was running not in docker compose format.
+        # When it was its own container run with a Dockerfile,
+        # it ran on 0.0.0.0 or the same host as flask and they 
+        # both ran on 0.0.0.0. So I could use the DNS from flask's
+        # env vars to reger to it. Not anymore.
         PORT = current_app.config["DB_PORT"]
         url = f'http://{U}:{P}@{DNS}:{PORT}'
         g.db = couchdb.Server(url)

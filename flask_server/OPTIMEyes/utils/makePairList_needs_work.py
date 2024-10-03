@@ -10,14 +10,14 @@ import couchdb
 import uuid
 import pdb
 from datetime import datetime, timezone, timedelta
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
-load_dotenv("flask_server/.env", verbose=True)
+# load_dotenv("flask_server/.env", verbose=True)
 
-DB_ADMIN_USER = os.getenv("DB_ADMIN_USER")
-DB_ADMIN_PASS = os.getenv("DB_ADMIN_PASS")
+COUCHDB_USER = os.getenv("COUCHDB_USER")
+COUCHDB_PASSWORD = os.getenv("COUCHDB_PASSWORD")
 DNS = os.getenv("DNS")
-IMAGES_DB = os.getenv("IMAGES_DB")
+COUCH_DB = os.getenv("COUCH_DB")
 DB_PORT = os.getenv("DB_PORT")
 HTTP_PORT = os.getenv("HTTP_PORT")
 ADMIN_PARTY = True if os.getenv("ADMIN_PARTY") == 'True' else False
@@ -27,17 +27,17 @@ if ADMIN_PARTY:
     couch = couchdb.Server(f'http://{DNS}:{DB_PORT}')
 else:
     couch = couchdb.Server(
-        f'http://{DB_ADMIN_USER}:{DB_ADMIN_PASS}@{DNS}:{DB_PORT}')
+        f'http://{COUCHDB_USER}:{COUCHDB_PASSWORD}@{DNS}:{DB_PORT}')
 
 # couch package ex for later
-    # db = couch[IMAGES_DB]
+    # db = couch[COUCH_DB]
     # imageIDs = [int(row['id']) for row in db.view('_design/basic_views/_view/imageSet2ImageId')]
     # imageIDs.sort()
     # imageIDs = [str(i) for i in imageIDs]
 
 
 def getURL(imageSet: str) -> str:
-    url = f"http://{DNS}:{DB_PORT}/{IMAGES_DB}"
+    url = f"http://{DNS}:{DB_PORT}/{COUCH_DB}"
     view = f'/_design/basic_views/_view/imageSet2ImageId?key="{imageSet}"'
     URL = url + view
     return URL
@@ -47,7 +47,7 @@ def getImages(url: str) -> list:
     if ADMIN_PARTY:
         response = requests.get(url)
     else:
-        response = requests.get(url, auth=(DB_ADMIN_USER, DB_ADMIN_PASS))
+        response = requests.get(url, auth=(COUCHDB_USER, COUCHDB_PASSWORD))
     response = response.content.decode('utf-8')
     response = json.loads(response)
     # pdb.set_trace()
@@ -79,7 +79,7 @@ def makeList(listName: str, images: list) -> None:
            "count": len(pairs),
            "list": pairs,
            "time_added": t.strftime('%Y-%m-%d %H:%M:%S')}
-    db = couch[IMAGES_DB]
+    db = couch[COUCH_DB]
     print(f"Created Pair List: {listName}")
     doc_id, doc_rev = db.save(obj)
 

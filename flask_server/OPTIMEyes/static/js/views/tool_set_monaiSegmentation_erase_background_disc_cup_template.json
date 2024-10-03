@@ -6,13 +6,19 @@
     "radio_button_categories": [
       {
         "category_id": "Choose Region To Segment",
-        "selected": "Mark GA",
+        "selected": null,
         "buttons": [
           {
             "button_id": "Erase"
           },
           {
-            "button_id": "Mark GA"
+            "button_id": "Background"
+          },
+          {
+            "button_id": "Disc"
+          },
+          {
+            "button_id": "Cup"
           }
         ]
       }
