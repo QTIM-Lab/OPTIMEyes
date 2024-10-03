@@ -1,36 +1,38 @@
 import os, sys, requests, json, couchdb, uuid, pdb, pprint as pp
 from datetime import datetime, timezone, timedelta
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
-load_dotenv("flask_server/.env", verbose=True)
+# load_dotenv("flask_server/.env", verbose=True)
 
-DB_ADMIN_USER = os.getenv("DB_ADMIN_USER")
-DB_ADMIN_PASS = os.getenv("DB_ADMIN_PASS")
+COUCHDB_USER = os.getenv("COUCHDB_USER")
+COUCHDB_PASSWORD = os.getenv("COUCHDB_PASSWORD")
 DNS = os.getenv("DNS")
-IMAGES_DB = os.getenv("IMAGES_DB")
+COUCH_DB = os.getenv("COUCH_DB")
 DB_PORT = os.getenv("DB_PORT")
 ADMIN_PARTY = True if os.getenv("ADMIN_PARTY") == 'True' else False
 
 # https://couchdb-python.readthedocs.io/en/latest/getting-started.html
 if ADMIN_PARTY:
-    couch = couchdb.Server(f'http://{DNS}:{DB_PORT}')
+    couch = couchdb.Server(f'http://couchdb:{DB_PORT}')
+    # couch = couchdb.Server(f'http://{DNS}:{DB_PORT}')
 else:
-    couch = couchdb.Server(f'http://{DB_ADMIN_USER}:{DB_ADMIN_PASS}@{DNS}:{DB_PORT}')
+    couch = couchdb.Server(f'http://{COUCHDB_USER}:{COUCHDB_PASSWORD}@couchdb:{DB_PORT}')
+    # couch = couchdb.Server(f'http://{COUCHDB_USER}:{COUCHDB_PASSWORD}@{DNS}:{DB_PORT}')
 
 # couch package ex for later
-# db = couch[IMAGES_DB]
+# db = couch[COUCH_DB]
 # imageIDs = [int(row['id']) for row in db.view('_design/basic_views/_view/imageSet2ImageId')]
 # imageIDs.sort()
 # imageIDs = [str(i) for i in imageIDs]
 
 # def getURL(uuid: str) -> str:
-#     url = f"http://{DNS}:{DB_PORT}/{IMAGES_DB}"
+#     url = f"http://{DNS}:{DB_PORT}/{COUCH_DB}"
 #     view = f'/{uuid}'
 #     URL = url + view
 #     return URL
 
 def checkIfListExists(taskName):
-    db = couch[IMAGES_DB]
+    db = couch[COUCH_DB]
     try:
         db[taskName]
         return True
@@ -60,7 +62,7 @@ def makeTask(user: str, imageListName: str, imageSet: str, imageListType: str, t
         if linkedWithImageListName is not None:
             obj['linked_with_image_list_name'] = linkedWithImageListName
 
-        db = couch[IMAGES_DB]
+        db = couch[COUCH_DB]
         doc_id, doc_rev = db.save(obj) # currently doc_id, doc_rev unused
         print(pp.pprint(f"created object {obj}"))
         return json.dumps("new_task_created")

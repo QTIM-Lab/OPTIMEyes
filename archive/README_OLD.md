@@ -1,5 +1,5 @@
 ### Deploy couchdb docker image
-Decide on a place to store the couchdb data. ```/opt/couchdb/data``` is where a normal couchdb installs will store data so don't use this directory in a docker mount unless you don't have couchdb installed on the machine already.
+<!-- Decide on a place to store the couchdb data. ```/opt/couchdb/data``` is where a normal couchdb installs will store data so don't use this directory in a docker mount unless you don't have couchdb installed on the machine already.
 ```
 APP_NAME=default
 DB_LOCATION=/opt/couchdb/data/$APP_NAME
@@ -18,10 +18,10 @@ docker run \
  -e COUCHDB_USER=$COUCHDB_USER \
  -e COUCHDB_PASSWORD=$COUCHDB_PASSWORD \
  couchdb:latest
-```
+``` -->
 
 > Note you can't make requests to this container wihtout making sure that CORS (cross-origin resource sharing) is enabled:
-
+<!-- 
 Once logged into couchdb goto settings to enable CORS:
 
 ![Initial Setup](../readme_images/couchdb_cors.jpg)
@@ -39,16 +39,16 @@ docker exec -it image-comparator-couchdb bash
 To stop container (if needed):
 ```
 docker stop image-comparator-couchdb
-```
+``` -->
 
-### Set up Image-Comparator in a Docker Container Using Flask
+<!-- ### Set up Image-Comparator in a Docker Container Using Flask
 
 We will be using the *Dockerfile* file in ```Image-Comparator-Dockerfiles```.
 
 #### Build the container
 
-Build a new image for flask and serve in the context of the flask_server folder:
-```bash
+Build a new image for flask and serve in the context of the flask_server folder: -->
+<!-- ```bash
 cd Image-Comparator-Dockerfiles
 MACHINE_PORT="8080"
 CONTAINER_NAME=image-comparator
@@ -73,7 +73,7 @@ docker run \
   gunicorn -b 0.0.0.0:8080 "OPTIMEyes:create_app()"
   # image-comparator:flask bash
   # image-comparator:flask flask run --port $MACHINE_PORT --host 0.0.0.0 --debug
-```
+``` -->
 
 #### HTTPS
 ```bash

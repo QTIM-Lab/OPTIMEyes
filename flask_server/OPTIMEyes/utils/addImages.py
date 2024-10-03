@@ -9,25 +9,27 @@ import pprint as pp
 import pandas as pd
 from PIL import Image
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
 # UTILS_DIR = "flask_server/image_comparator/utils"
 
-load_dotenv("flask_server/.env", verbose=True)
-DB_ADMIN_USER = os.getenv("DB_ADMIN_USER")
-DB_ADMIN_PASS = os.getenv("DB_ADMIN_PASS")
+# load_dotenv("flask_server/.env", verbose=True)
+COUCHDB_USER = os.getenv("COUCHDB_USER")
+COUCHDB_PASSWORD = os.getenv("COUCHDB_PASSWORD")
 DNS = os.getenv("DNS")
 IMAGE_COMPARATOR_DATA = os.getenv("IMAGE_COMPARATOR_DATA")
-IMAGES_DB = os.getenv("IMAGES_DB")
+COUCH_DB = os.getenv("COUCH_DB")
 DB_PORT = os.getenv("DB_PORT")
 ADMIN_PARTY = True if os.getenv("ADMIN_PARTY") == 'True' else False
 # pdb.set_trace()
 # https://couchdb-python.readthedocs.io/en/latest/getting-started.html
 if ADMIN_PARTY:
-    couch = couchdb.Server(f'http://{DNS}:{DB_PORT}')
+    couch = couchdb.Server(f'http://couchdb:{DB_PORT}')
+    # couch = couchdb.Server(f'http://{DNS}:{DB_PORT}')
 else:
     couch = couchdb.Server(
-        f'http://{DB_ADMIN_USER}:{DB_ADMIN_PASS}@{DNS}:{DB_PORT}')
+        f'http://{COUCHDB_USER}:{COUCHDB_PASSWORD}@couchdb:{DB_PORT}')
+        # f'http://{COUCHDB_USER}:{COUCHDB_PASSWORD}@{DNS}:{DB_PORT}')
 
 
 def getBase64Representation(image_id: str):
@@ -38,7 +40,7 @@ def addImages(path_to_images: str, imageSetName: str, imageSetType: str = 'non-D
     # get images
     # Sense csv for input
     # We need to check current current image counts
-    db = couch[IMAGES_DB]
+    db = couch[COUCH_DB]
     # If from csv we need to get the extra column data and save it
     if "image_key.csv" in os.listdir(os.path.join(IMAGE_COMPARATOR_DATA, path_to_images)):
         images_csv = pd.read_csv(os.path.join(IMAGE_COMPARATOR_DATA, path_to_images, "image_key.csv"))

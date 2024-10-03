@@ -3,29 +3,29 @@ import os, datetime
 from flask import Flask
 from flask_cors import CORS
 from flask_login import LoginManager
-from dotenv import load_dotenv
+# from dotenv import load_dotenv # ARCHIVE and DELETE eventually 
 
 
 login_manager = LoginManager()
 
 
-def create_app(test_config=None):
+def create_app(test_config=None, *args, **kwargs):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
     app.permanent_session_lifetime = datetime.timedelta(hours=1)
-    load_dotenv(".env", verbose=True)
+    # load_dotenv(".env", verbose=True) # ARCHIVE and DELETE eventually 
     app.config.from_mapping(
         # SECRET_KEY=b'',
         SECRET_KEY=os.getenv("SECRET_KEY")
     )
     
     # Get environ config    
-    app.config['DB_ADMIN_USER'] = os.getenv("DB_ADMIN_USER")
-    app.config['DB_ADMIN_PASS'] = os.getenv("DB_ADMIN_PASS")
+    app.config['COUCHDB_USER'] = os.getenv("COUCHDB_USER")
+    app.config['COUCHDB_PASSWORD'] = os.getenv("COUCHDB_PASSWORD")
     app.config['DNS'] = os.getenv("DNS")
     app.config['SSL'] =  True if os.getenv("SSL") == 'True' else False
     app.config['DB_DNS'] = os.getenv("DB_DNS")
-    app.config['IMAGES_DB'] = os.getenv("IMAGES_DB")
+    app.config['COUCH_DB'] = os.getenv("COUCH_DB")
     app.config['DB_PORT'] = os.getenv("DB_PORT")
     app.config['HTTP_PORT'] = os.getenv("HTTP_PORT")
     app.config['ADMIN_PARTY'] = True if os.getenv("ADMIN_PARTY") == 'True' else False

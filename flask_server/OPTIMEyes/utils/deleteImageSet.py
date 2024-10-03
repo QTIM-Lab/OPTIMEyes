@@ -6,14 +6,14 @@ import pdb
 from PIL import Image
 from datetime import datetime, timedelta
 import json
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
-load_dotenv("flask_server/.env", verbose=True)
-DB_ADMIN_USER = os.getenv("DB_ADMIN_USER")
-DB_ADMIN_PASS = os.getenv("DB_ADMIN_PASS")
+# load_dotenv("flask_server/.env", verbose=True)
+COUCHDB_USER = os.getenv("COUCHDB_USER")
+COUCHDB_PASSWORD = os.getenv("COUCHDB_PASSWORD")
 DNS = os.getenv("DNS")
 IMAGE_COMPARATOR_DATA = os.getenv("IMAGE_COMPARATOR_DATA")
-IMAGES_DB = os.getenv("IMAGES_DB")
+COUCH_DB = os.getenv("COUCH_DB")
 DB_PORT = os.getenv("DB_PORT")
 ADMIN_PARTY = True if os.getenv("ADMIN_PARTY") == 'True' else False
 
@@ -22,7 +22,7 @@ if ADMIN_PARTY:
     couch = couchdb.Server(f'http://{DNS}:{DB_PORT}')
 else:
     couch = couchdb.Server(
-        f'http://{DB_ADMIN_USER}:{DB_ADMIN_PASS}@{DNS}:{DB_PORT}')
+        f'http://{COUCHDB_USER}:{COUCHDB_PASSWORD}@{DNS}:{DB_PORT}')
 
 def deleteClassifyImageListBasedOnImageSet(imageSetName: str):
     pass
@@ -39,7 +39,7 @@ def deleteCompareResults(imageSetName: str):
 
 def deleteImageSet(imageSetName: str):
     # Delete Image Set
-    db = couch[IMAGES_DB]
+    db = couch[COUCH_DB]
     imagesBySet = db.iterview("images/imagesBySet", 10, key=imageSetName)
     count = 0
     image_ids = []

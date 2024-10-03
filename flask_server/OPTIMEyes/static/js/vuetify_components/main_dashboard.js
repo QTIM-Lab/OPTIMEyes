@@ -6,7 +6,7 @@ var main_dashboard = new Vue({
 
     data: () => ({
         DNS: null,
-        IMAGES_DB: null,
+        COUCH_DB: null,
         DB_PORT: null,
         HTTP_PORT: null,
         ADMIN_PARTY: null,
@@ -28,7 +28,7 @@ var main_dashboard = new Vue({
         configuration = await this.getConfiguration()
         this.DNS = configuration.DNS;
         this.SSL = configuration.SSL;
-        this.IMAGES_DB = configuration.IMAGES_DB;
+        this.COUCH_DB = configuration.COUCH_DB;
         this.DB_PORT = configuration.DB_PORT;
         this.HTTP_PORT = configuration.HTTP_PORT;
         this.ADMIN_PARTY = configuration.ADMIN_PARTY;

@@ -56,8 +56,8 @@ function init_app() {
         const currentTime = new Date();
 
         const timeStr = currentTime.toString();
-        const img0 = `http://${DNS}:${DB_PORT}/${IMAGES_DB}/${this.currentPair[0]}`;
-        const img1 = `http://${DNS}:${DB_PORT}/${IMAGES_DB}/${this.currentPair[1]}`;
+        const img0 = `http://${DNS}:${DB_PORT}/${COUCH_DB}/${this.currentPair[0]}`;
+        const img1 = `http://${DNS}:${DB_PORT}/${COUCH_DB}/${this.currentPair[1]}`;
         const winnerId = selection;
         // If Tie not mandatory and all submissions require comment or at least an optional comment
         const comment = $("#justification").val();
