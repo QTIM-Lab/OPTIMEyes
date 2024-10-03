@@ -1,0 +1,3 @@
+[submodule "monailabel"]
+	path = monailabel
+	url = https://github.com/QTIM-Lab/segmentationMonaiLabel
