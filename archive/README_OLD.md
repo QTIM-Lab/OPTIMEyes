@@ -120,20 +120,19 @@ flask shell
 ```
 
 ```python
-from image_comparator.auth_blueprint import load_user
-from image_comparator.db import get_server
+from OPTIMEyes.auth_blueprint import load_user
+from OPTIMEyes.db import get_server
 # Get the database instance
 couch_server = get_server()
 db = couch_server['image_comparator']
-
-user = load_user('user_guest')
-user.set_password("newpassword")
+user = load_user('user_bbearce')
+user.set_password("password")
 user.save(db)
 ```
 
 ```python
-from image_comparator.auth_blueprint import load_user
-from image_comparator.db import get_server
+from OPTIMEyes.auth_blueprint import load_user
+from OPTIMEyes.db import get_server
 # Get the database instance
 couch_server = get_server()
 db = couch_server['image_comparator']

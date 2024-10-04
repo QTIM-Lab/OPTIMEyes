@@ -16,28 +16,58 @@ cp .env_sampe .env
 ```
 
 ### Launch
+Start:
 ```bash
-# No MonaiLabel
-docker compose up -d
-# With MonaiLabel
-docker-compose -f docker-compose.yml -f docker-compose.monailabel.yml up --build
-
-docker compose down # bring down
-docker compose down; docker compose up -d
+./start.sh
+```
+Stop:
+```bash
+./stop.sh
 ```
 
-### Logs
+### Interact
+Relaunch:
 ```bash
+docker compose up -d
+```
+
+Logs:
+```bash
+docker compose logs -f # everything
 docker compose logs -f flask
 docker compose logs -f couchdb
+docker compose logs -f monailabel
 ```
 
-### Interactive shell for flask
+Interactive shell for flask:
 ```bash
 docker compose exec -it flask bash
+flask shell
+```
+then:
+```python
+from OPTIMEyes.auth_blueprint import load_user
+from OPTIMEyes.db import get_server
+# Get the database instance
+couch_server = get_server()
+db = couch_server['image_comparator']
+user = load_user('user_bbearce')
+user.set_password("password")
+user.save(db)
 ```
 
-### Purge DB
+Download Annotations:
+```python
+from OPTIMEyes.routes_blueprint import downloadAnnotations
+App="monaiSegmentation"
+user = 'bbearce'
+list_name =f'test_data-monaiSegmentation-0'
+task_id = f"{user}-{list_name}"
+zip_path = f"TMP/{user}-{list_name}.zip"
+downloadAnnotations(App, task_id, cli=True, zip_path=zip_path)
+```
+
+Purge DB:
 ```bash
 # DANGER
 sudo rm -rf /opt/couchdb/data/
@@ -46,6 +76,9 @@ sudo rm -rf /opt/couchdb/data/.share
 ```
 
 ### Load data
+
+TBD...
+
 
 
 ### SSL
