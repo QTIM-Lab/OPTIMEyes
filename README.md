@@ -12,7 +12,7 @@ Purpose: Set up a static webpage and server to host tasks for images
 ## Instructions for setup
 Create an environment variables file. Do not check `.env` into git.
 ```bash
-cp .env_sampe .env
+cp .env_sample .env
 ```
 
 ### Launch
