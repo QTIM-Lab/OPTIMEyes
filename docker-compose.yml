@@ -3,14 +3,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "${HTTP_PORT}:8080"
     volumes:
       - ./flask_server:/flask_server
       - ./Image-Comparator-Data:/Image-Comparator-Data 
     working_dir: /flask_server
     environment:
-      # - FLASK_ENV=development
       - FLASK_APP=${FLASK_APP}
       - IMAGE_COMPARATOR_DATA=${IMAGE_COMPARATOR_DATA}
       - DNS=${DNS}
@@ -24,7 +21,9 @@ services:
       - ADMIN_PARTY=${ADMIN_PARTY}
       - SECRET_KEY=${SECRET_KEY}
     command: bash -c "/flask_server/OPTIMEyes/utils/setup.sh"
-    # command: sleep 1000000 # Cheap debug
+    # command: sleep 1000000
+    ports:
+      - ${HTTP_PORT}:8080
     depends_on:
       - couchdb
 
@@ -41,3 +40,14 @@ services:
     volumes:
       - ${DB_LOCATION}:/opt/couchdb/data
       - ./flask_server:/flask_server
+
+  monailabel:
+    build:
+      context: ./monailabel
+    ports:
+      - 8000:8000
+    volumes:
+      - ./monailabel:/monailabel
+    environment:
+      - MONAI_LABEL_ENV=development
+    command: sleep 100000
