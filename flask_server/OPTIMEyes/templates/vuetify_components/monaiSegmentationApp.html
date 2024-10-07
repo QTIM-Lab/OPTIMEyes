@@ -278,8 +278,8 @@
 
                       <!-- Monai Label Buttons and Tools -->
                       <h4>Monai Label Tools:</h4>
-                      <div style="display: none">
-                      <!-- <div> -->
+                      <!-- <div style="display: none"> -->
+                      <div>
                         <v-btn @click="performInference">
                           <v-icon>[[ 'mdi-lightbulb-outline' ]]</v-icon>
                           Perform Inference
@@ -289,23 +289,23 @@
                           <div v-if="inferenceDoneTraining" class="check-mark">✔</div>
                         </v-btn>
 
-                        <v-btn @click="saveLabel">
+                        <!-- <v-btn @click="saveLabel">
                           <v-icon>[[ 'mdi-content-save' ]]</v-icon>
                           Save Current Annotation
                           <div v-if="saveLoading" class="spinner">
                             <div class="spinner-inner"></div>
                           </div>
                           <div v-if="saveDoneTraining" class="check-mark">✔</div>
-                        </v-btn>
+                        </v-btn> -->
                         
-                        <v-btn @click="trainOnLabels">
+                        <!-- <v-btn @click="trainOnLabels">
                           <v-icon>[[ 'mdi-brain' ]]</v-icon>
                           Train on Saved Annotations
                           <div v-if="trainLoading" class="spinner">
                             <div class="spinner-inner"></div>
                           </div>
                           <div v-if="trainDoneTraining" class="check-mark">✔</div>
-                        </v-btn>
+                        </v-btn> -->
 
                         <br>
                         
@@ -588,7 +588,7 @@ var monai_segmentation_app =new Vue({
           this.drawAnnotations(); //
           this.initCoco();
           this.initCanvasZoomTools();
-          this.performInference();
+          // this.performInference();
 
           this.resizeObserver = new ResizeObserver(entries => {
             for (let entry of entries) {
@@ -1664,7 +1664,7 @@ var monai_segmentation_app =new Vue({
         // formData.append('params', JSON.stringify({"roi": JSON.parse(this.roi)}));
         // USER KEY FOR GA STUDY
         user_key = {
-          'bbearce': true,
+          'bbearce': false,
 
           'andres': false,
           'larguinchona': false,
