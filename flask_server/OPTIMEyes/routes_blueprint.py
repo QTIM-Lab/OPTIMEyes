@@ -468,10 +468,11 @@ def task_result():
         # Get the image blob data
         image_blob = request.files.get('image') 
         # Save doc
-        # pdb.set_trace()
         doc_id, doc_rev = db.save(results)
         # Attach the image to the document
-        db.put_attachment(db[doc_id], image_blob.read(), 'image.png', content_type='image/png')
+        # pdb.set_trace()
+        image_extension = doc_id.split(".")[-1]
+        db.put_attachment(db[doc_id], image_blob.read(), f'image.{image_extension}', content_type=f'image/{image_extension}')
         # pdb.set_trace()
         # 2 needs to mark flicker task being referenced as "completed" if this was the last task
         #   or we need to increment the current_idx on the task
@@ -637,12 +638,10 @@ def downloadAnnotations(app, task_id, cli=False, zip_path=None):
         raise Exception("Multiple tasks returned for task_id.")
     task_value = task_rows[0].value
     images = db.view('images/imagesBySet', key=task_value['imageSet'])
-    # pdb.set_trace()
     # Create an in-memory zip file
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED, False) as zip_file:
         for record in annotations:
-            # pdb.set_trace()
             # Assuming the attachment name is 'image' and you want to use the record ID as the filename
             if record.id.find('.png') != -1:
                 attachment = db.get_attachment(record.id, 'image.png')
@@ -652,7 +651,6 @@ def downloadAnnotations(app, task_id, cli=False, zip_path=None):
                 zip_file.writestr(f"{record.id}", attachment.read())
         for image in images:
             # Assuming the attachment name is 'image' and you want to use the image ID as the filename
-            # pdb.set_trace()
             if image.id.find('.png') != -1:
                 attachment = db.get_attachment(image.id, 'image')
             elif image.id.find('.jpg') != -1:

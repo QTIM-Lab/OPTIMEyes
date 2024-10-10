@@ -19,10 +19,12 @@ ADMIN_PARTY = True if os.getenv("ADMIN_PARTY") == 'True' else False
 
 # https://couchdb-python.readthedocs.io/en/latest/getting-started.html
 if ADMIN_PARTY:
-    couch = couchdb.Server(f'http://{DNS}:{DB_PORT}')
+    couch = couchdb.Server(f'http://couchdb:{DB_PORT}')
+    # couch = couchdb.Server(f'http://{DNS}:{DB_PORT}')
 else:
     couch = couchdb.Server(
-        f'http://{COUCHDB_USER}:{COUCHDB_PASSWORD}@{DNS}:{DB_PORT}')
+        f'http://{COUCHDB_USER}:{COUCHDB_PASSWORD}@couchdb:{DB_PORT}')
+        # f'http://{COUCHDB_USER}:{COUCHDB_PASSWORD}@{DNS}:{DB_PORT}')
 
 def deleteClassifyImageListBasedOnImageSet(imageSetName: str):
     pass
@@ -39,6 +41,7 @@ def deleteCompareResults(imageSetName: str):
 
 def deleteImageSet(imageSetName: str):
     # Delete Image Set
+
     db = couch[COUCH_DB]
     imagesBySet = db.iterview("images/imagesBySet", 10, key=imageSetName)
     count = 0

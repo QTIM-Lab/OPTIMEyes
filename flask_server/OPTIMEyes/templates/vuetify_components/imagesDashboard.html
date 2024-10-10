@@ -193,6 +193,7 @@ var template_app =new Vue({
       configuration = await this.getConfiguration()
       this.DNS = configuration.DNS;
       this.SSL = configuration.SSL
+      
       this.COUCH_DB = configuration.COUCH_DB;
       this.DB_PORT = configuration.DB_PORT;
       this.HTTP_PORT = configuration.HTTP_PORT;
@@ -248,14 +249,15 @@ var template_app =new Vue({
           throw new Error(message);
       }
       const configuration = await response.json();
-      debugger
       return configuration;
     },
     getImageSets() {
       console.log("getImageSets")
+      
       fetch(this.URLS.getImageSets)
           .then((response) => response.json())
           .then((data) => {
+              
               data.rows.forEach((v, i, a) => {
                 cleaned_data = {imageSet:v.key[0], images: v.value}
                 this.imageSets.push(cleaned_data)
