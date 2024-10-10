@@ -70,10 +70,19 @@
 <p>Open Source Ophthalmology Annotation App</p>
 <p><a href="https://github.com/QTIM-Lab/OPTIMEyes">QTIM GitHub</a>.</p>
 <h2 id="project-layout">Project layout</h2>
-<pre><code>mkdocs.yml    # The configuration file.
-docs/
-    index.md  # The documentation homepage.
-    ...       # Other markdown pages, images and other files.
+<h3 id="interact">Interact</h3>
+<p>Relaunch:</p>
+<pre><code class="language-bash">docker compose up -d
+</code></pre>
+<p>Logs:</p>
+<pre><code class="language-bash">docker compose logs -f # everything
+docker compose logs -f flask
+docker compose logs -f couchdb
+docker compose logs -f monailabel
+# If you need to rebuild just one
+# docker compose build flask
+# docker compose build couchdb
+# docker compose build monailabel
 </code></pre>
 <p>Interactive shell for flask:</p>
 <pre><code class="language-bash">docker compose exec -it flask bash
@@ -225,5 +234,5 @@ torch.save(model.state_dict(), '/monailabel/apps/monaibundle/model/MedSamBundle/
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2024-10-10 21:47:02.803034+00:00
+Build Date UTC : 2024-10-10 21:53:09.244413+00:00
 -->
