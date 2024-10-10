@@ -11,6 +11,8 @@ Purpose: Set up a static webpage and server to host tasks for images
 > See docker-compose.yml
 
 ## Instructions for setup
+> [Documentation](https://qtim-lab.github.io/OPTIMEyes/)
+
 Create an environment variables file. Do not check `.env` into git.
 ```bash
 cp .env_sample .env
@@ -26,14 +28,3 @@ Stop:
 ./stop.sh
 ```
 
-## Mkdocs
-```bash
-# pyenv virtualenv 3.10.4 optimeyes
-pyenv activate optimeyes
-pip install -r requirements.txt
-mkdocs new mkdocs_documentation
-cd mkdocs_documentation
-mkdocs serve
-mkdocs build
-mkdocs gh-deploy
-```
