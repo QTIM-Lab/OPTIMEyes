@@ -2,7 +2,7 @@ services:
   flask:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: flask_server/Dockerfile
     stdin_open: true
     tty: true
     volumes:

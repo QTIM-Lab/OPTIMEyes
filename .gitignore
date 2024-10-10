@@ -5,3 +5,7 @@ Configuration.rb
 __pycache__
 Image-Comparator-Data/
 git_access_token.txt
+# models
+*.pt
+# mkdocs
+mkdocs_documentation

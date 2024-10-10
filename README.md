@@ -5,9 +5,9 @@ Purpose: Set up a static webpage and server to host tasks for images
 
 ## Components:
 
-* Flask docker container  
-* CouchDB docker container  
-* MonaiLabel docker container
+* [Flask](https://flask.palletsprojects.com/en/3.0.x/) web server
+* [CouchDB](https://couchdb.apache.org/) json document store (Persistence)  
+* [Our](https://github.com/QTIM-Lab/segmentationMonaiLabel) [MonaiLabel](https://github.com/Project-MONAI/MONAILabel)
 > See docker-compose.yml
 
 ## Instructions for setup
@@ -44,97 +44,14 @@ docker compose logs -f monailabel
 # docker compose build monailabel
 ```
 
-Interactive shell for flask:
+### Mkdocs
 ```bash
-docker compose exec -it flask bash
-flask shell
-```
-then:
-```python
-from OPTIMEyes.auth_blueprint import load_user
-from OPTIMEyes.db import get_server
-# Get the database instance
-couch_server = get_server()
-db = couch_server['image_comparator']
-user = load_user('user_bbearce')
-user.set_password("password")
-user.save(db)
-```
-
-Download Annotations:
-```python
-from OPTIMEyes.routes_blueprint import downloadAnnotations
-App="monaiSegmentation"
-user = 'bbearce'
-list_name =f'test_data-monaiSegmentation-0'
-task_id = f"{user}-{list_name}"
-zip_path = f"TMP/{user}-{list_name}.zip"
-downloadAnnotations(App, task_id, cli=True, zip_path=zip_path)
-```
-
-Purge DB:
-```bash
-# DANGER
-sudo rm -rf /opt/couchdb/data/
-sudo rm -rf /opt/couchdb/data/.delete
-sudo rm -rf /opt/couchdb/data/.share
-```
-
-### Load data
-
-TBD...
-
-
-
-### SSL
-#### Self signed
-```bash
-mkdir -p flask_server/certs/
-openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
-mv cert.pem flask_server/certs/
-mv key.pem flask_server/certs/
-```
-Echo what ever domain name you entered to `/etc/hosts`.
-
-Ex: `optimeyes.co`
-```bash
-echo "0.0.0.0 optimeyes.co" | sudo tee -a /etc/hosts
-```
-
-#### Certbot (real purchased certs)
-[certbot](https://certbot.eff.org/)
-```bash
-sudo snap install --classic certbot
-sudo ln -s /snap/bin/certbot /usr/bin/certbot
-sudo certbot certonly --standalone
-
-# When it expires in ~90 days
-sudo certbot renew
-```
-
-You will get instructions on where it is on your machine. Copy to flask_server/certs folder.
-
-### MonaiLabel
-```bash
-docker compose exec -it monailabel bash
-monailabel start_server --app apps/monaibundle --studies datastore --conf bundles IntegrationBundle,SegformerBundle,MedSamBundle --conf zoo_source ngc
-```
-
-Initialize MedSAM Bundle's model from huggingface:
-```bash
-docker compose exec -it monailabel bash
-python
-```
-
-```python
-from transformers import SamModel, SamProcessor
-import torch
-```
-
-```python
-model = SamModel.from_pretrained("flaviagiammarino/medsam-vit-base", local_files_only=False)
-torch.save(model.state_dict(), '/monailabel/apps/monaibundle/model/MedSamBundle/models/model.pt')
-torch.save(model.state_dict(), '/monailabel/apps/monaibundle/model/MedSamBundle/models/model_best.pt')
-# loaded_weights = torch.load('/monailabel/apps/monaibundle/model/MedSamBundle/models/model.pt', weights_only=True)
-# model.load_state_dict(loaded_weights)
+# pyenv virtualenv 3.10.4 optimeyes
+pyenv activate optimeyes
+pip install -r requirements.txt
+mkdocs new mkdocs_documentation
+cd mkdocs_documentation
+mkdocs serve
+mkdocs build
+mkdocs gh-deploy
 ```

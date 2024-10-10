@@ -12,3 +12,4 @@ pandas
 pycocotools
 scikit-image
 gunicorn
+mkdocs
