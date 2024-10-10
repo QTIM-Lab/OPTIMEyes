@@ -22,5 +22,6 @@ initialize_submodule() {
 initialize_submodule
 
 # Optionally, you can also add commands to build or run your Docker containers
-echo "Starting Docker containers... with docker compose up -d"
+echo "Starting Docker containers... with docker compose up -d."
+echo "If you get a docker compose erro try with `docker-compose`."
 docker compose up -d  # or include specific files if necessary

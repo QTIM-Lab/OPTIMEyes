@@ -3,10 +3,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    stdin_open: true
+    tty: true
     volumes:
       - ./flask_server:/flask_server
       - ./Image-Comparator-Data:/Image-Comparator-Data 
     working_dir: /flask_server
+    env_file:
+      - .env
     environment:
       - FLASK_APP=${FLASK_APP}
       - IMAGE_COMPARATOR_DATA=${IMAGE_COMPARATOR_DATA}
@@ -31,6 +35,8 @@ services:
     image: couchdb:latest
     ports:
       - "${COUCH_PORT}:5984"
+    env_file:
+      - .env
     environment:
       - COUCH_DB=${COUCH_DB}
       - COUCHDB_USER=${COUCHDB_USER}
@@ -48,6 +54,12 @@ services:
       - 8000:8000
     volumes:
       - ./monailabel:/monailabel
+    stdin_open: true
+    tty: true
+    working_dir: /monailabel
+    env_file:
+      - .env
     environment:
       - MONAI_LABEL_ENV=development
-    command: sleep 100000
+    command: monailabel start_server --app apps/monaibundle --studies datastore --conf bundles IntegrationBundle,SegformerBundle,MedSamBundle --conf zoo_source ngc
+    # command: bash

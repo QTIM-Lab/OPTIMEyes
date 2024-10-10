@@ -278,8 +278,8 @@
 
                       <!-- Monai Label Buttons and Tools -->
                       <h4>Monai Label Tools:</h4>
-                      <div style="display: none">
-                      <!-- <div> -->
+                      <!-- <div style="display: none"> -->
+                      <div>
                         <v-btn @click="performInference">
                           <v-icon>[[ 'mdi-lightbulb-outline' ]]</v-icon>
                           Perform Inference
@@ -588,7 +588,7 @@ var monai_segmentation_app =new Vue({
           this.drawAnnotations(); //
           this.initCoco();
           this.initCanvasZoomTools();
-          this.performInference();
+          // this.performInference();
 
           this.resizeObserver = new ResizeObserver(entries => {
             for (let entry of entries) {
@@ -1664,21 +1664,12 @@ var monai_segmentation_app =new Vue({
         // formData.append('params', JSON.stringify({"roi": JSON.parse(this.roi)}));
         // USER KEY FOR GA STUDY
         user_key = {
-          'bbearce': true,
-
-          'andres': false,
-          'larguinchona': false,
-          'bmarks': false,
-          'bhogan': false,
-          'iroseto': false,
-          'lbarrientos': false,
-          'dmilner': false,
-          'rgnanaraj': false,
-          'zgill': false,
-          'mtukel': false,
+          'all_users': false,
         }
         user_key[this.user]
-        formData.append('params', JSON.stringify({"roi": JSON.parse(this.roi), "trained":user_key[this.user] ? user_key[this.user] : false}));
+        debugger
+        formData.append('params', JSON.stringify({"roi": JSON.parse(this.roi), "trained":user_key['all_users'] ? user_key['all_users'] : false}));
+        // formData.append('params', JSON.stringify({"roi": JSON.parse(this.roi), "trained":user_key[this.user] ? user_key[this.user] : false}));
         formData.append('file', '');
         formData.append('label', '');
         // Send a POST request with the FormData using the fetch API
