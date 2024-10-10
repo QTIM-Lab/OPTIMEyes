@@ -26,7 +26,6 @@ Stop:
 ./stop.sh
 ```
 
-
 ## Mkdocs
 ```bash
 # pyenv virtualenv 3.10.4 optimeyes
