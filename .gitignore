@@ -8,4 +8,4 @@ git_access_token.txt
 # models
 *.pt
 # mkdocs
-mkdocs_documentation
+mkdocs_documentation/site
