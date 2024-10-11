@@ -2,6 +2,7 @@
 
 Purpose: Set up a static webpage and server to host tasks for images 
 
+![Sample deploy gif](./tmp.gif)
 
 ## Components:
 
