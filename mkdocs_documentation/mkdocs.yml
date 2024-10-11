@@ -1,12 +1,12 @@
 site_name: OPTIMEyes
 nav:
-  - Use: index.md
-  - Instructions for Setup: instructions_for_setup.md
+  - Instructions for Setup: index.md
+  - Use: use.md
   - Interactive Shell for Flask: interactive_shell_for_flask.md
   - Load Data: load_data.md
   - Purge Data: purge_data.md
   - SSL: ssl.md
-  - MonailLabel: monaillabel.md
+  - MonaiLabel: monailabel.md
   - MKdocs: mkdocs.md
 theme:
   name: readthedocs
