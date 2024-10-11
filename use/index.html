@@ -5,15 +5,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Instructions for Setup - OPTIMEyes</title>
+    <title>Use - OPTIMEyes</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Instructions for Setup";
-        var mkdocs_page_input_path = "instructions_for_setup.md";
+        var mkdocs_page_name = "Use";
+        var mkdocs_page_input_path = "use.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -40,12 +40,26 @@
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="..">Use</a>
+                <li class="toctree-l1"><a class="reference internal" href="..">Instructions for Setup</a>
                 </li>
               </ul>
               <ul class="current">
-                <li class="toctree-l1 current"><a class="reference internal current" href="#">Instructions for Setup</a>
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Use</a>
     <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#signup">Signup</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#login">Login</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#monailabel">MonaiLabel</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#classify">Classify</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#compare">Compare</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#flicker">Flicker</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#slider">Slider</a>
+    </li>
     </ul>
                 </li>
               </ul>
@@ -66,7 +80,7 @@
                 </li>
               </ul>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../monaillabel/">MonailLabel</a>
+                <li class="toctree-l1"><a class="reference internal" href="../monailabel/">MonaiLabel</a>
                 </li>
               </ul>
               <ul>
@@ -87,7 +101,7 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-      <li class="breadcrumb-item active">Instructions for Setup</li>
+      <li class="breadcrumb-item active">Use</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -96,35 +110,41 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="instructions-for-setup">Instructions for setup</h1>
-<p>Create an environment variables file. Do not check .env into git.</p>
-<pre><code class="language-bash">cp .env_sample .env
-</code></pre>
-<p>Launch Start:</p>
-<pre><code class="language-bash">./start.sh
-</code></pre>
-<p>Stop:</p>
-<pre><code class="language-bash">./stop.sh
-</code></pre>
-<h1 id="interact">Interact</h1>
-<p>Relaunch:</p>
-<pre><code class="language-bash">docker compose up -d
-</code></pre>
-<p>Logs:</p>
-<pre><code class="language-bash">docker compose logs -f # everything
-docker compose logs -f flask
-docker compose logs -f couchdb
-docker compose logs -f monailabel
-# If you need to rebuild just one
-# docker compose build flask
-# docker compose build couchdb
-# docker compose build monailabel
-</code></pre>
+                <h1 id="use-optimeyes">Use OPTIMEyes</h1>
+<p>Open Source Ophthalmology Annotation App</p>
+<p><a href="https://github.com/QTIM-Lab/OPTIMEyes">QTIM GitHub.</a></p>
+<h2 id="signup">Signup</h2>
+<iframe width="420" height="315" src="https://www.youtube.com/embed/ZhmR0Me0Z34?si=cnyEJTIL1shzdjbj">
+</iframe>
+
+<h2 id="login">Login</h2>
+<iframe width="420" height="315" src="https://www.youtube.com/embed/w8pNBqcXC-k?si=K9d3D81y5g5V6Sy1">
+</iframe>
+
+<h2 id="monailabel">MonaiLabel</h2>
+<iframe width="420" height="315" src="https://www.youtube.com/embed/J12VxOWivWM?si=2ALR7G9q1adRUHRT">
+</iframe>
+
+<h2 id="classify">Classify</h2>
+<iframe width="420" height="315" src="https://www.youtube.com/embed/LsUm5UGd4dg?si=w8JDy4W_47D0ZiWm">
+</iframe>
+
+<h2 id="compare">Compare</h2>
+<iframe width="420" height="315" src="https://www.youtube.com/embed/we0ZvIsEKgk?si=ticlayJ4-yJxrPZc">
+</iframe>
+
+<h2 id="flicker">Flicker</h2>
+<iframe width="420" height="315" src="https://www.youtube.com/embed/vH4WA_gEh3s?si=dYd0_dw7ZKCW542y">
+</iframe>
+
+<h2 id="slider">Slider</h2>
+<iframe width="420" height="315" src="https://www.youtube.com/embed/OHr3_OASoZk?si=bE519ohoWkZkjsy7">
+</iframe>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href=".." class="btn btn-neutral float-left" title="Use"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href=".." class="btn btn-neutral float-left" title="Instructions for Setup"><span class="icon icon-circle-arrow-left"></span> Previous</a>
         <a href="../interactive_shell_for_flask/" class="btn btn-neutral float-right" title="Interactive Shell for Flask">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 

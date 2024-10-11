@@ -5,15 +5,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>MonailLabel - OPTIMEyes</title>
+    <title>MonaiLabel - OPTIMEyes</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "MonailLabel";
-        var mkdocs_page_input_path = "monaillabel.md";
+        var mkdocs_page_name = "MonaiLabel";
+        var mkdocs_page_input_path = "monailabel.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -40,11 +40,11 @@
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="..">Use</a>
+                <li class="toctree-l1"><a class="reference internal" href="..">Instructions for Setup</a>
                 </li>
               </ul>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../instructions_for_setup/">Instructions for Setup</a>
+                <li class="toctree-l1"><a class="reference internal" href="../use/">Use</a>
                 </li>
               </ul>
               <ul>
@@ -64,8 +64,12 @@
                 </li>
               </ul>
               <ul class="current">
-                <li class="toctree-l1 current"><a class="reference internal current" href="#">MonailLabel</a>
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">MonaiLabel</a>
     <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#download-models">Download Models</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#restart-monailabel">Restart MonaiLabel</a>
+    </li>
     </ul>
                 </li>
               </ul>
@@ -87,7 +91,7 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-      <li class="breadcrumb-item active">MonailLabel</li>
+      <li class="breadcrumb-item active">MonaiLabel</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -97,22 +101,24 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="monailabel">MonaiLabel</h1>
-<pre><code class="language-bash">docker compose exec -it monailabel bash
-monailabel start_server --app apps/monaibundle --studies datastore --conf bundles IntegrationBundle,SegformerBundle,MedSamBundle --conf zoo_source ngc
-</code></pre>
+<h2 id="download-models">Download Models</h2>
 <p>Initialize MedSAM Bundle's model from huggingface:</p>
 <pre><code class="language-bash">docker compose exec -it monailabel bash
-python
+python # start a python interpreter in monailabel container
 </code></pre>
 <pre><code class="language-python">from transformers import SamModel, SamProcessor
 import torch
 </code></pre>
+<p>MonaiLabel requires <code>model.pt</code> and <code>model_best.pt</code> in the bundle:</p>
 <pre><code class="language-python">model = SamModel.from_pretrained(&quot;flaviagiammarino/medsam-vit-base&quot;, local_files_only=False)
 torch.save(model.state_dict(), '/monailabel/apps/monaibundle/model/MedSamBundle/models/model.pt')
 torch.save(model.state_dict(), '/monailabel/apps/monaibundle/model/MedSamBundle/models/model_best.pt')
-# loaded_weights = torch.load('/monailabel/apps/monaibundle/model/MedSamBundle/models/model.pt', weights_only=True)
+</code></pre>
+<p>Loading weights if needed for custom models:</p>
+<pre><code class="language-python"># loaded_weights = torch.load('/monailabel/apps/monaibundle/model/MedSamBundle/models/model.pt', weights_only=True)
 # model.load_state_dict(loaded_weights)
 </code></pre>
+<h2 id="restart-monailabel">Restart MonaiLabel</h2>
               
             </div>
           </div><footer>

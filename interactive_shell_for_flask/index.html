@@ -40,11 +40,11 @@
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="..">Use</a>
+                <li class="toctree-l1"><a class="reference internal" href="..">Instructions for Setup</a>
                 </li>
               </ul>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../instructions_for_setup/">Instructions for Setup</a>
+                <li class="toctree-l1"><a class="reference internal" href="../use/">Use</a>
                 </li>
               </ul>
               <ul class="current">
@@ -66,7 +66,7 @@
                 </li>
               </ul>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../monaillabel/">MonailLabel</a>
+                <li class="toctree-l1"><a class="reference internal" href="../monailabel/">MonaiLabel</a>
                 </li>
               </ul>
               <ul>
@@ -97,18 +97,21 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="interactive-shell-for-flask">Interactive shell for flask</h1>
+<p>Relaunch:</p>
+<pre><code class="language-bash">docker compose up -d
+</code></pre>
+<p>Logs:</p>
+<pre><code class="language-bash">docker compose logs -f # everything
+docker compose logs -f flask
+docker compose logs -f couchdb
+docker compose logs -f monailabel
+# If you need to rebuild just one
+# docker compose build flask
+# docker compose build couchdb
+# docker compose build monailabel
+</code></pre>
 <pre><code class="language-bash">docker compose exec -it flask bash
 flask shell
-</code></pre>
-<p>then:</p>
-<pre><code class="language-python">from OPTIMEyes.auth_blueprint import load_user
-from OPTIMEyes.db import get_server
-# Get the database instance
-couch_server = get_server()
-db = couch_server['image_comparator']
-user = load_user('user_bbearce')
-user.set_password(&quot;password&quot;)
-user.save(db)
 </code></pre>
 <p>Download Annotations:</p>
 <pre><code class="language-python">from OPTIMEyes.routes_blueprint import downloadAnnotations
@@ -129,6 +132,7 @@ user = load_user('user_bbearce')
 user.set_password(&quot;password&quot;)
 user.save(db)
 </code></pre>
+<p>Automate it with user\pass list:</p>
 <pre><code class="language-python">from OPTIMEyes.auth_blueprint import load_user
 from OPTIMEyes.db import get_server
 # Get the database instance
@@ -159,7 +163,7 @@ for u, p in user_pass:
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../instructions_for_setup/" class="btn btn-neutral float-left" title="Instructions for Setup"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../use/" class="btn btn-neutral float-left" title="Use"><span class="icon icon-circle-arrow-left"></span> Previous</a>
         <a href="../load_data/" class="btn btn-neutral float-right" title="Load Data">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
@@ -183,7 +187,7 @@ for u, p in user_pass:
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../instructions_for_setup/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../use/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
       <span><a href="../load_data/" style="color: #fcfcfc">Next &raquo;</a></span>

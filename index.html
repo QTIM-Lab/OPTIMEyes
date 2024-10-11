@@ -12,7 +12,7 @@
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Use";
+        var mkdocs_page_name = "Instructions for Setup";
         var mkdocs_page_input_path = "index.md";
         var mkdocs_page_url = null;
       </script>
@@ -40,27 +40,19 @@
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
-                <li class="toctree-l1 current"><a class="reference internal current" href="#">Use</a>
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Instructions for Setup</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#signup">Signup</a>
+    <li class="toctree-l2"><a class="reference internal" href="#launch">Launch</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#login">Login</a>
+    <li class="toctree-l2"><a class="reference internal" href="#adjust-cors-on-database">Adjust CORS on Database</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#monailabel">MonaiLabel</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#classify">Classify</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#compare">Compare</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#flicker">Flicker</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#slider">Slider</a>
     </li>
     </ul>
                 </li>
               </ul>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="instructions_for_setup/">Instructions for Setup</a>
+                <li class="toctree-l1"><a class="reference internal" href="use/">Use</a>
                 </li>
               </ul>
               <ul>
@@ -80,7 +72,7 @@
                 </li>
               </ul>
               <ul>
-                <li class="toctree-l1"><a class="reference internal" href="monaillabel/">MonailLabel</a>
+                <li class="toctree-l1"><a class="reference internal" href="monailabel/">MonaiLabel</a>
                 </li>
               </ul>
               <ul>
@@ -101,7 +93,7 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href="." class="icon icon-home" aria-label="Docs"></a></li>
-      <li class="breadcrumb-item active">Use</li>
+      <li class="breadcrumb-item active">Instructions for Setup</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -110,41 +102,27 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="use-optimeyes">Use OPTIMEyes</h1>
-<p>Open Source Ophthalmology Annotation App</p>
-<p><a href="https://github.com/QTIM-Lab/OPTIMEyes">QTIM GitHub.</a></p>
-<h2 id="signup">Signup</h2>
-<iframe width="420" height="315" src="https://www.youtube.com/embed/ZhmR0Me0Z34?si=cnyEJTIL1shzdjbj">
-</iframe>
-
-<h2 id="login">Login</h2>
-<iframe width="420" height="315" src="https://www.youtube.com/embed/w8pNBqcXC-k?si=K9d3D81y5g5V6Sy1">
-</iframe>
-
+                <h1 id="instructions-for-setup">Instructions for setup</h1>
+<h2 id="launch">Launch</h2>
+<p>Create an environment variables file. Do not check .env into git.</p>
+<pre><code class="language-bash">cp .env_sample .env
+</code></pre>
+<p>Launch Start:</p>
+<pre><code class="language-bash">./start.sh
+</code></pre>
+<p>Stop:</p>
+<pre><code class="language-bash">./stop.sh
+</code></pre>
+<h2 id="adjust-cors-on-database">Adjust CORS on Database</h2>
+<p>Default CouchDB credentials: [<code>admin</code>,<code>password</code>]
+<img alt="CORS" src="load_data/couchdb_CORS.png" /></p>
 <h2 id="monailabel">MonaiLabel</h2>
-<iframe width="420" height="315" src="https://www.youtube.com/embed/J12VxOWivWM?si=2ALR7G9q1adRUHRT">
-</iframe>
-
-<h2 id="classify">Classify</h2>
-<iframe width="420" height="315" src="https://www.youtube.com/embed/LsUm5UGd4dg?si=w8JDy4W_47D0ZiWm">
-</iframe>
-
-<h2 id="compare">Compare</h2>
-<iframe width="420" height="315" src="https://www.youtube.com/embed/we0ZvIsEKgk?si=ticlayJ4-yJxrPZc">
-</iframe>
-
-<h2 id="flicker">Flicker</h2>
-<iframe width="420" height="315" src="https://www.youtube.com/embed/vH4WA_gEh3s?si=dYd0_dw7ZKCW542y">
-</iframe>
-
-<h2 id="slider">Slider</h2>
-<iframe width="420" height="315" src="https://www.youtube.com/embed/OHr3_OASoZk?si=bE519ohoWkZkjsy7">
-</iframe>
+<p><a href="monailabel/">monailabel</a></p>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="instructions_for_setup/" class="btn btn-neutral float-right" title="Instructions for Setup">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="use/" class="btn btn-neutral float-right" title="Use">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -168,7 +146,7 @@
     
     
     
-      <span><a href="instructions_for_setup/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="use/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>
@@ -188,5 +166,5 @@
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2024-10-11 02:59:56.728940+00:00
+Build Date UTC : 2024-10-11 18:34:32.537904+00:00
 -->
