@@ -1,6 +1,10 @@
 # Instructions for setup
 
 ## Launch
+```bash
+git clone git@github.com:QTIM-Lab/OPTIMEyes.git
+cd OPTIMEyes
+```
 Create an environment variables file. Do not check .env into git.
 ```bash
 cp .env_sample .env
