@@ -1,19 +1,25 @@
 # Interactive shell for flask
+
+Relaunch:
+```bash
+docker compose up -d
+```
+
+Logs:
+```bash
+docker compose logs -f # everything
+docker compose logs -f flask
+docker compose logs -f couchdb
+docker compose logs -f monailabel
+# If you need to rebuild just one
+# docker compose build flask
+# docker compose build couchdb
+# docker compose build monailabel
+```
+
 ```bash
 docker compose exec -it flask bash
 flask shell
-```
-
-then:
-```python
-from OPTIMEyes.auth_blueprint import load_user
-from OPTIMEyes.db import get_server
-# Get the database instance
-couch_server = get_server()
-db = couch_server['image_comparator']
-user = load_user('user_bbearce')
-user.set_password("password")
-user.save(db)
 ```
 
 Download Annotations:
@@ -39,6 +45,7 @@ user.set_password("password")
 user.save(db)
 ```
 
+Automate it with user\pass list:
 ```python
 from OPTIMEyes.auth_blueprint import load_user
 from OPTIMEyes.db import get_server
