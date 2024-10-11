@@ -1,7 +1,8 @@
 # Purge CouchDB
 ```bash
 # DANGER
-sudo rm -rf /opt/couchdb/data/
-sudo rm -rf /opt/couchdb/data/.delete
-sudo rm -rf /opt/couchdb/data/.share
+DB_LOCATION=./couchdb
+sudo rm -rf $DB_LOCATION/
+sudo rm -rf $DB_LOCATION/.delete
+sudo rm -rf $DB_LOCATION/.share
 ```

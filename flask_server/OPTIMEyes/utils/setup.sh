@@ -1,4 +1,5 @@
 #!/bin/bash
+sleep 5
 
 # Ensure necessary variables are set
 if [ -z "$DB_PORT" ] || [ -z "$COUCH_DB" ]; then

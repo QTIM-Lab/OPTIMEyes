@@ -1,6 +1,6 @@
 site_name: OPTIMEyes
 nav:
-  - Use: use.md
+  - Use: index.md
   - Instructions for Setup: instructions_for_setup.md
   - Interactive Shell for Flask: interactive_shell_for_flask.md
   - Load Data: load_data.md
