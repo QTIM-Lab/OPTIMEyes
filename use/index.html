@@ -5,15 +5,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>SSL - OPTIMEyes</title>
+    <title>Use - OPTIMEyes</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
     
       <script>
         // Current page data
-        var mkdocs_page_name = "SSL";
-        var mkdocs_page_input_path = "ssl.md";
+        var mkdocs_page_name = "Use";
+        var mkdocs_page_input_path = "use.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -39,8 +39,24 @@
       </div>
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul>
-                <li class="toctree-l1"><a class="reference internal" href="../use/">Use</a>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Use</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#signup">Signup</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#login">Login</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#monailabel">MonaiLabel</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#classify">Classify</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#compare">Compare</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#flicker">Flicker</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#slider">Slider</a>
+    </li>
+    </ul>
                 </li>
               </ul>
               <ul>
@@ -59,14 +75,8 @@
                 <li class="toctree-l1"><a class="reference internal" href="../purge_data/">Purge Data</a>
                 </li>
               </ul>
-              <ul class="current">
-                <li class="toctree-l1 current"><a class="reference internal current" href="#">SSL</a>
-    <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#self-signed">Self signed</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#certbot-real-purchased-certs">Certbot (real purchased certs)</a>
-    </li>
-    </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../ssl/">SSL</a>
                 </li>
               </ul>
               <ul>
@@ -91,7 +101,7 @@
         <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
     <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
-      <li class="breadcrumb-item active">SSL</li>
+      <li class="breadcrumb-item active">Use</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -100,33 +110,41 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="ssl">SSL</h1>
-<h2 id="self-signed">Self signed</h2>
-<pre><code class="language-bash">mkdir -p flask_server/certs/
-openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
-mv cert.pem flask_server/certs/
-mv key.pem flask_server/certs/
-</code></pre>
-<p>Echo what ever domain name you entered to <code>/etc/hosts</code>.</p>
-<p>Ex: <code>optimeyes.co</code></p>
-<pre><code class="language-bash">echo &quot;0.0.0.0 optimeyes.co&quot; | sudo tee -a /etc/hosts
-</code></pre>
-<h2 id="certbot-real-purchased-certs">Certbot (real purchased certs)</h2>
-<p><a href="https://certbot.eff.org/">certbot</a></p>
-<pre><code class="language-bash">sudo snap install --classic certbot
-sudo ln -s /snap/bin/certbot /usr/bin/certbot
-sudo certbot certonly --standalone
-</code></pre>
-<p>You will get instructions on where it is on your machine. Copy to <code>flask_server/certs</code> folder.</p>
-<p>When it expires in ~90 days:</p>
-<pre><code class="language-bash">sudo certbot renew
-</code></pre>
+                <h1 id="use-optimeyes">Use OPTIMEyes</h1>
+<p>Open Source Ophthalmology Annotation App</p>
+<p><a href="https://github.com/QTIM-Lab/OPTIMEyes">QTIM GitHub.</a></p>
+<h2 id="signup">Signup</h2>
+<iframe width="420" height="315" src="https://www.youtube.com/embed/ZhmR0Me0Z34?si=cnyEJTIL1shzdjbj">
+</iframe>
+
+<h2 id="login">Login</h2>
+<iframe width="420" height="315" src="https://www.youtube.com/embed/w8pNBqcXC-k?si=K9d3D81y5g5V6Sy1">
+</iframe>
+
+<h2 id="monailabel">MonaiLabel</h2>
+<iframe width="420" height="315" src="https://www.youtube.com/embed/J12VxOWivWM?si=2ALR7G9q1adRUHRT">
+</iframe>
+
+<h2 id="classify">Classify</h2>
+<iframe width="420" height="315" src="https://www.youtube.com/embed/LsUm5UGd4dg?si=w8JDy4W_47D0ZiWm">
+</iframe>
+
+<h2 id="compare">Compare</h2>
+<iframe width="420" height="315" src="https://www.youtube.com/embed/we0ZvIsEKgk?si=ticlayJ4-yJxrPZc">
+</iframe>
+
+<h2 id="flicker">Flicker</h2>
+<iframe width="420" height="315" src="https://www.youtube.com/embed/vH4WA_gEh3s?si=dYd0_dw7ZKCW542y">
+</iframe>
+
+<h2 id="slider">Slider</h2>
+<iframe width="420" height="315" src="https://www.youtube.com/embed/OHr3_OASoZk?si=bE519ohoWkZkjsy7">
+</iframe>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../purge_data/" class="btn btn-neutral float-left" title="Purge Data"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../monaillabel/" class="btn btn-neutral float-right" title="MonailLabel">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../instructions_for_setup/" class="btn btn-neutral float-right" title="Instructions for Setup">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -149,10 +167,8 @@ sudo certbot certonly --standalone
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../purge_data/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
-    
-      <span><a href="../monaillabel/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../instructions_for_setup/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>
