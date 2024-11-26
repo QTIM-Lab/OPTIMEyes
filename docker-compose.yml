@@ -15,7 +15,7 @@ services:
       - FLASK_APP=${FLASK_APP}
       - IMAGE_COMPARATOR_DATA=${IMAGE_COMPARATOR_DATA}
       - DNS=${DNS}
-      - SSL=${SSL} 5t bfcdc
+      - SSL=${SSL}
       - DB_PORT=${DB_PORT}
       - HTTP_PORT=${HTTP_PORT}
       - DEPLOY=${DEPLOY}
