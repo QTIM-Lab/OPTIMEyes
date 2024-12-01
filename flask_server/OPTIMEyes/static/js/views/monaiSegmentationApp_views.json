@@ -1,5 +1,5 @@
 {
-    "_id": "_design/classifyApp",
+    "_id": "_design/monaiSegmentationApp",
     "language": "javascript",
     "views": {
         "tasksByUser": {

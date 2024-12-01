@@ -588,7 +588,7 @@ var monai_segmentation_app =new Vue({
           this.drawAnnotations(); //
           this.initCoco();
           this.initCanvasZoomTools();
-          // this.performInference();
+          this.performInference();
 
           this.resizeObserver = new ResizeObserver(entries => {
             for (let entry of entries) {
@@ -1667,11 +1667,11 @@ var monai_segmentation_app =new Vue({
           'all_users': false,
         }
         user_key[this.user]
-        debugger
         formData.append('params', JSON.stringify({"roi": JSON.parse(this.roi), "trained":user_key['all_users'] ? user_key['all_users'] : false}));
         // formData.append('params', JSON.stringify({"roi": JSON.parse(this.roi), "trained":user_key[this.user] ? user_key[this.user] : false}));
         formData.append('file', '');
         formData.append('label', '');
+        // debugger
         // Send a POST request with the FormData using the fetch API
         fetch(url, {
           method: 'POST',

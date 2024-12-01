@@ -20,7 +20,7 @@ done
 
 
 # Upload design documents
-views=("classifyApp" "compareApp" "flickerApp" "sliderApp" "monaiSegmentationApp" "images" "users")
+views=("classifyApp" "compareApp" "flickerApp" "sliderApp" "monaiSegmentationApp" "monaiSegmentationOCTApp" "images" "users")
 for view in "${views[@]}"; do
   if [ -f /flask_server/OPTIMEyes/static/js/views/${view}_views.json ]; then
     curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASSWORD@couchdb:$DB_PORT/$COUCH_DB/_design/$view \
@@ -32,7 +32,7 @@ done
 
 
 # Upload template documents
-templates=("tool_set_examples.json" "tool_set_classify_template.json" "tool_set_compare_template.json" "tool_set_flicker_template.json" "tool_set_slider_template.json" "tool_set_monaiSegmentation_template.json")
+templates=("tool_set_examples.json" "tool_set_classify_template.json" "tool_set_compare_template.json" "tool_set_flicker_template.json" "tool_set_slider_template.json" "tool_set_monaiSegmentation_template.json" "tool_set_monaiSegmentationOCT_template.json")
 
 for template in "${templates[@]}"; do
   # Check if the file exists before attempting to upload

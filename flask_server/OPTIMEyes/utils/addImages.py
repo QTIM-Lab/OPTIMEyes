@@ -44,15 +44,16 @@ def addImages(path_to_images: str, imageSetName: str, imageSetType: str = 'non-D
     # If from csv we need to get the extra column data and save it
     if "image_key.csv" in os.listdir(os.path.join(IMAGE_COMPARATOR_DATA, path_to_images)):
         images_csv = pd.read_csv(os.path.join(IMAGE_COMPARATOR_DATA, path_to_images, "image_key.csv"))
-        images_csv.head()
         images_csv['index'] = images_csv.index+1
-        records = images_csv.to_dict(orient="records")
+        images_csv['index']
+        images_csv['start_x']
+        records = images_csv.to_dict(orient="records", )
         for record in records:
             t = datetime.now() - timedelta(hours=4)
             # mandatory fields
             index = record['index']
             image_path_orig = record.pop('image_path_orig')
-            # pdb.set_trace()
+
             try:
                 relative_path = os.path.dirname(record.pop('relative_path'))
             except:
@@ -67,6 +68,7 @@ def addImages(path_to_images: str, imageSetName: str, imageSetType: str = 'non-D
             record['type'] = "image"
             record['imageSetName'] = imageSetName
             record['timeAdded'] = t.strftime('%Y-%m-%d %H:%M:%S')
+            record = {k: v if not pd.isna(v) else None for k, v in record.items()}
             db.save(record)
             print(f"Saved record: {record['image']}")
             # pdb.set_trace()            

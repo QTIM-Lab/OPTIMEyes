@@ -328,6 +328,66 @@
                   </template>
                 </v-simple-table>
 
+                <h3>Monai Segmentation OCT Tasks:</h3>
+                
+                <v-simple-table>
+                  <template v-slot:default>
+                    <thead>
+                      <tr>
+                        <th class="text-left">
+                          Start/Continue
+                        </th>
+                        <th class="text-left">
+                          Image List
+                        </th>
+                        <th class="text-left">
+                          Task Type
+                        </th>
+                        <th class="text-left">
+                          Download All
+                        </th>
+                        <!--<th class="text-left">
+                          Associated List
+                        </th>-->
+                        <th class="text-left">
+                          Priority
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        v-for="item in monaiSegmentationOCTTasks"
+                        :key="item.value.list_name"
+                      >
+                        <td>
+                          <v-btn
+                          elevation="2"
+                          @click="goToApp(item)" 
+                          >Start/Continue</v-btn>
+                        </td> 
+                        <td>
+                          <v-btn
+                          elevation="2"
+                          @click="goToImageSummary(item.value.imageSet)" 
+                          >[[ item.value.imageSet ]]</v-btn>
+                        </td> 
+                        <td>[[ item.value.app ]]</td> 
+                        <!-- Display false if not done -->
+                        <!-- <td v-if="item.value.completed === false">[[ item.value.completed ]]</td> -->
+                        <!-- Display button to download if done -->
+                        <td>
+                          <!-- v-if="item.value.completed === true"c -->
+                          <v-btn
+                            elevation="2"
+                            @click="downloadAnnotations(item.id)" 
+                          >Download All | Completed: [[ item.value.completed ]]</v-btn>
+                        </td>
+                        <td>[[ item.value.task_order ]]</td> 
+                      </tr>
+                    </tbody>
+                  </template>
+                </v-simple-table>
+
 
               </v-col>
 

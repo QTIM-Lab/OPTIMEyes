@@ -1,0 +1,33 @@
+{
+    "_id": "_design/monaiSegmentationOCTApp",
+    "language": "javascript",
+    "views": {
+        "tasksByUser": {
+            "map": "function(doc) {\n  if (doc.type === \"task\" && doc.app === \"monaiSegmentationOCT\") {\n    emit (doc.user, doc);\n  }\n}"
+        },
+        "tasks": {
+            "map": "function(doc) {\n  if (doc.type === \"task\" && doc.app === \"monaiSegmentationOCT\") {\n    emit (doc._id, doc);\n  }\n}"
+        },
+        "completedTasks": {
+            "map": "function(doc) {\n  if (doc.type === \"task\" && doc.app === \"monaiSegmentationOCT\" && doc.completed === true) {\n    emit ([doc.user, doc.list_name], doc);\n  }\n}"
+          },
+        "incompleteTasks": {
+            "map": "function(doc) {\n  if (doc.type === \"task\" && doc.app === \"monaiSegmentationOCT\" && doc.completed === false) {\n    emit (doc.user, doc);\n  }\n}"
+        },
+        "imageLists": {
+            "map": "function(doc) {\n  if (doc.type === \"imageList\" && doc.app === \"monaiSegmentationOCT\")\n   emit(doc._id, doc);\n}"
+        },
+        "toolSets": {
+            "map": "function(doc) {\n  if (doc.type === \"toolSet\" && doc.app === \"monaiSegmentationOCT\")\n    emit(doc._id, doc);\n}"
+        },
+        "results": {
+            "map": "function(doc) {\n  if (doc.type === \"result\" && doc.app === \"monaiSegmentationOCT\")\n    emit(doc._id, doc);\n}"
+        },
+        "resultsByTask": {
+            "map": "function(doc) {\n  if (doc.type === \"result\" && doc.app === \"monaiSegmentationOCT\") {\n    emit (doc.taskid, doc);\n  }\n}"
+        },
+        "tasksByUserAndListName": {
+            "map": "function(doc) {\n  if (doc.type === \"task\" && doc.app === \"monaiSegmentationOCT\") {\n    emit ([doc.user, doc.list_name], doc);\n  }\n}"
+          }
+    }
+}

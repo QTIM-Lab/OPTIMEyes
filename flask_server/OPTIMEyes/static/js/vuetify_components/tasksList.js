@@ -23,6 +23,7 @@ var tasksList = new Vue({
         flickerTasks: [],
         sliderTasks: [],
         monaiSegmentationTasks: [],
+        monaiSegmentationOCTTasks: [],
         alert_warning: null,
         alert_success: null,
         alert_error: null,
@@ -31,7 +32,7 @@ var tasksList = new Vue({
         user: '',
         imageSetName: '',
         imageListTypeSelect: null,
-        imageListTypeSelectItems: ['classify', 'compare', 'flicker', 'slider', 'monaiSegmentation'],
+        imageListTypeSelectItems: ['classify', 'compare', 'flicker', 'slider', 'monaiSegmentation', 'monaiSegmentationOCT'],
         taskOrder: '',
     }),
 
@@ -59,6 +60,7 @@ var tasksList = new Vue({
                 getFlickerTasks: `/get_tasks/flicker?username=${this.USER_INFO.username}`,
                 getSliderTasks: `/get_tasks/slider?username=${this.USER_INFO.username}`,
                 getMonaiSegmentationTasks: `/get_tasks/monaiSegmentation?username=${this.USER_INFO.username}`,
+                getMonaiSegmentationOCTTasks: `/get_tasks/monaiSegmentationOCT?username=${this.USER_INFO.username}`,
                 getMonaiSegmentationAnnotation: `/downloadAnnotations`,
                 goToImageSummary: `/image_set_summary`,
                 makeTask: `/make_task`,
@@ -140,6 +142,14 @@ var tasksList = new Vue({
                 .then((data) => {
                     data.rows.forEach((v, i, a) => {
                         this.monaiSegmentationTasks.push(v)
+                    })
+            })
+            fetch(this.URLS.getMonaiSegmentationOCTTasks)
+                .then((response) => response.json())
+                .then((data) => {
+                    data.rows.forEach((v, i, a) => {
+                        debugger
+                        this.monaiSegmentationOCTTasks.push(v)
                     })
             })
         },

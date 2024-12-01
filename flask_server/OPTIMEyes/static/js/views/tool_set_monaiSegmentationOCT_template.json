@@ -1,0 +1,32 @@
+{
+  "_id": "tool_set_monaiSegmentationOCT_template",
+  "type": "toolSet",
+  "app": "monaiSegmentationOCT",
+  "tools": {
+    "radio_button_categories": [
+      {
+        "category_id": "Choose Region To Segment",
+        "selected": "Mark GA",
+        "buttons": [
+          {
+            "button_id": "Erase"
+          },
+          {
+            "button_id": "Mark GA"
+          }
+        ]
+      }
+    ],
+    "text_input_categories": [
+      {
+        "category_id": "Misc Comments",
+        "text_inputs": [
+          {
+            "text_input_id": "Message 1",
+            "message": "Default Message 1"
+          }
+        ]
+      }
+    ]
+  }
+}

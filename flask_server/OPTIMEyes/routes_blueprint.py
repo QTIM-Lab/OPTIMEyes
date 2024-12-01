@@ -27,6 +27,7 @@ from .utils.makeCompareList import makeCompareList
 from .utils.makeFlickerList import makeFlickerList
 from .utils.makeSliderList import makeSliderList
 from .utils.makeMonaiSegmentationList import makeMonaiSegmentationList
+from .utils.makeMonaiSegmentationOCTList import makeMonaiSegmentationOCTList
 from .utils.addImages import addImages
 from .utils.deleteImageSet import deleteImageSet
 
@@ -101,7 +102,6 @@ def imagesDashboard():
     # pdb.set_trace()
     return render_template('/vuetify_components/imagesDashboard.html')
 
-
 @bp.route('/image_set_summary/<imageSet>', methods=['GET'])
 @login_required
 def image_set_summary(imageSet):
@@ -142,6 +142,14 @@ def sliderApp(user, list_name):
 def monaiSegmentationApp(user, list_name):
     task_dict = {"user":user, "list_name":list_name}
     return render_template('/vuetify_components/monaiSegmentationApp.html', task=task_dict)
+
+@bp.route('/monaiSegmentationOCTApp/<user>/<list_name>', methods=['GET'])
+@login_required
+def monaiSegmentationOCTApp(user, list_name):
+    task_dict = {"user":user, "list_name":list_name}
+    return render_template('/vuetify_components/monaiSegmentationOCTApp.html', task=task_dict)
+
+
 
 
 @bp.route('/ohif', methods=['GET'])
@@ -194,6 +202,9 @@ def make_task():
     elif imageListTypeSelect == "monaiSegmentation":
         listName=f"{imageSetName}-{imageListTypeSelect}-{pctRepeat}" # Placeholder and won't allow duplicates; add form entry to truly customze and add duplicates
         makeMonaiSegmentationList(imageSet=imageSetName, monaiSegmentationListName=listName, pctRepeat=pctRepeat)
+    elif imageListTypeSelect == "monaiSegmentationOCT":
+        listName=f"{imageSetName}-{imageListTypeSelect}-{pctRepeat}" # Placeholder and won't allow duplicates; add form entry to truly customze and add duplicates
+        makeMonaiSegmentationOCTList(imageSet=imageSetName, monaiSegmentationOCTListName=listName, pctRepeat=pctRepeat)
     elif imageListTypeSelect == "grid":
         pass
     elif imageListTypeSelect == "pair":
@@ -250,6 +261,8 @@ def get_task(app, user, list_name):
     view = f"_design/{app}App/_view/tasksByUserAndListName?key=[\"{user}\", \"{list_name}\"]"
     url = f"{base}/{view}"
     response = check_if_admin_party_then_make_request(url)
+    # pdb.set_trace()
+    print(response)
     return json.loads(response.content.decode('utf-8'))
 
 # Marked for deletion...thing is it's a good guide to writing this.
@@ -633,6 +646,7 @@ def downloadAnnotations(app, task_id, cli=False, zip_path=None):
     # for row in task.rows:##########        # Access the document ID of each row using the `id` attribute
     #     doc_id = row.id
     #     print(f"Document ID: {doc_id}")
+    # pdb.set_trace()
     task_rows = [record for record in task.rows]
     if len(task_rows) != 1:
         raise Exception("Multiple tasks returned for task_id.")
