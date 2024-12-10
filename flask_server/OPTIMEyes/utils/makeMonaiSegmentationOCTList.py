@@ -83,12 +83,12 @@ def checkIfListExists(monaiSegmentationOCTListName):
 #def makeMonaiSegmentationOCTList(monaiSegmentationOCTListName: str, images: list) -> None:
 def makeMonaiSegmentationOCTList(imageSet: str, monaiSegmentationOCTListName: str, pctRepeat: int = 0) -> None:
     listExists = checkIfListExists(monaiSegmentationOCTListName)
-    # pdb.set_trace()
     if not listExists:
         url = getURL(imageSet)
         ImageAttributes = getImageAttributes(url)
-        OCTImageSetList = {}
+        OCTImageSetList = []
         for group in ImageAttributes['group'].unique():
+            # pdb.set_trace()
             group_df = ImageAttributes[ImageAttributes['group'] == group]
             FAFImage = group_df[group_df['image_type'] == 'FAF']
             SLOImage = group_df[group_df['image_type'] == 'SLOImage']
@@ -103,19 +103,20 @@ def makeMonaiSegmentationOCTList(imageSet: str, monaiSegmentationOCTListName: st
                     'start_y':row['start_y'],
                     'end_y':row['end_y'],
                 }
-                bscan_group[row['order']]
-            OCTImageSetList[group] = {
-                'faf': {"image_id":FAFImage['_id']},
-                'slo': {"image_id":SLOImage['_id']},
+                bscan_group[row['order']] = bscan
+            OCTImageSet = {
+                'group': group,
+                'faf': {"image_id":FAFImage['_id'].values[0]},
+                'slo': {"image_id":SLOImage['_id'].values[0]},
                 'bscan_group': bscan_group,
             }
+            OCTImageSetList.append(OCTImageSet)
 
-            pdb.set_trace()
 
         t = datetime.now() - timedelta(hours=4)
         obj = {
             "_id":monaiSegmentationOCTListName,
-            "app": "monaiSegmentation",
+            "app": "monaiSegmentationOCT",
             "type": "imageList",
             "imageSet": imageSet, # probably redundant now
             "count": len(ImageAttributes['group'].unique()),
@@ -123,6 +124,7 @@ def makeMonaiSegmentationOCTList(imageSet: str, monaiSegmentationOCTListName: st
             "time_added": t.strftime('%Y-%m-%d %H:%M:%S')}
         db = couch[COUCH_DB]
         print(f"Created Monai Segmentation List: {monaiSegmentationOCTListName}")
+
         doc_id, doc_rev = db.save(obj)
 
 

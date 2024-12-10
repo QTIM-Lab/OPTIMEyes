@@ -148,7 +148,7 @@ var tasksList = new Vue({
                 .then((response) => response.json())
                 .then((data) => {
                     data.rows.forEach((v, i, a) => {
-                        debugger
+                        // debugger
                         this.monaiSegmentationOCTTasks.push(v)
                     })
             })
@@ -159,7 +159,7 @@ var tasksList = new Vue({
                 const message = `An error has occured: ${response.status}`;
                 throw new Error(message);
             }
-            debugger
+            // debugger
             var blob = await response.blob();
             var url = URL.createObjectURL(blob);
             window.open(url);
@@ -177,7 +177,7 @@ var tasksList = new Vue({
         },
         goToApp(task) {
           console.log(`goToApp(${task.value.user}, ${task.value.list_name})`)
-          debugger
+        //   debugger
           window.location.replace(`/${task.value.app}App/${task.value.user}/${task.value.list_name}`)
         },
         // Right Column
@@ -199,11 +199,15 @@ var tasksList = new Vue({
             .then((response) => response.json())
             .then((data) => {
                 console.log("back!")
-                debugger
+                // debugger
                 response_message = JSON.parse(data);
                 if (response_message === 'new_task_created'){
                     this.alert_success = "New task created."
-                    setTimeout(()=>{this.alert_success = null}, 2000)
+                    setTimeout(()=>{
+                        this.alert_success = null;
+                        window.location.replace(`/tasksList`);
+                    }, 2000)
+
                 }else{
                     this.alert_warning = "This task exists already."
                     setTimeout(()=>{this.alert_warning = null}, 2000)

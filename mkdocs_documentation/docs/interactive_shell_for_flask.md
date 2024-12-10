@@ -27,9 +27,10 @@ Download Annotations:
 from OPTIMEyes.routes_blueprint import downloadAnnotations
 App="monaiSegmentation"
 user = 'bbearce'
-list_name =f'test_data-monaiSegmentation-0'
+# list_name =f'FineTunedMedSAM-monaiSegmentation-0'
+list_name =f'UntrainedMedSam-monaiSegmentation-0'
 task_id = f"{user}-{list_name}"
-zip_path = f"TMP/{user}-{list_name}.zip"
+zip_path = f"/flask_server/OPTIMEyes/TMP/{task_id}.zip"
 downloadAnnotations(App, task_id, cli=True, zip_path=zip_path)
 ```
 

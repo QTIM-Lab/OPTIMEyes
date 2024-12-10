@@ -8,6 +8,7 @@ import pdb
 import zipfile
 
 from flask import (
+    make_response,
     current_app,
     Blueprint,
     flash,
@@ -186,7 +187,6 @@ def make_task():
     pctRepeat = 0
     taskOrder=new_task['taskOrder']
     # pdb.set_trace()
-    #pdb.set_trace()
     if imageListTypeSelect == "classify":
         listName=f"{imageSetName}-{imageListTypeSelect}-{pctRepeat}" # Placeholder and won't allow duplicates; add form entry to truly customze and add duplicates
         makeClassifyList(imageSet=imageSetName, classifyListName=listName, pctRepeat=pctRepeat)
@@ -278,6 +278,7 @@ def reset_to_previous_result(app):
     view = f'_design/{app}App/_view/results?key=%22{last_result_key}%22'
     url = f'{base}/{view}'
     print(url)
+    # pdb.set_trace()
     response = check_if_admin_party_then_make_request(url)
     all_results = json.loads(response.content.decode('utf-8'))
     row = all_results['rows'][0]
@@ -345,6 +346,7 @@ def get_image_classify_lists():
     # view = f"_design/basic_views/_view/image_classify_lists?key=\"{key}\""
     view = f"_design/classifyApp/_view/imageLists?key=\"{key}\""
     url = f"{base}/{view}"
+    # pdb.set_trace()
     response = check_if_admin_party_then_make_request(url)
     return json.loads(response.content.decode('utf-8'))
 
@@ -422,6 +424,26 @@ def get_image_monai_segmentation_lists():
     response = check_if_admin_party_then_make_request(url)
     return json.loads(response.content.decode('utf-8'))
 
+@bp.route('/get_image_monai_segmentation_oct_lists', methods=['GET'])
+def get_image_monai_segmentation_oct_lists():
+    base = "http://{}:{}/{}".format(
+        "couchdb", current_app.config["DB_PORT"], current_app.config["COUCH_DB"])
+        # current_app.config['DNS'], current_app.config["DB_PORT"], current_app.config["COUCH_DB"])
+    try:
+        key = request.args['key']
+    except :
+        response = {
+            "status": 400,
+            "error": "Bad Requestt",
+            "message": "key not in request.args['key'] in flask after retrieving response."
+        }
+        return make_response(jsonify(response), 400)
+    view = f"_design/monaiSegmentationOCTApp/_view/imageLists?key=\"{key}\""
+    url = f"{base}/{view}"
+    response = check_if_admin_party_then_make_request(url)
+    # pdb.set_trace()
+    return json.loads(response.content.decode('utf-8'))
+
 
 
 @bp.route('/get_image/<image_id>', methods=['GET'])
@@ -477,13 +499,14 @@ def task_result():
         results = json.loads(request.form.get('json'))
         app = results['app']
     # Determine task type
-    if results['app'] == "monaiSegmentation":
+    if results['app'] == "monaiSegmentation" or results['app'] == "monaiSegmentationOCT":
+        print("monaiSegmentation...")
+        # pdb.set_trace()
         # Get the image blob data
         image_blob = request.files.get('image') 
         # Save doc
         doc_id, doc_rev = db.save(results)
         # Attach the image to the document
-        # pdb.set_trace()
         image_extension = doc_id.split(".")[-1]
         db.put_attachment(db[doc_id], image_blob.read(), f'image.{image_extension}', content_type=f'image/{image_extension}')
         # pdb.set_trace()
@@ -502,6 +525,7 @@ def task_result():
                 "_id": results['list_name'],
                 "type": "imageList"}
             })
+        # pdb.set_trace()
         task = task_map.__next__()
         image_list = list_map.__next__()
         # pdb.set_trace()
@@ -629,7 +653,7 @@ def task_result():
             db[task['_id']] = task
 
         return jsonify('asdf')  # ! What is this
-
+    
     return jsonify('asdf')  # ! What is this
 
 @bp.route('/downloadAnnotations/<app>/<task_id>', methods=['GET'])
