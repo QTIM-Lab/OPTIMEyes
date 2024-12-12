@@ -26,3 +26,28 @@ Loading weights if needed for custom models:
 ```
 
 ## Restart MonaiLabel
+
+```bash
+docker compose restart monailabel
+```
+
+## Changes to MonaiLabel and GIT
+
+If you make some edits to monailabel you need to check it into git first.
+```
+cd monailabel
+git branch add-changes
+git add <file>
+git commit -m "Your commit message for submodule changes"
+
+git checkout main
+git merge add-changes
+git push origin main
+git branch -d add-changes
+
+cd ..
+git add monailabel
+git commit -m "commit message"
+git push
+```
+
