@@ -88,7 +88,6 @@ def makeMonaiSegmentationOCTList(imageSet: str, monaiSegmentationOCTListName: st
         ImageAttributes = getImageAttributes(url)
         OCTImageSetList = []
         for group in ImageAttributes['group'].unique():
-            # pdb.set_trace()
             group_df = ImageAttributes[ImageAttributes['group'] == group]
             FAFImage = group_df[group_df['image_type'] == 'FAF']
             SLOImage = group_df[group_df['image_type'] == 'SLOImage']
@@ -107,7 +106,7 @@ def makeMonaiSegmentationOCTList(imageSet: str, monaiSegmentationOCTListName: st
             OCTImageSet = {
                 'group': group,
                 'faf': {"image_id":FAFImage['_id'].values[0]},
-                'slo': {"image_id":SLOImage['_id'].values[0]},
+                'slo': {"image_id":None if SLOImage.shape[0] == 0 else SLOImage['_id'].values[0]},
                 'bscan_group': bscan_group,
             }
             OCTImageSetList.append(OCTImageSet)
@@ -122,6 +121,7 @@ def makeMonaiSegmentationOCTList(imageSet: str, monaiSegmentationOCTListName: st
             "count": len(ImageAttributes['group'].unique()),
             "list": OCTImageSetList, #####################
             "time_added": t.strftime('%Y-%m-%d %H:%M:%S')}
+        # pdb.set_trace()
         db = couch[COUCH_DB]
         print(f"Created Monai Segmentation List: {monaiSegmentationOCTListName}")
 

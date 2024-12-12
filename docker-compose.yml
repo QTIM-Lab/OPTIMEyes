@@ -50,6 +50,14 @@ services:
   monailabel:
     build:
       context: ./monailabel
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+              count: 1 # Number of GPUs to reserve
+              driver: nvidia # Specify the driver
     ports:
       - 8000:8000
     volumes:

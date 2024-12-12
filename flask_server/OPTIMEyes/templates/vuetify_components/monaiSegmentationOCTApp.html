@@ -20,7 +20,7 @@
     width: 700px;
     height: 700px;
     border: 1px;
-    border-style: dashed;    
+    /* border-style: dashed;     */
   }
 
   .oct_parent {
@@ -34,7 +34,7 @@
     width: 1032px;
     height: 500px;
     border: 1px;
-    border-style: dashed;    
+    /* border-style: dashed;     */
   }
 
   #buttonWrapper {
@@ -131,7 +131,24 @@
       <v-main>
           <v-container>
 
-            <v-btn v-if="images.length != 0" style="display: inline-block;">
+            <v-img
+              v-if="image.base64 === null"
+              class="mx-auto"
+              height="1000"
+              lazy-src="{{ url_for('static', filename='img/DALL·E 2024-12-10 17.37.10 - A creative and futuristic image of a clinician in a white coat holding a paintbrush, painting statistics and insights on a high-tech easel. The easel .webp') }}"
+              src="{{ url_for('static', filename='img/DALL·E 2024-12-10 17.37.10 - A creative and futuristic image of a clinician in a white coat holding a paintbrush, painting statistics and insights on a high-tech easel. The easel .webp') }}"
+            >
+              <template v-slot:placeholder>
+                <div class="d-flex align-center justify-center fill-height">
+                  <v-progress-circular
+                    color="grey-lighten-4"
+                    indeterminate
+                  ></v-progress-circular>
+                </div>
+              </template>
+            </v-img>
+
+            <!-- <v-btn v-if="images.length != 0" style="display: inline-block;">
               <v-tooltip left>
                 <template v-slot:activator="{ on }">
                   <v-icon v-on="on" style="font-style: normal; font-size: small;">Monai Label Task | On Image [[ task.value.current_idx + 1 ]] of [[ images.length ]]
@@ -139,7 +156,11 @@
                 </template>
                 Image List Name: [[ list_name ]]
               </v-tooltip>
-            </v-btn> 
+            </v-btn> -->
+            
+            <p v-if="image.base64 != null">Monai Label Task | On Image [[ task.value.current_idx + 1 ]] of [[ images.length ]] </p>
+            
+
             <timer-tag ref="timer" @update-time="updateTrackedTime"></timer-tag>
             <!-- Debug Time - comes from <timer-tag> -->
             <!-- <p>[[ total_sec ]]</p> -->
@@ -171,23 +192,28 @@
             >
               <!-- AF Image -->
               <v-col
-              cols="12"
-              lg="5"
+                cols="12"
+                lg="5"
               >
 
               <div ref="canvases_parent_div" class="parent">
 
                   <canvas
-                  ref="image"
+                    v-if="image.base64 != null"
+                    ref="image"
                     class="image"
                     :style="{ border: borderImage, 'z-index': image_z_index, opacity: image_opacity}"
                   ></canvas>
                   <canvas
+                    v-if="slo_image.base64 != null"
                     ref="slo_image"
                     class="segmentation"
                     :style="{ border: borderSlo, 'z-index': slo_image_z_index, opacity: slo_image_opacity}"
                   ></canvas>
-                    <div id="buttonWrapper">
+                    <div
+                      v-if="image.base64 != null"
+                      id="buttonWrapper"
+                    >
                       <input type="button" id="plus" value="+">
                       <input type="button" id="minus" value="-">
                     </div>
@@ -198,7 +224,7 @@
                     @mouseup="stopBrushing"
                     ref="segmentation"
                     class="segmentation"
-                    :style="{ border: borderSegmentation, opacity: 0.5, display: segmentation_image.display, 'z-index': segmentation_z_index}"
+                    :style="{ border: borderSegmentation, opacity: 0.3, display: segmentation_image.display, 'z-index': segmentation_z_index}"
                   ></canvas>
 
                   <canvas
@@ -225,11 +251,17 @@
 
               </v-col>
               
+              <v-col
+              cols="12"
+              lg="1"
+              >
+              </v-col>
+
               <!-- OCT BScan Images -->
               <v-col
+                v-if="image.base64 != null"
                 cols="12"
-                lg="7"
-                
+                lg="6"
               >
                 <!-- Bscan toolbar -->
                 <v-row no-gutters>
@@ -252,6 +284,7 @@
                     SLO Image Opacity
                   </div>
                   <v-slider
+                    v-if="true"
                     v-model="slo_image_opacity"
                     max=1
                     min=0
@@ -260,7 +293,21 @@
                     thumb-label
                   >
                   </v-slider>
-                  
+
+                  <!-- Bscan Lines Opacity -->
+                  <div class="text-caption">
+                    Bscan Lines Opacity
+                  </div>
+                  <v-slider
+                    v-if="true"
+                    v-model="bscan_lines_opacity"
+                    max=1
+                    min=0
+                    step=0.1
+                    hide-details
+                    thumb-label
+                  >
+                  </v-slider>
                   
                 </v-row>
                 <v-row no-gutters>
@@ -287,6 +334,9 @@
                     ></canvas>
                   </div>
                 </v-row>
+                <v-row>
+                  <p>|    Bscans loaded [[ bscan_image_list.length ]]</p>
+                </v-row>
 
               </v-col>
             </v-row>
@@ -298,15 +348,39 @@
               cols="12"
               lg="12"
               >
+
               <!--https://codepen.io/zed_at_home/pen/LYpWyEM-->
-              <v-form v-if="tool_set" action="/task_result" method="post" ref="form">
+              <v-form v-if="tool_set && image.base64 != null" action="/task_result" method="post" ref="form">
                 <v-row no-gutters>
                   <v-col
                   cols="12"
                     lg="12"
                     >
                       <!-- Segmentation Tools -->
-                      <h4>Segmentation Tools:</h4>
+                      
+                      <v-btn
+                      class="mr-4"
+                        @click="submit"
+                      >
+                        Next Image
+                      </v-btn>
+                      <v-alert
+                        title="Error"
+                        color="red"
+                        elevation="4"
+                        type="error"
+                        v-if="alert_error != null"
+                      >
+                      [[ alert_error ]]
+                    </v-alert>
+                    <!-- <v-btn @click="clear">
+                      clear
+                    </v-btn> -->
+                    <v-btn @click="resetToPreviousResult">
+                      Previous Image
+                    </v-btn>
+                    
+                    <h4>Segmentation Tools:</h4>
                       <!-- Simple button example if needed for later -->
                       <!-- <v-btn @click="toggleTool('brush')"> 
                         <v-icon>[[ 'mdi-brush-outline' ]]</v-icon>
@@ -325,7 +399,7 @@
                       </v-btn>
 
                       <!-- Brush Options -->
-                      <h5>Brush Options:</h5>
+                      <h4>Brush Options:</h4>
                       <v-btn :outlined="segmentation_selected" @click="toggleTool('brush')"> 
                         <v-tooltip left>
                           <template v-slot:activator="{ on }">
@@ -345,6 +419,23 @@
                       <!-- Brush size adjustment -->
                       <label>Size:</label>
                       <input type="range" v-model="brushSize" min="1" :max="brushSizeMax" />
+
+                      <v-radio-group
+                        v-for="(radio_button_category, index_radio_category) in tool_set.radio_button_categories"
+                        :key="radio_button_category['category_id']"
+                        v-model="result.radio_button_categories[index_radio_category].selected"
+                      >
+                        <p>[[ radio_button_category['category_id'] ]]</p>
+                        <v-radio
+                          v-for="(radio_button, index_radio_button) in radio_button_category['buttons']"
+                          :key="radio_button['button_id']"
+                          :label="`${result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id}`"
+                          :value="`${result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id}`"                       
+                          @click="toggleTool(result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id)"
+                        ></v-radio>
+
+                      </v-radio-group>
+
 
                       <!-- Coco Polygon Options -->
                       <h4>Coco Polygon Options:</h4>
@@ -372,7 +463,7 @@
                       <!-- Monai Label Buttons and Tools -->
                       <h4>Monai Label Tools:</h4>
                       <!-- <div style="display: none"> -->
-                      <div>
+                      <!-- <div> -->
                         <v-btn @click="performInference">
                           <v-icon>[[ 'mdi-lightbulb-outline' ]]</v-icon>
                           Perform Inference
@@ -382,38 +473,39 @@
                           <div v-if="inferenceDoneTraining" class="check-mark">✔</div>
                         </v-btn>
 
-                        <v-btn @click="saveLabel">
+                        <!-- HIDDEN with v-if -->
+                        <!-- <v-btn v-if="false" @click="saveLabel">
                           <v-icon>[[ 'mdi-content-save' ]]</v-icon>
                           Save Current Annotation
                           <div v-if="saveLoading" class="spinner">
                             <div class="spinner-inner"></div>
                           </div>
                           <div v-if="saveDoneTraining" class="check-mark">✔</div>
-                        </v-btn>
-                        
-                        <v-btn @click="trainOnLabels">
+                        </v-btn> -->
+                        <!-- HIDDEN with v-if -->
+                        <!-- <v-btn v-if="false" @click="trainOnLabels">
                           <v-icon>[[ 'mdi-brain' ]]</v-icon>
                           Train on Saved Annotations
                           <div v-if="trainLoading" class="spinner">
                             <div class="spinner-inner"></div>
                           </div>
                           <div v-if="trainDoneTraining" class="check-mark">✔</div>
-                        </v-btn>
+                        </v-btn> -->
 
-                        <br>
+                        <!-- <br> -->
                         
-                        <v-btn @click="drawROI">
+                        <!-- <v-btn @click="drawROI">
                           <v-tooltip left>
                             <template v-slot:activator="{ on }">
                               <v-icon v-on="on">[[ 'mdi-crop-square' ]]</v-icon> ROI
                             </template>
                             Region of Interest: [x_left, y_top, x_right, y_bottom]
                           </v-tooltip>
-                        </v-btn>
+                        </v-btn> -->
 
                         <v-text-field label="ROI for Inference" v-model:value="roi"></v-text-field>                        
 
-                      </div>
+                      <!-- </div> -->
 
                     </v-col>
                   </v-row>  
@@ -439,7 +531,8 @@
                         ></v-checkbox>
 
                       </div>
-                      <v-radio-group
+                      <!-- This is where radios are supposed to be but moving for bruch for now -->
+                      <!-- <v-radio-group
                         v-for="(radio_button_category, index_radio_category) in tool_set.radio_button_categories"
                         :key="radio_button_category['category_id']"
                         v-model="result.radio_button_categories[index_radio_category].selected"
@@ -453,7 +546,7 @@
                           @click="toggleTool(result.radio_button_categories[index_radio_category].buttons[index_radio_button].button_id)"
                         ></v-radio>
 
-                      </v-radio-group>
+                      </v-radio-group> -->
                     </v-col>
                     <v-col
                     cols="12"
@@ -502,27 +595,6 @@
                   </v-row>
                   <!--  -->
 
-                  <v-btn
-                    class="mr-4"
-                    @click="submit"
-                  >
-                    Next Image
-                  </v-btn>
-                  <v-alert
-                  title="Error"
-                  color="red"
-                  elevation="4"
-                  type="error"
-                  v-if="alert_error != null"
-                >
-                  [[ alert_error ]]
-                </v-alert>
-                  <!-- <v-btn @click="clear">
-                    clear
-                  </v-btn> -->
-                  <v-btn @click="resetToPreviousResult">
-                    Previous Image
-                  </v-btn>
 
                 </v-form>
               </v-col>
@@ -579,12 +651,15 @@ var monai_segmentation_oct_app =new Vue({
       sloLines:[],
       // SLO Image
       slo_image: {image_id: null, base64: null},
-      slo_image_opacity: 0,
+      slo_image_opacity: 0.5,
       borderSlo: "0px yellow solid", /* for debugging */
       slo_image_z_index: 1,
-      slo_image_selected: false,  // what is this for...Ithink from segmentation it is a   
+      slo_image_selected: false,  // what is this for...I think from segmentation it is a   
       // OCT BScans 
+      bscan_lines_opacity: 0.5,
       bscan_image: {image_id: null, base64: ""},
+      bscan_display: 'none',
+      bscan_image_list: [],
       bscanIndex: 1,
       bscanSliceCount: 10,
       bscan_opacity: 1,
@@ -614,7 +689,7 @@ var monai_segmentation_oct_app =new Vue({
       vertices: [],
       currentSegmentation: [],
       // 01_23_2024
-      borderCoco: "1px red solid", /* for debugging */
+      borderCoco: "0px red solid", /* for debugging */
       hidePolygonButtonText: "Hide",
       polygonDisplay: "",
       polygons_z_index: 2,
@@ -651,12 +726,35 @@ var monai_segmentation_oct_app =new Vue({
       // Watch the entire array of radio_button_categories for deep changes
       async bscanIndex(newValues, oldValues) {
         this.bscanIndex = Number(newValues)
-        this.bscan_image['image_id'] = this.images[this.task.value.current_idx]['bscan_group'][this.bscanIndex]['image_id']
-        this.bscan_image['base64'] = await this.getBase64DataOfImageFromCouch(this.bscan_image.image_id)
-        await this.displayBscanImage(current_image=this.task.value.current_idx);
+        try {
+          // Code that might throw an error
+          this.bscan_image['image_id'] = this.images[this.task.value.current_idx]['bscan_group'][this.bscanIndex]['image_id']
+          // this.bscan_image['base64'] = await this.getBase64DataOfImageFromCouch(this.bscan_image.image_id)
+          this.bscan_image['base64'] = this.bscan_image_list[this.bscanIndex - 1]
+          await this.displayBscanImage(current_image=this.task.value.current_idx);
+        } catch (error) {
+          // console.error("An error occurred:", error);
+          this.alert_error = `We have ${this.bscan_image_list.length} Bscans and you tried to access ${this.bscanIndex}.`
+          // debugger
+          this.bscanIndex = oldValues
+          setTimeout(()=>{this.alert_error = null}, 2000)
+        }
         this.displayCanvasImage(this.current_image, translatePos=this.translatePos, scale=this.scale)
         this.displaySloImage(this.current_image, translatePos=this.translatePos, scale=this.scale)
         // debugger
+        },
+        async bscan_lines_opacity(newValues, oldValues){
+          await this.displayCanvasImage(this.current_image, translatePos=this.translatePos, scale=this.scale)
+          await this.displaySloImage(this.current_image, translatePos=this.translatePos, scale=this.scale)
+
+        },
+        async slo_image_opacity(newValues, oldValues){
+          this.segmentation_z_index = 3
+          this.polygons_z_index = 2
+          this.slo_image_z_index = 1
+          this.image_z_index = 0 // bottom
+          await this.displaySloImage(this.current_image, translatePos=this.translatePos, scale=this.scale)
+
         }
     },
     async mounted() {
@@ -674,28 +772,35 @@ var monai_segmentation_oct_app =new Vue({
           setTimeout(()=>{this.alert_info = null}, 2000)
           setTimeout(()=>{window.location.replace(this.URLS.taskList);}, 2000)
         }else{
-          // debugger
           await this.getImageList();
           this.getTools(this.app, this.task.value.tool_set)
+          // debugger
           // Get image
           this.image.image_id = this.images[this.task.value.current_idx]['faf']['image_id']
           this.image['base64'] = await this.getBase64DataOfImageFromCouch(this.image.image_id)
-          this.slo_image.image_id = this.images[this.task.value.current_idx]['slo']['image_id']
-          this.slo_image['base64'] = await this.getBase64DataOfImageFromCouch(this.slo_image.image_id)
+          // Check for FAF with no OCT
+          if (this.images[this.task.value.current_idx]['slo']['image_id'] != null){
+            this.slo_image.image_id = this.images[this.task.value.current_idx]['slo']['image_id']
+            this.slo_image['base64'] = await this.getBase64DataOfImageFromCouch(this.slo_image.image_id)
+            this.bscan_images_load();
+            this.getSloLines();
+            await this.displaySloImage(current_image=this.task.value.current_idx, scale=this.scale);
+            this.bscanSliceCount = Object.keys(this.images[this.task.value.current_idx]['bscan_group']).length
+            this.bscan_image['image_id'] = this.images[this.task.value.current_idx]['bscan_group'][this.bscanIndex]['image_id']
+            this.bscan_image['base64'] = await this.getBase64DataOfImageFromCouch(this.bscan_image.image_id)
+            await this.displayBscanImage(current_image=this.task.value.current_idx);
+          }else{
+            this.alert_info = "This FAF has no OCT paired with it"
+            setTimeout(()=>{this.alert_info = null}, 2000)
+          }
+          await this.displayCanvasImage(current_image=this.task.value.current_idx, scale=this.scale);
           // debugger
-          this.getSloLines();
-          await this.displayCanvasImage(current_image=this.task.value.current_idx);
-          await this.displaySloImage(current_image=this.task.value.current_idx);
-          this.bscanSliceCount = Object.keys(this.images[this.task.value.current_idx]['bscan_group']).length
-          this.bscan_image['image_id'] = this.images[this.task.value.current_idx]['bscan_group'][this.bscanIndex]['image_id']
-          this.bscan_image['base64'] = await this.getBase64DataOfImageFromCouch(this.bscan_image.image_id)
-          await this.displayBscanImage(current_image=this.task.value.current_idx);
           this.displayBrushImage(current_image=this.task.value.current_idx, fromInference=false, translatePos=this.translatePos, scale=this.scale);
           this.drawAnnotations(); //
           this.initCoco();
           this.initCanvasZoomTools();
-          // this.mouseScrollEventListener()
-          // this.performInference();
+          this.mouseScrollEventListener()
+          this.performInference();
 
           this.resizeObserver = new ResizeObserver(entries => {
             for (let entry of entries) {
@@ -903,6 +1008,7 @@ var monai_segmentation_oct_app =new Vue({
           segmentationContext.drawImage(testCanvas, sX, sY, sW, sH, dX, dY, dW, dH);
           // Draw back on patch canvas from test canvas
           patchContext.drawImage(testCanvas, sX, sY, sW, sH, dX, dY, dW, dH);
+          
         });
 
       },
@@ -971,6 +1077,10 @@ var monai_segmentation_oct_app =new Vue({
             event.preventDefault(); // Prevent the default behavior of the Enter key
             // 05_13_2024
             this.mergePolygonsToBrushCanvas()
+            // TEMPORARY --- RE EVALUATE
+            this.hidePolygon() 
+            
+            // TEMPORARY --- RE EVALUATE
           } else if (event.key === "Backspace" || event.key === "Delete"){
             undo_vertice_placement()
           }
@@ -1501,6 +1611,7 @@ var monai_segmentation_oct_app =new Vue({
             dW = canvas.width
             dH = canvas.height
             context.drawImage(image, sX, sY, sW, sH, dX, dY, dW, dH);
+            // debugger
             MS.displayFAFBscanLines(MS.current_image, translatePos=MS.translatePos, scale=MS.scale)
             resolve();
           };
@@ -1521,24 +1632,22 @@ var monai_segmentation_oct_app =new Vue({
             // Draw existing vertices
             ctx.save()
             ctx.scale(scale, scale)
-            // debugger
             ctx.translate( -this.translatePos.x * (imageCanvas.width/current_working_width), -this.translatePos.y * (imageCanvas.height/current_working_height) )
             // Your drawing logic here
             // ctx.fillStyle = 'rgba(0, 255, 0, 1)'; // Transparent (Green)
-            ctx.lineWidth = 4; // Adjust line thickness
+            ctx.lineWidth = 4; // Adjust line thickness 
             for (let i = 0; i < MS.sloLines.length; i++) {
               ctx.beginPath();
-              ctx.strokeStyle = 'rgba(0, 255, 0, 0.5)'; // Set the line color (Green)
+              ctx.strokeStyle = `rgba(0, 255, 0, ${this.bscan_lines_opacity})`; // Set the line color (Green)
               if (i+1 === this.bscanIndex){
-                // debugger
-                ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)'; // Set the line color (Red)
+                ctx.strokeStyle = `rgba(255, 0, 0, ${this.bscan_lines_opacity})`; // Set the line color (Red)
               }
               var line = MS.sloLines[i];
               ctx.moveTo(line['start_x'], line['start_y']);
               ctx.lineTo(line['end_x'], line['end_y']);
               ctx.closePath();
-              // debugger
               ctx.stroke();
+
             }
             resolve();
           } catch (error) {
@@ -1616,10 +1725,10 @@ var monai_segmentation_oct_app =new Vue({
             ctx.lineWidth = 4; // Adjust line thickness
             for (let i = 0; i < MS.sloLines.length; i++) {
               ctx.beginPath();
-              ctx.strokeStyle = 'rgba(0, 255, 0, 0.5)'; // Set the line color (Green)
+              ctx.strokeStyle = `rgba(0, 255, 0, ${this.bscan_lines_opacity})`; // Set the line color (Green)
               if (i+1 === this.bscanIndex){
                 // debugger
-                ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)'; // Set the line color (Red)
+                ctx.strokeStyle = `rgba(255, 0, 0, ${this.bscan_lines_opacity})`; // Set the line color (Red)
               }
               var line = MS.sloLines[i];
               ctx.moveTo(line['start_x'], line['start_y']);
@@ -1634,18 +1743,43 @@ var monai_segmentation_oct_app =new Vue({
           }
         })
       },
+      async bscan_images_load() {
+        let bscan_image_indexes = Object.keys(this.images[this.task.value.current_idx]['bscan_group']);
+        bscan_image_indexes = bscan_image_indexes.map(id => parseInt(id));
+        bscan_image_indexes.sort((a, b) => parseInt(a) - parseInt(b));
+        for (const index of bscan_image_indexes) {
+            // debugger
+            const image_id = this.images[this.task.value.current_idx]['bscan_group'][index]['image_id']
+            const base64 = await this.getBase64DataOfImageFromCouch(image_id);
+            console.log(`Loaded bscan ${image_id}`);
+            this.bscan_image_list.push({ image_id: image_id, base64: base64 });
+            // debugger
+        }
+      },
       mouseScrollEventListener(){
-        debugger
+        // debugger
+        MS = this;
         // Add event listener for mouse scroll
         window.addEventListener('wheel', function(event) {
-            debugger
+            // debugger
+            event.preventDefault();
+          // event.stopPropagation();
             // Check the direction of the scroll
             if (event.deltaY > 0) {
-                console.log('Scrolled Down');
+              if(MS.bscanIndex === 1){
+                  console.log('Scrolled down and at limit');
+                }else{
+                  MS.bscanIndex = MS.bscanIndex - 1
+                }
             } else {
-                console.log('Scrolled Up');
+              // debugger
+              if(MS.bscanIndex === MS.bscanSliceCount){
+                  console.log('Scrolled up and at limit');
+                }else{
+                  MS.bscanIndex = MS.bscanIndex + 1
+                }
             }
-        });
+        }, { passive: false });
       },
       displayBscanImage(current_image, translatePos={x:0,y:0}, scale=1.0, fromInference=false) {
         return new Promise((resolve, reject) => {
@@ -1686,15 +1820,18 @@ var monai_segmentation_oct_app =new Vue({
             reject(error);
           }
           // Set the base64 data as the source of the bscanImage
-          bscanImage.src = `${this.bscan_image.base64}`;
+          // debugger
+          
+          // bscanImage.src = `${this.bscan_image.base64}`;
+          bscanImage.src = `${this.bscan_image_list[this.bscanIndex - 1]['base64']}`;
         })
       },
       getSloLines() {
         this.sloLines = []
-        bscan_image_ids = Object.keys(this.images[this.task.value.current_idx]['bscan_group'])
-        bscan_image_ids = bscan_image_ids.map(id => parseInt(id));
-        bscan_image_ids.sort((a, b) => parseInt(a) - parseInt(b));
-        bscan_image_ids.forEach((v,i,a) => {
+        bscan_image_indexes = Object.keys(this.images[this.task.value.current_idx]['bscan_group'])
+        bscan_image_indexes = bscan_image_indexes.map(id => parseInt(id));
+        bscan_image_indexes.sort((a, b) => parseInt(a) - parseInt(b));
+        bscan_image_indexes.forEach((v,i,a) => {
           // debugger
           const s_x = this.images[this.task.value.current_idx]['bscan_group'][v]['start_x']
           const s_y = this.images[this.task.value.current_idx]['bscan_group'][v]['start_y']
@@ -1989,13 +2126,14 @@ var monai_segmentation_oct_app =new Vue({
         // formData.append('params', JSON.stringify({"roi": JSON.parse(this.roi)}));
         // USER KEY FOR GA STUDY
         user_key = {
-          'all_users': false,
+          'all_users': true,
         }
         user_key[this.user]
         formData.append('params', JSON.stringify({"roi": JSON.parse(this.roi), "trained":user_key['all_users'] ? user_key['all_users'] : false}));
         // formData.append('params', JSON.stringify({"roi": JSON.parse(this.roi), "trained":user_key[this.user] ? user_key[this.user] : false}));
         formData.append('file', '');
         formData.append('label', '');
+        // debugger
         // debugger
         // Send a POST request with the FormData using the fetch API
         fetch(url, {
@@ -2221,6 +2359,7 @@ var monai_segmentation_oct_app =new Vue({
           this.polygonDisplay = ""
           this.BrushButtonText = 'Brush'
           this.PolygonButtonText = 'Shape (Selected)'
+          
         } else if (variable === "brush"){
           this.segmentation_selected = true
           this.polygon_selected = false
