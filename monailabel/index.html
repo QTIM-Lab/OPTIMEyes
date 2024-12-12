@@ -70,6 +70,8 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#restart-monailabel">Restart MonaiLabel</a>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#changes-to-monailabel-and-git">Changes to MonaiLabel and GIT</a>
+    </li>
     </ul>
                 </li>
               </ul>
@@ -120,6 +122,23 @@ torch.save(model.state_dict(), '/monailabel/apps/monaibundle/model/MedSamBundle/
 </code></pre>
 <h2 id="restart-monailabel">Restart MonaiLabel</h2>
 <pre><code class="language-bash">docker compose restart monailabel
+</code></pre>
+<h2 id="changes-to-monailabel-and-git">Changes to MonaiLabel and GIT</h2>
+<p>If you make some edits to monailabel you need to check it into git first.</p>
+<pre><code>cd monailabel
+git branch add-changes
+git add &lt;file&gt;
+git commit -m &quot;Your commit message for submodule changes&quot;
+
+git checkout main
+git merge add-changes
+git push origin main
+git branch -d add-changes
+
+cd ..
+git add monailabel
+git commit -m &quot;commit message&quot;
+git push
 </code></pre>
               
             </div>
