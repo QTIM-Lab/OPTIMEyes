@@ -9,3 +9,4 @@ git_access_token.txt
 *.pt
 # mkdocs
 mkdocs_documentation/site
+couchdb/
